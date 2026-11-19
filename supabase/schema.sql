@@ -36,7 +36,27 @@ alter table user_api_keys enable row level security;
 create policy "own keys" on user_api_keys
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
--- 3. meals
+-- 3. foods (user_id null = global shared food)
+create table if not exists foods (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users (id) on delete cascade,
+  name_mm text not null,
+  name_en text,
+  barcode text,
+  calories_per_100g numeric,
+  protein_per_100g numeric,
+  carbs_per_100g numeric,
+  fat_per_100g numeric,
+  serving_desc text,
+  created_at timestamptz default now()
+);
+alter table foods enable row level security;
+create policy "read global or own foods" on foods
+  for select using (user_id is null or auth.uid() = user_id);
+create policy "insert own foods" on foods
+  for insert with check (auth.uid() = user_id);
+
+-- 4. meals
 create table if not exists meals (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -57,7 +77,7 @@ alter table meals enable row level security;
 create policy "own meals" on meals
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
--- 4. meal_items
+-- 5. meal_items
 create table if not exists meal_items (
   id uuid primary key default gen_random_uuid(),
   meal_id uuid not null references meals (id) on delete cascade,
@@ -83,26 +103,6 @@ create policy "own meal items" on meal_items
   ) with check (
     exists (select 1 from meals m where m.id = meal_id and m.user_id = auth.uid())
   );
-
--- 5. foods (user_id null = global shared food)
-create table if not exists foods (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users (id) on delete cascade,
-  name_mm text not null,
-  name_en text,
-  barcode text,
-  calories_per_100g numeric,
-  protein_per_100g numeric,
-  carbs_per_100g numeric,
-  fat_per_100g numeric,
-  serving_desc text,
-  created_at timestamptz default now()
-);
-alter table foods enable row level security;
-create policy "read global or own foods" on foods
-  for select using (user_id is null or auth.uid() = user_id);
-create policy "insert own foods" on foods
-  for insert with check (auth.uid() = user_id);
 
 -- 6. weight_logs
 create table if not exists weight_logs (
