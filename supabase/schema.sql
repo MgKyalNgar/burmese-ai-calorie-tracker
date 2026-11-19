@@ -1,6 +1,6 @@
-# Burmese AI Calorie Tracker — Supabase schema (Phase 0)
-# Run this in the NEW Supabase project's SQL Editor (Dashboard > SQL Editor).
-# Do NOT run against the StarFish project. RLS: every row belongs to its user.
+-- Burmese AI Calorie Tracker — Supabase schema (Phase 0)
+-- Run this in the NEW Supabase project's SQL Editor (Dashboard > SQL Editor).
+-- Do NOT run against the StarFish project. RLS: every row belongs to its user.
 
 -- 1. profiles (one row per auth user)
 create table if not exists profiles (
