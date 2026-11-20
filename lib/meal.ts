@@ -97,6 +97,16 @@ export interface DiaryData {
   needsOnboarding?: boolean;
 }
 
+// /api/progress က ပြန်တဲ့ Progress ဒေတာ ပုံစံ။
+export interface ProgressData {
+  week: { date: string; eaten: number; target: number }[];
+  weights: { date: string; kg: number }[];
+  waterWeek: { date: string; cups: number }[];
+  loggedDays: string[];
+  needsLogin?: boolean;
+  needsOnboarding?: boolean;
+}
+
 // ရန်ကုန်စံတော်ချိန်နဲ့ ဒီနေ့ ရက်စွဲ (YYYY-MM-DD)။
 export function todayYangon(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Yangon" });
