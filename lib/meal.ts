@@ -57,6 +57,21 @@ export interface MealRow {
   meal_items: MealItemRow[];
 }
 
+// /api/profile က ပြန်တဲ့ Profile ဒေတာ ပုံစံ။
+export interface ProfileData {
+  email: string | null;
+  profile: {
+    display_name: string | null;
+    gender: string | null;
+    age: number | null;
+    height_cm: number | null;
+    weight_kg: number | null;
+    goal: string | null;
+    daily_calorie_target: number | null;
+  } | null;
+  needsLogin?: boolean;
+}
+
 // /api/today က ပြန်တဲ့ Home ဒေတာ ပုံစံ။
 export interface TodayData {
   date: string;

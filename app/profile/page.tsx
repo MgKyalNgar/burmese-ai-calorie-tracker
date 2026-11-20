@@ -1,13 +1,23 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import LogoutButton from "@/components/LogoutButton";
 import ApiKeySettings from "@/components/ApiKeySettings";
+import { useCachedData } from "@/lib/useCachedData";
+import type { ProfileData } from "@/lib/meal";
 
-// Profile က login session (cookies) ကို ဖတ်လို့ prerender လုပ်လို့ မရဘူး —
-// blocking route အဖြစ် ခွင့်ပြုတယ် (Next 16 Cache Components)။
-export const instant = false;
+// Profile ကို client component အဖြစ် ပြောင်းထားတယ် —
+// ဒေတာကို ဖုန်းထဲ cache ထားတော့ tab ပြန်ကူးတိုင်း ချက်ချင်း ပြတယ်။
+async function fetchProfile(): Promise<ProfileData> {
+  const res = await fetch("/api/profile");
+  const data = await res.json();
+  if (res.status === 401) return { needsLogin: true } as ProfileData;
+  if (!res.ok) throw new Error(data?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
+  return data as ProfileData;
+}
 
 const GOAL_LABELS: Record<string, string> = {
   lose: "ဝိတ်ချမယ်",
@@ -15,23 +25,40 @@ const GOAL_LABELS: Record<string, string> = {
   gain: "ဝိတ်တက်မယ်",
 };
 
-export default async function ProfilePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+export default function ProfilePage() {
+  const router = useRouter();
+  const { data, loading, error } = useCachedData<ProfileData>(
+    "profile",
+    fetchProfile,
+  );
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
+  useEffect(() => {
+    if (data?.needsLogin) router.push("/login");
+  }, [data, router]);
+
+  if (loading || !data || data.needsLogin) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center bg-white px-5 pb-24">
+        <div
+          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#16a34a]"
+          aria-hidden
+        />
+        <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
+        <BottomNav />
+      </main>
+    );
+  }
+
+  const profile = data.profile;
 
   return (
     <main className="mx-auto max-w-md min-h-screen bg-white px-5 pb-24 pt-8">
       <h1>Profile</h1>
-      <p className="caption mt-1">{user.email}</p>
+      <p className="caption mt-1">{data.email}</p>
+
+      {error && (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
+      )}
 
       <section className="mt-4 rounded-2xl border p-5">
         <h2>ကိုယ့်အချက်အလက်</h2>

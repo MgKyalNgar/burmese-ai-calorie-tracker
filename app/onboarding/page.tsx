@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { invalidateCache, invalidateCachePrefix } from "@/lib/useCachedData";
 
 // Mifflin-St Jeor နဲ့ တစ်နေ့တာ ကယ်လိုရီ target တွက်တယ်။
 const ACTIVITY_FACTORS: Record<string, number> = {
@@ -117,6 +118,10 @@ export default function OnboardingPage() {
       setError("သိမ်းလို့ မရပါ — " + error.message);
       return;
     }
+    // Profile ပြင်ပြီးပြီ — Profile/Home cache ကို ဖျက်တယ်
+    // (target ပြောင်းနိုင်လို့ Home cache လည်း ဖျက်တယ်)။
+    invalidateCache("profile");
+    invalidateCachePrefix("today-");
     router.push("/");
     router.refresh();
   }
