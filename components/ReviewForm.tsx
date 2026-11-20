@@ -1,0 +1,365 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import {
+  MEAL_TYPES,
+  defaultMealType,
+  round1,
+  todayYangon,
+  type AnalyzedFood,
+  type MealType,
+} from "@/lib/meal";
+
+// Add flow ရဲ့ Review အဆင့် — သိမ်းခင် အတည်ပြုရမယ် (မဖြစ်မနေ)။
+// ဂရမ် stepper က အာဟာရ အားလုံးကို live ပြန်တွက်ပေးတယ်။
+export interface ReviewInitial {
+  food: AnalyzedFood;
+  source: "photo" | "text" | "search";
+  foodId?: string | null;
+  photoFile?: File | null;
+  photoPreviewUrl?: string | null;
+}
+
+export default function ReviewForm({
+  initial,
+  onCancel,
+}: {
+  initial: ReviewInitial;
+  onCancel: () => void;
+}) {
+  const router = useRouter();
+  const [nameMm, setNameMm] = useState(initial.food.name_mm);
+  const [nameEn, setNameEn] = useState(initial.food.name_en);
+  const [grams, setGrams] = useState(initial.food.grams);
+  const [calories, setCalories] = useState(initial.food.calories);
+  const [protein, setProtein] = useState(initial.food.protein);
+  const [carbs, setCarbs] = useState(initial.food.carbs);
+  const [fat, setFat] = useState(initial.food.fat);
+  const [mealType, setMealType] = useState<MealType>(defaultMealType());
+  // 1 ဂရမ်လျှင် အာဟာရ — stepper က ပြန်တွက်ဖို့၊ လက်နဲ့ ပြင်ရင် rate ကို ပြင်တယ်။
+  const [rates, setRates] = useState({
+    cal: initial.food.grams > 0 ? initial.food.calories / initial.food.grams : 0,
+    pro: initial.food.grams > 0 ? initial.food.protein / initial.food.grams : 0,
+    carb: initial.food.grams > 0 ? initial.food.carbs / initial.food.grams : 0,
+    fat: initial.food.grams > 0 ? initial.food.fat / initial.food.grams : 0,
+  });
+  const [edited, setEdited] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  function changeGrams(next: number) {
+    const g = Math.min(2000, Math.max(10, Math.round(next)));
+    setGrams(g);
+    setCalories(Math.round(rates.cal * g));
+    setProtein(round1(rates.pro * g));
+    setCarbs(round1(rates.carb * g));
+    setFat(round1(rates.fat * g));
+    setEdited(true);
+  }
+
+  // အာဟာရတစ်ခုကို လက်နဲ့ ပြင်ရင် အဲဒီအမျိုးအစားရဲ့ rate ကို ပြန်သတ်တယ်။
+  function editNutrient(
+    key: "cal" | "pro" | "carb" | "fat",
+    value: number,
+  ) {
+    const v = Math.max(0, value || 0);
+    if (key === "cal") setCalories(Math.round(v));
+    if (key === "pro") setProtein(round1(v));
+    if (key === "carb") setCarbs(round1(v));
+    if (key === "fat") setFat(round1(v));
+    setRates((r) => ({ ...r, [key]: grams > 0 ? v / grams : 0 }));
+    setEdited(true);
+  }
+
+  async function handleSave() {
+    if (!nameMm.trim() && !nameEn.trim()) {
+      setMessage("အစားအစာ နာမည် ထည့်ပေးပါ။");
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setMessage("Login အရင် ဝင်ပေးပါ။");
+        return;
+      }
+      const today = todayYangon();
+
+      // 1) ဓာတ်ပုံ ရှိရင် meal-photos bucket (private) ထဲ တင်တယ်။
+      let photoPath: string | null = null;
+      let photoFailed = false;
+      if (initial.photoFile) {
+        const ext =
+          initial.photoFile.type === "image/png"
+            ? "png"
+            : initial.photoFile.type === "image/webp"
+              ? "webp"
+              : "jpg";
+        photoPath = `${user.id}/${today}/${crypto.randomUUID()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("meal-photos")
+          .upload(photoPath, initial.photoFile, {
+            contentType: initial.photoFile.type || "image/jpeg",
+            upsert: false,
+          });
+        if (uploadError) {
+          photoPath = null;
+          photoFailed = true;
+        }
+      }
+
+      // 2) meals row သိမ်းတယ်။
+      const { data: meal, error: mealError } = await supabase
+        .from("meals")
+        .insert({
+          user_id: user.id,
+          logged_date: today,
+          meal_type: mealType,
+          photo_url: photoPath,
+          source: initial.source,
+          total_calories: Math.round(calories),
+          total_protein: round1(protein),
+          total_carbs: round1(carbs),
+          total_fat: round1(fat),
+          ai_confidence: initial.source === "search" ? null : "medium",
+          status: "confirmed",
+          ai_result: initial.source === "search" ? null : initial.food,
+        })
+        .select("id")
+        .single();
+      if (mealError || !meal) {
+        throw new Error("သိမ်းလို့ မရပါ — ပြန်စမ်းပေးပါ။");
+      }
+
+      // 3) meal_items row သိမ်းတယ်။
+      const { error: itemError } = await supabase.from("meal_items").insert({
+        meal_id: meal.id,
+        food_id: initial.foodId ?? null,
+        food_name_mm: nameMm.trim(),
+        food_name_en: nameEn.trim(),
+        amount: grams,
+        unit: "g",
+        calories: Math.round(calories),
+        protein: round1(protein),
+        carbs: round1(carbs),
+        fat: round1(fat),
+        is_ai_detected: initial.source !== "search",
+        user_edited: edited,
+      });
+      if (itemError) {
+        // Item မသိမ်းရင် meal အလွတ်ကြီး မကျန်အောင် ပြန်ဖျက်တယ်။
+        await supabase.from("meals").delete().eq("id", meal.id);
+        throw new Error("သိမ်းလို့ မရပါ — ပြန်စမ်းပေးပါ။");
+      }
+
+      if (photoFailed) {
+        // မှတ်တမ်းသိမ်းပြီးသား — ဓာတ်ပုံပဲ တင်မရတာ၊ user ကို ပြပေးတယ်။
+        setSaved(true);
+        setMessage(
+          "မှတ်တမ်း သိမ်းပြီးပြီ ✅ ဒါပေမဲ့ ဓာတ်ပုံ တင်လို့ မရပါ — Supabase Storage policy စစ်ပေးပါ။",
+        );
+        return;
+      }
+      router.push("/diary");
+      router.refresh();
+    } catch (err) {
+      setMessage(
+        err instanceof Error ? err.message : "သိမ်းလို့ မရပါ — ပြန်စမ်းပေးပါ။",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (saved) {
+    return (
+      <section className="mt-4 rounded-2xl border p-5 text-center">
+        <p className="font-semibold text-[#15803d]">မှတ်တမ်း သိမ်းပြီးပြီ ✅</p>
+        <p className="mt-2 text-[#52677f]">{message}</p>
+        <button
+          type="button"
+          onClick={() => router.push("/diary")}
+          className="mt-4 rounded-xl bg-[#16a34a] px-5 py-2.5 font-semibold text-white"
+        >
+          Diary ကို သွားမယ်
+        </button>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mt-4 rounded-2xl border p-5">
+      <h2>စစ်ဆေးပြီး သိမ်းမယ်</h2>
+      {initial.photoPreviewUrl && (
+        <img
+          src={initial.photoPreviewUrl}
+          alt={nameMm}
+          className="mt-3 h-44 w-full rounded-xl object-cover"
+        />
+      )}
+      {initial.food.note && (
+        <p className="caption mt-3">🤖 AI: {initial.food.note}</p>
+      )}
+
+      <label className="mt-4 block">
+        <span className="caption">အစားအစာ (မြန်မာ)</span>
+        <input
+          type="text"
+          value={nameMm}
+          onChange={(e) => {
+            setNameMm(e.target.value);
+            setEdited(true);
+          }}
+          className="mt-1 w-full rounded-xl border px-3 py-2.5"
+        />
+      </label>
+      <label className="mt-3 block">
+        <span className="caption">Food (English)</span>
+        <input
+          type="text"
+          value={nameEn}
+          onChange={(e) => {
+            setNameEn(e.target.value);
+            setEdited(true);
+          }}
+          className="mt-1 w-full rounded-xl border px-3 py-2.5"
+        />
+      </label>
+
+      <div className="mt-4">
+        <span className="caption">ပမာဏ (ဂရမ်)</span>
+        <div className="mt-1 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => changeGrams(grams - 10)}
+            disabled={busy}
+            className="h-10 w-10 rounded-xl border text-lg font-bold disabled:opacity-50"
+            aria-label="လျှော့မယ်"
+          >
+            −
+          </button>
+          <input
+            type="number"
+            min={10}
+            max={2000}
+            value={grams}
+            onChange={(e) => changeGrams(Number(e.target.value))}
+            disabled={busy}
+            className="h-10 flex-1 rounded-xl border px-3 text-center"
+          />
+          <button
+            type="button"
+            onClick={() => changeGrams(grams + 10)}
+            disabled={busy}
+            className="h-10 w-10 rounded-xl border text-lg font-bold disabled:opacity-50"
+            aria-label="တိုးမယ်"
+          >
+            +
+          </button>
+          <span className="caption">g</span>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <label className="block">
+          <span className="caption">ကယ်လိုရီ (kcal)</span>
+          <input
+            type="number"
+            min={0}
+            value={calories}
+            onChange={(e) => editNutrient("cal", Number(e.target.value))}
+            disabled={busy}
+            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+          />
+        </label>
+        <label className="block">
+          <span className="caption">Protein (g)</span>
+          <input
+            type="number"
+            min={0}
+            step="0.1"
+            value={protein}
+            onChange={(e) => editNutrient("pro", Number(e.target.value))}
+            disabled={busy}
+            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+          />
+        </label>
+        <label className="block">
+          <span className="caption">Carbs (g)</span>
+          <input
+            type="number"
+            min={0}
+            step="0.1"
+            value={carbs}
+            onChange={(e) => editNutrient("carb", Number(e.target.value))}
+            disabled={busy}
+            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+          />
+        </label>
+        <label className="block">
+          <span className="caption">Fat (g)</span>
+          <input
+            type="number"
+            min={0}
+            step="0.1"
+            value={fat}
+            onChange={(e) => editNutrient("fat", Number(e.target.value))}
+            disabled={busy}
+            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+          />
+        </label>
+      </div>
+
+      <div className="mt-4">
+        <span className="caption">ဘယ်အစာ အမျိုးအစားလဲ?</span>
+        <div className="mt-1 grid grid-cols-4 gap-2">
+          {MEAL_TYPES.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => setMealType(t.value)}
+              disabled={busy}
+              className={`rounded-xl border px-2 py-2.5 ${
+                mealType === t.value
+                  ? "border-[#16a34a] bg-[#16a34a] font-semibold text-white"
+                  : "text-[#334155]"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {message && (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{message}</p>
+      )}
+
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={busy}
+          className="flex-1 rounded-xl border px-4 py-2.5 font-semibold text-[#334155] disabled:opacity-50"
+        >
+          ပြန်ပြင်မယ်
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={busy}
+          className="flex-1 rounded-xl bg-[#16a34a] py-2.5 font-semibold text-white disabled:opacity-50"
+        >
+          {busy ? "သိမ်းနေတယ်…" : "သိမ်းမယ် ✅"}
+        </button>
+      </div>
+    </section>
+  );
+}

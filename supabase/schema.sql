@@ -144,3 +144,12 @@ create policy "own push subs" on push_subscriptions
 
 -- Storage bucket for meal photos (create in Dashboard > Storage if SQL cannot):
 -- insert into storage.buckets (id, name, public) values ('meal-photos', 'meal-photos', false);
+
+-- Storage policies for meal-photos (Phase 2 — run once in SQL Editor;
+-- without these, the app's photo upload from the browser is rejected):
+-- create policy "own meal photos read" on storage.objects
+--   for select using (bucket_id = 'meal-photos' and auth.uid()::text = (storage.foldername(name))[1]);
+-- create policy "own meal photos upload" on storage.objects
+--   for insert with check (bucket_id = 'meal-photos' and auth.uid()::text = (storage.foldername(name))[1]);
+-- create policy "own meal photos delete" on storage.objects
+--   for delete using (bucket_id = 'meal-photos' and auth.uid()::text = (storage.foldername(name))[1]);

@@ -11,7 +11,7 @@
 
 - [x] Phase 0 — Scaffold (Next.js + Supabase client + schema SQL + manifest)
 - [x] Phase 1 — Auth + Onboarding + API Key Settings + Home (19 Nov 2026)
-- [ ] Phase 2 — Photo Analyze (`/api/analyze`) + AI Review/Edit + Diary
+- [x] Phase 2 — Photo Analyze (`/api/analyze`) + AI Review/Edit + Diary (built locally 20 Nov 2026, not yet pushed — live Gemini + storage-policy check still needed)
 - [ ] Phase 3 — Progress + Water/Weight + Myanmar food seed (50–100)
 - [ ] Phase 4 — Reminder (Web Push) + PWA
 - [ ] Phase 5 — Real Myanmar food photo testing + launch via link
