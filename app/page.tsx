@@ -66,45 +66,44 @@ export default async function Home() {
   const today = todayYangon();
   const target = profile.daily_calorie_target ?? 1800;
 
-  // ဒီနေ့ စားပြီးသား meals။
-  const { data: meals } = await supabase
-    .from("meals")
-    .select("id, meal_type, total_calories, total_protein, total_carbs, total_fat, created_at")
-    .eq("user_id", user.id)
-    .eq("logged_date", today)
-    .eq("status", "confirmed")
-    .order("created_at", { ascending: true });
+  // ဒီနေ့ စားပြီးသား meals + ရေ + ဝိတ် + streak ကို တစ်ပြိုင်တည်း ဆွဲတယ် —
+  // တစ်ခုချင်း စောင့်နေရင် tab ကူးတိုင်း စက္ကန့်ပိုင်း ကြာလို့။
+  const [{ data: meals }, { data: water }, { data: latestWeight }, { data: mealDays }] =
+    await Promise.all([
+      supabase
+        .from("meals")
+        .select("id, meal_type, total_calories, total_protein, total_carbs, total_fat, created_at")
+        .eq("user_id", user.id)
+        .eq("logged_date", today)
+        .eq("status", "confirmed")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("water_logs")
+        .select("cups")
+        .eq("user_id", user.id)
+        .eq("logged_date", today),
+      supabase
+        .from("weight_logs")
+        .select("weight_kg, logged_date")
+        .eq("user_id", user.id)
+        .order("logged_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("meals")
+        .select("logged_date")
+        .eq("user_id", user.id)
+        .eq("status", "confirmed")
+        .order("logged_date", { ascending: false })
+        .limit(60),
+    ]);
 
   const eaten = (meals ?? []).reduce((s, m) => s + Number(m.total_calories ?? 0), 0);
   const protein = (meals ?? []).reduce((s, m) => s + Number(m.total_protein ?? 0), 0);
   const carbs = (meals ?? []).reduce((s, m) => s + Number(m.total_carbs ?? 0), 0);
   const fat = (meals ?? []).reduce((s, m) => s + Number(m.total_fat ?? 0), 0);
 
-  // ဒီနေ့ ရေသောက်ပြီးသား ခွက်။
-  const { data: water } = await supabase
-    .from("water_logs")
-    .select("cups")
-    .eq("user_id", user.id)
-    .eq("logged_date", today);
   const cups = (water ?? []).reduce((s, w) => s + Number(w.cups ?? 0), 0);
-
-  // နောက်ဆုံး ဝိတ်။
-  const { data: latestWeight } = await supabase
-    .from("weight_logs")
-    .select("weight_kg, logged_date")
-    .eq("user_id", user.id)
-    .order("logged_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  // Streak — ထမင်းမှတ်တဲ့ ရက် ဆက်တိုက် ဘယ်နှစ်ရက် ရှိပြီလဲ။
-  const { data: mealDays } = await supabase
-    .from("meals")
-    .select("logged_date")
-    .eq("user_id", user.id)
-    .eq("status", "confirmed")
-    .order("logged_date", { ascending: false })
-    .limit(60);
   const daySet = new Set((mealDays ?? []).map((m) => m.logged_date as string));
   let streak = 0;
   const cursor = new Date(`${today}T12:00:00+06:30`);

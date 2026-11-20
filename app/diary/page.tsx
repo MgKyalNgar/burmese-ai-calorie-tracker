@@ -15,23 +15,21 @@ export default async function DiaryPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", user.id)
-    .maybeSingle();
-  if (!profile) redirect("/onboarding");
-
   const today = todayYangon();
 
-  // ဒီနေ့ မှတ်တမ်းတွေ + အထဲက item တွေ။
-  const { data: meals } = await supabase
-    .from("meals")
-    .select("*, meal_items(*)")
-    .eq("user_id", user.id)
-    .eq("logged_date", today)
-    .eq("status", "confirmed")
-    .order("created_at", { ascending: true });
+  // profile + ဒီနေ့ မှတ်တမ်းတွေ တစ်ပြိုင်တည်း ဆွဲတယ် (တစ်ခုချင်း
+  // စောင့်နေရင် tab ကူးတိုင်း ကြာလို့)။
+  const [{ data: profile }, { data: meals }] = await Promise.all([
+    supabase.from("profiles").select("id").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("meals")
+      .select("*, meal_items(*)")
+      .eq("user_id", user.id)
+      .eq("logged_date", today)
+      .eq("status", "confirmed")
+      .order("created_at", { ascending: true }),
+  ]);
+  if (!profile) redirect("/onboarding");
 
   // meal_items ကို created_at အတိုင်း စီတယ် (meal တစ်ခုမှာ item များရင်)။
   const sorted = ((meals ?? []) as MealRow[]).map((m) => ({

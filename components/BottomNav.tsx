@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 // အောက်ခြေ tab bar — login/signup/onboarding မှာ မပြဘူး။
 const TABS = [
@@ -16,6 +17,14 @@ const HIDDEN_PREFIXES = ["/login", "/signup", "/onboarding", "/auth"];
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Tab တစ်ခုချင်းစီကို အသုံးမပြုခင် ကြိုဆွဲထားတယ် (prefetch) —
+  // server ကို နှိုးထားပြီးသား ဖြစ်တော့ tab နှိပ်တဲ့အခါ ပိုမြန်တယ်။
+  useEffect(() => {
+    TABS.forEach((t) => router.prefetch(t.href));
+  }, [router]);
+
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
   return (
