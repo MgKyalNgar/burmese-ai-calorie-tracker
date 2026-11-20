@@ -30,7 +30,7 @@ export async function GET() {
       supabase
         .from("meals")
         .select(
-          "id, meal_type, total_calories, total_protein, total_carbs, total_fat, created_at",
+          "id, meal_type, total_calories, total_protein, total_carbs, total_fat, created_at, meal_items(food_name_mm)",
         )
         .eq("user_id", user.id)
         .eq("logged_date", today)
@@ -90,12 +90,21 @@ export async function GET() {
     carbs,
     fat,
     cups,
-    latestWeightKg: latestWeight ? Number(latestWeight.weight_kg) : null,
+    // Weight log မရှိသေးရင် onboarding weight ကို ပြတယ် —
+    // အရင် "— kg" ပဲ ပြနေလို့။
+    latestWeightKg: latestWeight
+      ? Number(latestWeight.weight_kg)
+      : profile.weight_kg != null
+        ? Number(profile.weight_kg)
+        : null,
     streak,
     meals: list.map((m) => ({
       id: m.id,
       meal_type: m.meal_type,
       total_calories: m.total_calories,
+      name_mm:
+        (m.meal_items as { food_name_mm?: string | null }[] | null)?.[0]
+          ?.food_name_mm ?? null,
     })),
   });
 }

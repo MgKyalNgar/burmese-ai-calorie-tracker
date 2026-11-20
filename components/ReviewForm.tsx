@@ -17,7 +17,7 @@ import {
 // ဂရမ် stepper က အာဟာရ အားလုံးကို live ပြန်တွက်ပေးတယ်။
 export interface ReviewInitial {
   food: AnalyzedFood;
-  source: "photo" | "text" | "search";
+  source: "photo" | "text" | "search" | "manual";
   foodId?: string | null;
   photoFile?: File | null;
   photoPreviewUrl?: string | null;
@@ -33,11 +33,13 @@ export default function ReviewForm({
   const router = useRouter();
   const [nameMm, setNameMm] = useState(initial.food.name_mm);
   const [nameEn, setNameEn] = useState(initial.food.name_en);
-  const [grams, setGrams] = useState(initial.food.grams);
-  const [calories, setCalories] = useState(initial.food.calories);
-  const [protein, setProtein] = useState(initial.food.protein);
-  const [carbs, setCarbs] = useState(initial.food.carbs);
-  const [fat, setFat] = useState(initial.food.fat);
+  const [grams, setGrams] = useState(Math.round(initial.food.grams) || 100);
+  // AI က float အရှည် ပြန်ရင် ဒီမှာတင် 1 decimal လှီးထားတယ်
+  // (ဥပမာ 15.300000190734863) — သိမ်းတဲ့နေရာမှာလည်း round1 သုံးတယ်။
+  const [calories, setCalories] = useState(Math.round(initial.food.calories));
+  const [protein, setProtein] = useState(round1(initial.food.protein));
+  const [carbs, setCarbs] = useState(round1(initial.food.carbs));
+  const [fat, setFat] = useState(round1(initial.food.fat));
   const [mealType, setMealType] = useState<MealType>(defaultMealType());
   // 1 ဂရမ်လျှင် အာဟာရ — stepper က ပြန်တွက်ဖို့၊ လက်နဲ့ ပြင်ရင် rate ကို ပြင်တယ်။
   const [rates, setRates] = useState({
@@ -95,6 +97,9 @@ export default function ReviewForm({
       // ဓာတ်ပုံကို သိမ်းမထားဘူး (user ဆုံးဖြတ်ချက် 20 Nov 2026 — Data Size
       // ကြီးမှာစိုးလို့ စာရင်းပဲ သိမ်းတယ်)။ ဓာတ်ပုံက analyze + Review
       // ပြဖို့အတွက်ပဲ သုံးပြီး သိမ်းတဲ့အခါ မတင်တော့ဘူး။
+      // manual ဆို DB source က 'text' (meals.source check က
+      // photo/text/search ပဲ လက်ခံလို့)၊ AI နဲ့ စစ်ထားတာ မဟုတ်ကြောင်း
+      // is_ai_detected=false နဲ့ ခွဲထားတယ်။
       const { data: meal, error: mealError } = await supabase
         .from("meals")
         .insert({
@@ -102,14 +107,20 @@ export default function ReviewForm({
           logged_date: today,
           meal_type: mealType,
           photo_url: null, // ဓာတ်ပုံ မသိမ်းဘူး — စာရင်းပဲ
-          source: initial.source,
+          source: initial.source === "manual" ? "text" : initial.source,
           total_calories: Math.round(calories),
           total_protein: round1(protein),
           total_carbs: round1(carbs),
           total_fat: round1(fat),
-          ai_confidence: initial.source === "search" ? null : "medium",
+          ai_confidence:
+            initial.source === "search" || initial.source === "manual"
+              ? null
+              : "medium",
           status: "confirmed",
-          ai_result: initial.source === "search" ? null : initial.food,
+          ai_result:
+            initial.source === "search" || initial.source === "manual"
+              ? null
+              : initial.food,
         })
         .select("id")
         .single();
@@ -129,7 +140,8 @@ export default function ReviewForm({
         protein: round1(protein),
         carbs: round1(carbs),
         fat: round1(fat),
-        is_ai_detected: initial.source !== "search",
+        is_ai_detected:
+          initial.source === "photo" || initial.source === "text",
         user_edited: edited,
       });
       if (itemError) {
@@ -142,6 +154,9 @@ export default function ReviewForm({
       // အသစ်ကို ပြန်ဆွဲမယ်)။
       invalidateCachePrefix("today-");
       invalidateCachePrefix("diary-");
+      // Add form ကို အစက ပြန်စထားတယ် — မဟုတ်ရင် Back နှိပ်ပြီး + Add
+      // ပြန်လာရင် Review အဟောင်း ပြန်ပေါ်နေမယ်။
+      onCancel();
       router.push("/diary");
       router.refresh();
     } catch (err) {

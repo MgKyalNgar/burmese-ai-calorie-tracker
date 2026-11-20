@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decryptApiKey } from "@/lib/crypto";
 import { callGeminiParts, GeminiApiError } from "@/lib/gemini";
-import { clampNonNegative, type AnalyzedFood } from "@/lib/meal";
+import { clampNonNegative, round1, type AnalyzedFood } from "@/lib/meal";
 
 // Env var နှစ်ခု လိုတယ် — မရှိရင် မြန်မာလို ရှင်းပြတယ်။
 const MISSING_ENV_ERROR =
@@ -55,9 +55,12 @@ function parseAnalyzedFood(data: unknown): AnalyzedFood {
     name_en: nameEn || nameMm,
     grams: grams > 0 ? Math.round(grams) : 100,
     calories: Math.round(clampNonNegative(d.calories)),
-    protein: clampNonNegative(d.protein),
-    carbs: clampNonNegative(d.carbs),
-    fat: clampNonNegative(d.fat),
+    // macro တွေကို 1 decimal လှီးထားတယ် — AI က float အရှည်
+    // (ဥပမာ 15.300000190734863) ပြန်ရင် Review/Diary မှာ အဲဒီအတိုင်း
+    // ပါသွားမှာစိုးလို့။
+    protein: round1(clampNonNegative(d.protein)),
+    carbs: round1(clampNonNegative(d.carbs)),
+    fat: round1(clampNonNegative(d.fat)),
     note: String(d.note ?? "").trim(),
   };
 }

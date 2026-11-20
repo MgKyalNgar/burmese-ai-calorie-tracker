@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { useCachedData } from "@/lib/useCachedData";
-import { todayYangon, type TodayData } from "@/lib/meal";
+import {
+  formatDateDMY,
+  round1,
+  todayYangon,
+  type TodayData,
+} from "@/lib/meal";
 
 // Home ကို client component အဖြစ် ပြောင်းထားတယ် —
 // ဒေတာကို ဖုန်းထဲ cache ထားတော့ tab ပြန်ကူးတိုင်း server ကို
@@ -58,7 +63,10 @@ function CalorieRing({ eaten, target }: { eaten: number; target: number }) {
 export default function Home() {
   const router = useRouter();
   const key = `today-${todayYangon()}`;
-  const { data, loading, error } = useCachedData<TodayData>(key, fetchToday);
+  const { data, loading, refreshing, error } = useCachedData<TodayData>(
+    key,
+    fetchToday,
+  );
 
   useEffect(() => {
     if (data?.needsLogin) router.push("/login");
@@ -111,8 +119,12 @@ export default function Home() {
         မင်္ဂလာပါ{data.displayName ? `၊ ${data.displayName}` : ""} 👋
       </h1>
       <p className="caption mt-1">
-        ဒီနေ့ {data.date} · 🔥 Streak {streak} ရက်
+        ဒီနေ့ {formatDateDMY(data.date)} · 🔥 Streak {streak} ရက်
       </p>
+      <p className="caption mt-1">
+        Streak ဆိုတာ အစာမှတ်တဲ့ ရက် ဆက်တိုက်ပါ — ရေသောက်/ဝိတ်မှတ်တာ မပါဘူး။
+      </p>
+      {refreshing && <p className="caption mt-1">အသစ်ဆွဲနေတယ်…</p>}
 
       <section className="mt-6 rounded-2xl border p-5 text-center">
         <CalorieRing eaten={eaten} target={target} />
@@ -135,7 +147,7 @@ export default function Home() {
             <div className="flex justify-between">
               <span>{label}</span>
               <span className="caption">
-                {Math.round(value)}
+                {round1(value)}
                 {unit} / {goal}
                 {unit}
               </span>
@@ -184,7 +196,14 @@ export default function Home() {
                 key={m.id}
                 className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5"
               >
-                <span>{MEAL_LABELS[m.meal_type as string] ?? m.meal_type}</span>
+                <div>
+                  <p className="font-semibold">
+                    {m.name_mm ?? MEAL_LABELS[m.meal_type as string] ?? m.meal_type}
+                  </p>
+                  <p className="caption">
+                    {MEAL_LABELS[m.meal_type as string] ?? m.meal_type}
+                  </p>
+                </div>
                 <span className="font-semibold">
                   {Math.round(Number(m.total_calories ?? 0))} kcal
                 </span>

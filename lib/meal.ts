@@ -84,7 +84,12 @@ export interface TodayData {
   cups: number;
   latestWeightKg: number | null;
   streak: number;
-  meals: { id: string; meal_type: string; total_calories: number | null }[];
+  meals: {
+    id: string;
+    meal_type: string;
+    total_calories: number | null;
+    name_mm: string | null;
+  }[];
   needsLogin?: boolean;
   needsOnboarding?: boolean;
 }
@@ -107,7 +112,48 @@ export interface ProgressData {
   needsOnboarding?: boolean;
 }
 
-// ရန်ကုန်စံတော်ချိန်နဲ့ ဒီနေ့ ရက်စွဲ (YYYY-MM-DD)။
+// ရက်စွဲကို မြန်မာ Date-Month-Year ပုံစံနဲ့ ပြတယ် — "20 Nov 2026"။
+// (အရင် en-CA "2026-11-20" / my-MM "11/20/2026" တွေ မှားနေလို့
+// ဒီ helper တစ်ခုတည်းကို နေရာတိုင်းမှာ သုံးတယ်။)
+export function formatDateDMY(dateStr: string): string {
+  const d = new Date(`${dateStr}T12:00:00+06:30`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Yangon",
+  }).format(d);
+}
+
+// "20 Nov" (ရက် + လ အတို) — chart label တွေအတွက်။
+export function formatDayMonth(dateStr: string): string {
+  const d = new Date(`${dateStr}T12:00:00+06:30`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    timeZone: "Asia/Yangon",
+  }).format(d);
+}
+
+// ISO timestamp ကို "20 Nov 2026, 21:14" (24-hour) ပုံစံနဲ့ ပြတယ်။
+export function formatDateTimeDMY(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Yangon",
+  }).format(d);
+}
+
+// ရန်ကုန်စံတော်ချိန်နဲ့ ဒီနေ့ ရက်စွဲ (YYYY-MM-DD) —
+// DB key / cache key အတွက်ပဲ သုံးတယ်၊ မျက်နှာပြင်မှာ မပြဘူး။
 export function todayYangon(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Yangon" });
 }
@@ -123,12 +169,14 @@ export function yangonHour(): number {
   );
 }
 
-// အချိန်ပေါ်မူတည်ပြီး ဘယ်အစာ အမျိုးအစား ဖြစ်နိုင်လဲ — Review မှာ default ရွေးဖို့။
+// အချိန်ပေါ်မူတည်ပြီး ဘယ်အစာ အမျိုးအစား ဖြစ်နိုင်လဲ — Review မှာ default ရွေးဖို့.
+// ညစာ 22:00 အထိ ထားတယ် (အရင် 21:00 နောက်ပိုင်း snack ဖြစ်သွားလို့
+// ည ၉ နာရီကျော် တစ်ပွဲလုံး စားရင်တောင် အဆာပြေ ဖြစ်နေတယ်)။
 export function defaultMealType(): MealType {
   const h = yangonHour();
   if (h < 10) return "breakfast";
   if (h < 15) return "lunch";
-  if (h < 21) return "dinner";
+  if (h < 22) return "dinner";
   return "snack";
 }
 

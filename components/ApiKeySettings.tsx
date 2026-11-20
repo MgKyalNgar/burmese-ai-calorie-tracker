@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDateTimeDMY } from "@/lib/meal";
 
 // API Key Settings — ကိုယ့် Gemini API key ကို server-side encrypted သိမ်းတယ်။
 type Status = {
@@ -103,7 +104,7 @@ export default function ApiKeySettings() {
           {status.last_tested_at && (
             <span className="caption block">
               နောက်ဆုံး စမ်းတာ:{" "}
-              {new Date(status.last_tested_at).toLocaleString("my-MM")} ·{" "}
+              {formatDateTimeDMY(status.last_tested_at)} ·{" "}
               {status.test_status ?? ""}
             </span>
           )}

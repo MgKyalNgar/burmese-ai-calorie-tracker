@@ -7,6 +7,23 @@ function yangonDate(offsetDays = 0): string {
   return d.toLocaleDateString("en-CA", { timeZone: "Asia/Yangon" });
 }
 
+// "YYYY-MM-DD" ရက်စွဲမှာ ရက်ပေါင်းတယ်။
+function addDays(dateStr: string, n: number): string {
+  const d = new Date(`${dateStr}T12:00:00+06:30`);
+  d.setDate(d.getDate() + n);
+  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Yangon" });
+}
+
+// ဒီအပတ် တနင်္လာ (ပြက္ခဒိန်က တနင်္လာစ လို့ weekly chart လည်း
+// တနင်္လာ–တနင်္ဂနွေ သတ်မှတ်တယ် — အရင် နောက် ၇ ရက် rolling ဖြစ်နေလို့
+// ပြက္ခဒိန်နဲ့ မကိုက်ဘူး)။
+function mondayOfThisWeek(): string {
+  const today = yangonDate(0);
+  const dow = new Date(`${today}T12:00:00+06:30`).getDay(); // 0=နွေ
+  const back = (dow + 6) % 7; // တနင်္လာအထိ နောက်ပြန်ရက်
+  return addDays(today, -back);
+}
+
 export async function GET() {
   const supabase = await createClient();
   const {
@@ -20,7 +37,7 @@ export async function GET() {
   }
 
   const today = yangonDate(0);
-  const weekStart = yangonDate(-6);
+  const weekStart = mondayOfThisWeek();
   const sixtyDaysAgo = yangonDate(-59);
 
   const [{ data: profile }, { data: meals }, { data: weights }, { data: water }] =
@@ -62,7 +79,7 @@ export async function GET() {
 
   const target = profile.daily_calorie_target ?? 1800;
 
-  // နောက် ၇ ရက် (ဒီနေ့အထိ) — ရက်တိုင်း စားပြီးသား ကယ်လိုရီ ပေါင်းတယ်။
+  // ဒီအပတ် တနင်္လာ–တနင်္ဂနွေ — ရက်တိုင်း စားပြီးသား ကယ်လိုရီ ပေါင်းတယ်။
   const eatenByDate = new Map<string, number>();
   const loggedSet = new Set<string>();
   for (const m of meals ?? []) {
@@ -71,18 +88,18 @@ export async function GET() {
     loggedSet.add(d);
   }
   const week = Array.from({ length: 7 }, (_, i) => {
-    const date = yangonDate(-6 + i);
+    const date = addDays(weekStart, i);
     return { date, eaten: eatenByDate.get(date) ?? 0, target };
   });
 
-  // ရေသောက်တာ — နောက် ၇ ရက်၊ ရက်တိုင်း ခွက်ပေါင်းတယ်။
+  // ရေသောက်တာ — ဒီအပတ် တနင်္လာ–တနင်္ဂနွေ၊ ရက်တိုင်း ခွက်ပေါင်းတယ်။
   const cupsByDate = new Map<string, number>();
   for (const w of water ?? []) {
     const d = w.logged_date as string;
     cupsByDate.set(d, (cupsByDate.get(d) ?? 0) + Number(w.cups ?? 0));
   }
   const waterWeek = Array.from({ length: 7 }, (_, i) => {
-    const date = yangonDate(-6 + i);
+    const date = addDays(weekStart, i);
     return { date, cups: cupsByDate.get(date) ?? 0 };
   });
 

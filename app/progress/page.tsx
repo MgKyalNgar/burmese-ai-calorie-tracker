@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { invalidateCachePrefix, useCachedData } from "@/lib/useCachedData";
-import { todayYangon, type ProgressData } from "@/lib/meal";
+import {
+  formatDateDMY,
+  formatDayMonth,
+  todayYangon,
+  type ProgressData,
+} from "@/lib/meal";
 
 // Progress ကို client component အဖြစ် ထားတယ် —
 // ဒေတာကို ဖုန်းထဲ cache ထားတော့ tab ပြန်ကူးတိုင်း ချက်ချင်း ပြတယ်။
@@ -120,7 +125,13 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
   const kgs = weights.map((w) => w.kg);
   let min = Math.floor(Math.min(...kgs) - 1);
   let max = Math.ceil(Math.max(...kgs) + 1);
-  if (max - min < 2) max = min + 2;
+  // အကွာအဝေး သေးလွန်းရင် (ဥပမာ 70kg တစ်ခုတည်း → 69–71) y-axis က
+  // ထူးဆန်းနေလို့ အနည်းဆုံး 5kg အကွာ ဖြစ်အောင် ချဲ့တယ်။
+  if (max - min < 5) {
+    const mid = (min + max) / 2;
+    min = Math.floor(mid - 2.5);
+    max = min + 5;
+  }
   const x = (i: number) =>
     weights.length === 1
       ? W / 2
@@ -158,16 +169,26 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
             </text>
           </g>
         ))}
-        <text x={padL} y={H - 6} fontSize="11" fill="#52677f">
-          {weights[0].date.slice(5)}
-        </text>
-        <text x={W - padR} y={H - 6} fontSize="11" fill="#52677f" textAnchor="end">
-          {weights[weights.length - 1].date.slice(5)}
-        </text>
+        {/* x-axis ရက်စွဲ — point တစ်ခုတည်းဆို အလယ်မှာ တစ်ခုပဲ ပြတယ်
+            (အရင် အစနဲ့ အဆုံး နှစ်ခုလုံး "11-20" လို့ ထပ်နေလို့)။ */}
+        {weights.length === 1 ? (
+          <text x={W / 2} y={H - 6} fontSize="11" fill="#52677f" textAnchor="middle">
+            {formatDayMonth(weights[0].date)}
+          </text>
+        ) : (
+          <>
+            <text x={padL} y={H - 6} fontSize="11" fill="#52677f">
+              {formatDayMonth(weights[0].date)}
+            </text>
+            <text x={W - padR} y={H - 6} fontSize="11" fill="#52677f" textAnchor="end">
+              {formatDayMonth(weights[weights.length - 1].date)}
+            </text>
+          </>
+        )}
       </svg>
       <p className="caption mt-1 text-[#52677f]">
-        {weights.length} ခု မှတ်ထားတယ် · {weights[0].date} →{" "}
-        {weights[weights.length - 1].date}
+        {weights.length} ခု မှတ်ထားတယ် · {formatDateDMY(weights[0].date)} →{" "}
+        {formatDateDMY(weights[weights.length - 1].date)}
       </p>
     </div>
   );
@@ -208,8 +229,11 @@ function MonthCalendar({ loggedDays }: { loggedDays: string[] }) {
             <span
               key={day}
               className={`relative flex h-9 items-center justify-center rounded-full ${
+                // ဒီနေ့ကို အစိမ်းအပြည့် ဖြည့်တာမျိုး မဟုတ်ဘဲ ring ပဲ ထားတယ် —
+                // အရင် solid အစိမ်းနဲ့ မှတ်ထားတဲ့နေ့ အစက်ရောင်တူပြီး
+                // ရောနေလို့ (ဒီနေ့ မှတ်ပြီးရင် အစက်ပါ မမြင်ရဘူး)။
                 today === `${year}-${mm}-${String(day).padStart(2, "0")}`
-                  ? "bg-[#16a34a] font-bold text-white"
+                  ? "font-bold text-[#15803d] ring-2 ring-[#16a34a]"
                   : ""
               }`}
             >
@@ -222,7 +246,9 @@ function MonthCalendar({ loggedDays }: { loggedDays: string[] }) {
         )}
       </div>
       <p className="caption mt-2 text-[#52677f]">
-        <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[#16a34a]" />
+        <span className="mr-1 inline-block h-2.5 w-2.5 rounded-full border-2 border-[#16a34a]" />
+        ဒီနေ့{" "}
+        <span className="ml-2 mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[#16a34a]" />
         မှတ်ထားတဲ့ ရက်
       </p>
     </div>
@@ -327,7 +353,11 @@ export default function ProgressPage() {
     );
   }
 
-  const todayCups = data.waterWeek.length > 0 ? data.waterWeek[6].cups : 0;
+  // ဒီနေ့ ရေခွက် — ရက်စွဲနဲ့ တိုက်ရှာတယ် (waterWeek က တနင်္လာ–တနင်္ဂနွေ
+  // ဖြစ်သွားလို့ [6] က ဒီနေ့ မဟုတ်တော့ဘူး)။
+  const todayStr = todayYangon();
+  const todayCups =
+    data.waterWeek.find((d) => d.date === todayStr)?.cups ?? 0;
 
   return (
     <main className="mx-auto max-w-md min-h-screen bg-white px-5 pb-24 pt-8">

@@ -6,7 +6,7 @@ import ReviewForm, { type ReviewInitial } from "@/components/ReviewForm";
 import { createClient } from "@/lib/supabase/client";
 import { scaleNutrients, type AnalyzedFood } from "@/lib/meal";
 
-type Mode = "photo" | "text" | "search";
+type Mode = "photo" | "text" | "search" | "manual";
 
 type FoodRow = {
   id: string;
@@ -46,12 +46,16 @@ export default function AddPage() {
   // Review အဆင့် — AI စစ်ပြီးသား (သို့) Search က ရွေးထားတဲ့ အစားအစာ။
   const [review, setReview] = useState<ReviewInitial | null>(null);
 
-  // Preview URL ကို သန့်ရှင်းရေး လုပ်တယ်။
-  useEffect(() => {
-    return () => {
-      if (photoPreview) URL.revokeObjectURL(photoPreview);
-    };
-  }, [photoPreview]);
+  // Preview URL ကို ပုံလဲမှ (သို့) ဖျက်မှ ပဲ revoke လုပ်တယ် —
+  // အရင် unmount မှာ revoke လုပ်ထားလို့ Back နှိပ်ပြီး ပြန်လာရင်
+  // ပုံက broken ဖြစ်နေတယ် (App Router က ပြန်လာတဲ့ စာမျက်နှာကို
+  // cache ကနေ ပြန်ပြပေမဲ့ URL ကို အရင် ဖျက်ပြီးသား ဖြစ်နေလို့)။
+  function removePhoto() {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setMessage("");
+  }
 
   function pickPhoto(file: File | undefined) {
     if (!file) return;
@@ -189,7 +193,24 @@ export default function AddPage() {
     { value: "photo", label: "📷 ဓာတ်ပုံ" },
     { value: "text", label: "✍️ စာရိုက်" },
     { value: "search", label: "🔍 ရှာဖွေ" },
+    { value: "manual", label: "📝 လက်နဲ့" },
   ];
+
+  // လက်နဲ့ ဖြည့်တဲ့ အစာ — နာမည်/ဂရမ်/ကယ်လိုရီ/macro ကို ကိုယ်တိုင် ဖြည့်တယ်။
+  // (Gemini key မရှိတဲ့ user အသစ်လည်း ဒီနည်းနဲ့ မှတ်လို့ရတယ်။)
+  const manualInitial: ReviewInitial = {
+    food: {
+      name_mm: "",
+      name_en: "",
+      grams: 100,
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      note: "",
+    },
+    source: "manual",
+  };
 
   return (
     <main className="mx-auto min-h-screen max-w-md bg-white px-5 pb-24 pt-8">
@@ -199,7 +220,7 @@ export default function AddPage() {
         <ReviewForm initial={review} onCancel={resetReview} />
       ) : (
         <>
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="mt-4 grid grid-cols-4 gap-2">
             {tabs.map((t) => (
               <button
                 key={t.value}
@@ -208,7 +229,7 @@ export default function AddPage() {
                   setMode(t.value);
                   setMessage("");
                 }}
-                className={`rounded-xl border px-2 py-2.5 ${
+                className={`rounded-xl border px-2 py-2.5 text-sm ${
                   mode === t.value
                     ? "border-[#16a34a] bg-[#16a34a] font-semibold text-white"
                     : "text-[#334155]"
@@ -219,6 +240,19 @@ export default function AddPage() {
             ))}
           </div>
 
+          {mode === "manual" && (
+            <div className="mt-4">
+              <p className="caption">
+                AI မသုံးဘဲ ကိုယ်တိုင် ဖြည့်မယ် — နာမည်၊ ဂရမ်၊ ကယ်လိုရီနဲ့
+                macro ကို ရိုက်ထည့်ပြီး သိမ်းလို့ရတယ်။
+              </p>
+              <ReviewForm
+                initial={manualInitial}
+                onCancel={() => setMode("photo")}
+              />
+            </div>
+          )}
+
           {mode === "photo" && (
             <section className="mt-4 rounded-2xl border p-5">
               <h2>ဓာတ်ပုံနဲ့ ထည့်မယ်</h2>
@@ -226,11 +260,22 @@ export default function AddPage() {
                 ပုံရိုက်လိုက် — AI က အစားအစာကို ခွဲပြီး ကယ်လိုရီ ခန့်မှန်းပေးမယ်။
               </p>
               {photoPreview ? (
-                <img
-                  src={photoPreview}
-                  alt="ရွေးထားတဲ့ ဓာတ်ပုံ"
-                  className="mt-3 h-56 w-full rounded-xl object-cover"
-                />
+                <div className="relative mt-3">
+                  <img
+                    src={photoPreview}
+                    alt="ရွေးထားတဲ့ ဓာတ်ပုံ"
+                    className="h-56 w-full rounded-xl object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    disabled={busy}
+                    aria-label="ဓာတ်ပုံ ဖျက်မယ်"
+                    className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-lg font-bold text-white disabled:opacity-50"
+                  >
+                    ✕
+                  </button>
+                </div>
               ) : (
                 <div className="mt-3 flex h-40 items-center justify-center rounded-xl bg-slate-100 text-5xl">
                   🍜
