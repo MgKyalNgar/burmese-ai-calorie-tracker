@@ -48,7 +48,6 @@ export default function ReviewForm({
   const [edited, setEdited] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [saved, setSaved] = useState(false);
 
   function changeGrams(next: number) {
     const g = Math.min(2000, Math.max(10, Math.round(next)));
@@ -92,37 +91,16 @@ export default function ReviewForm({
       }
       const today = todayYangon();
 
-      // 1) ဓာတ်ပုံ ရှိရင် meal-photos bucket (private) ထဲ တင်တယ်။
-      let photoPath: string | null = null;
-      let photoFailed = false;
-      if (initial.photoFile) {
-        const ext =
-          initial.photoFile.type === "image/png"
-            ? "png"
-            : initial.photoFile.type === "image/webp"
-              ? "webp"
-              : "jpg";
-        photoPath = `${user.id}/${today}/${crypto.randomUUID()}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from("meal-photos")
-          .upload(photoPath, initial.photoFile, {
-            contentType: initial.photoFile.type || "image/jpeg",
-            upsert: false,
-          });
-        if (uploadError) {
-          photoPath = null;
-          photoFailed = true;
-        }
-      }
-
-      // 2) meals row သိမ်းတယ်။
+      // ဓာတ်ပုံကို သိမ်းမထားဘူး (user ဆုံးဖြတ်ချက် 20 Nov 2026 — Data Size
+      // ကြီးမှာစိုးလို့ စာရင်းပဲ သိမ်းတယ်)။ ဓာတ်ပုံက analyze + Review
+      // ပြဖို့အတွက်ပဲ သုံးပြီး သိမ်းတဲ့အခါ မတင်တော့ဘူး။
       const { data: meal, error: mealError } = await supabase
         .from("meals")
         .insert({
           user_id: user.id,
           logged_date: today,
           meal_type: mealType,
-          photo_url: photoPath,
+          photo_url: null, // ဓာတ်ပုံ မသိမ်းဘူး — စာရင်းပဲ
           source: initial.source,
           total_calories: Math.round(calories),
           total_protein: round1(protein),
@@ -159,14 +137,6 @@ export default function ReviewForm({
         throw new Error("သိမ်းလို့ မရပါ — ပြန်စမ်းပေးပါ။");
       }
 
-      if (photoFailed) {
-        // မှတ်တမ်းသိမ်းပြီးသား — ဓာတ်ပုံပဲ တင်မရတာ၊ user ကို ပြပေးတယ်။
-        setSaved(true);
-        setMessage(
-          "မှတ်တမ်း သိမ်းပြီးပြီ ✅ ဒါပေမဲ့ ဓာတ်ပုံ တင်လို့ မရပါ — Supabase Storage policy စစ်ပေးပါ။",
-        );
-        return;
-      }
       router.push("/diary");
       router.refresh();
     } catch (err) {
@@ -176,22 +146,6 @@ export default function ReviewForm({
     } finally {
       setBusy(false);
     }
-  }
-
-  if (saved) {
-    return (
-      <section className="mt-4 rounded-2xl border p-5 text-center">
-        <p className="font-semibold text-[#15803d]">မှတ်တမ်း သိမ်းပြီးပြီ ✅</p>
-        <p className="mt-2 text-[#52677f]">{message}</p>
-        <button
-          type="button"
-          onClick={() => router.push("/diary")}
-          className="mt-4 rounded-xl bg-[#16a34a] px-5 py-2.5 font-semibold text-white"
-        >
-          Diary ကို သွားမယ်
-        </button>
-      </section>
-    );
   }
 
   return (
