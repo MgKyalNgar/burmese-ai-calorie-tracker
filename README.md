@@ -10,7 +10,7 @@
 ## Status
 
 - [x] Phase 0 — Scaffold (Next.js + Supabase client + schema SQL + manifest)
-- [ ] Phase 1 — Auth + Onboarding + API Key Settings + Home
+- [x] Phase 1 — Auth + Onboarding + API Key Settings + Home (19 Nov 2026)
 - [ ] Phase 2 — Photo Analyze (`/api/analyze`) + AI Review/Edit + Diary
 - [ ] Phase 3 — Progress + Water/Weight + Myanmar food seed (50–100)
 - [ ] Phase 4 — Reminder (Web Push) + PWA
