@@ -5,13 +5,29 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
+  setCacheData,
+  invalidateCachePrefix,
+  useCachedData,
+} from "@/lib/useCachedData";
+import {
   MEAL_LABELS,
   MEAL_TYPES,
   round1,
+  todayYangon,
+  type DiaryData,
   type MealItemRow,
   type MealRow,
   type MealType,
 } from "@/lib/meal";
+
+// /api/diary ကနေ ဒီနေ့ မှတ်တမ်းတွေ ဆွဲတယ် (module-level stable fetcher)။
+async function fetchDiary(): Promise<DiaryData> {
+  const res = await fetch("/api/diary");
+  const data = await res.json();
+  if (res.status === 401) return { needsLogin: true } as DiaryData;
+  if (!res.ok) throw new Error(data?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
+  return data as DiaryData;
+}
 
 // Private bucket ထဲက ဓာတ်ပုံကို signed URL နဲ့ ပြတယ်။
 function MealPhoto({ path }: { path: string }) {
@@ -225,40 +241,49 @@ function sum(items: MealItemRow[], key: "calories" | "protein" | "carbs" | "fat"
   return items.reduce((s, i) => s + Number(i[key] ?? 0), 0);
 }
 
-export default function DiaryClient({
-  initialMeals,
-  date,
-}: {
-  initialMeals: MealRow[];
-  date: string;
-}) {
+export default function DiaryClient() {
   const router = useRouter();
-  const [meals, setMeals] = useState<MealRow[]>(initialMeals);
+  const date = todayYangon();
+  const key = `diary-${date}`;
+  // ဒေတာကို cache နဲ့ ဆွဲတယ် — tab ပြန်ကူးတိုင်း မှတ်ထားတာကို ချက်ချင်း ပြတယ်။
+  const { data, loading, error } = useCachedData<DiaryData>(key, fetchDiary);
+  const [meals, setMeals] = useState<MealRow[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
-  // ပြင်ပြီးသား item ကို local state + parent meal totals မှာ ပြင်တယ်။
+  // ဆွဲလို့ရတဲ့ ဒေတာကို local state ထဲ ထည့်တယ်။
+  useEffect(() => {
+    if (data?.meals) setMeals(data.meals);
+  }, [data]);
+
+  useEffect(() => {
+    if (data?.needsLogin) router.push("/login");
+    else if (data?.needsOnboarding) router.push("/onboarding");
+  }, [data, router]);
+
+  // ပြင်ပြီးသား item ကို local state + parent meal totals + cache မှာ ပြင်တယ်။
   function applyItemUpdate(updated: MealItemRow) {
     const meal = meals.find((m) => m.id === updated.meal_id);
     const newItems = (meal?.meal_items ?? []).map((i) =>
       i.id === updated.id ? updated : i,
     );
-    setMeals((prev) =>
-      prev.map((m) =>
-        m.id === updated.meal_id
-          ? {
-              ...m,
-              meal_items: newItems,
-              total_calories: Math.round(sum(newItems, "calories")),
-              total_protein: round1(sum(newItems, "protein")),
-              total_carbs: round1(sum(newItems, "carbs")),
-              total_fat: round1(sum(newItems, "fat")),
-            }
-          : m,
-      ),
+    const newMeals = meals.map((m) =>
+      m.id === updated.meal_id
+        ? {
+            ...m,
+            meal_items: newItems,
+            total_calories: Math.round(sum(newItems, "calories")),
+            total_protein: round1(sum(newItems, "protein")),
+            total_carbs: round1(sum(newItems, "carbs")),
+            total_fat: round1(sum(newItems, "fat")),
+          }
+        : m,
     );
+    setMeals(newMeals);
+    setCacheData(key, { date, meals: newMeals });
+    invalidateCachePrefix("today-");
     setEditingId(null);
     // Parent meal totals ကို DB မှာလည်း ပြင်တယ်။
     void syncMealTotals(updated.meal_id, newItems);
@@ -295,22 +320,26 @@ export default function DiaryClient({
       if (meal && remaining.length === 0) {
         // နောက်ဆုံး item ကို ဖျက်ရင် meal အလွတ်ပါ ဖျက်တယ်။
         await supabase.from("meals").delete().eq("id", meal.id);
-        setMeals((prev) => prev.filter((m) => m.id !== meal.id));
+        const newMeals = meals.filter((m) => m.id !== meal.id);
+        setMeals(newMeals);
+        setCacheData(key, { date, meals: newMeals });
+        invalidateCachePrefix("today-");
       } else {
-        setMeals((prev) =>
-          prev.map((m) =>
-            m.id === item.meal_id
-              ? {
-                  ...m,
-                  meal_items: remaining,
-                  total_calories: Math.round(sum(remaining, "calories")),
-                  total_protein: round1(sum(remaining, "protein")),
-                  total_carbs: round1(sum(remaining, "carbs")),
-                  total_fat: round1(sum(remaining, "fat")),
-                }
-              : m,
-          ),
+        const newMeals = meals.map((m) =>
+          m.id === item.meal_id
+            ? {
+                ...m,
+                meal_items: remaining,
+                total_calories: Math.round(sum(remaining, "calories")),
+                total_protein: round1(sum(remaining, "protein")),
+                total_carbs: round1(sum(remaining, "carbs")),
+                total_fat: round1(sum(remaining, "fat")),
+              }
+            : m,
         );
+        setMeals(newMeals);
+        setCacheData(key, { date, meals: newMeals });
+        invalidateCachePrefix("today-");
         void syncMealTotals(item.meal_id, remaining);
       }
       setDeletingId(null);
@@ -374,8 +403,8 @@ export default function DiaryClient({
         await supabase.from("meals").delete().eq("id", newMeal.id);
         throw new Error("ထပ်ထည့်လို့ မရပါ။");
       }
-      setMeals((prev) => [
-        ...prev,
+      const newMeals = [
+        ...meals,
         {
           id: newMeal.id,
           meal_type: meal.meal_type,
@@ -388,7 +417,10 @@ export default function DiaryClient({
           created_at: new Date().toISOString(),
           meal_items: [newItem as MealItemRow],
         },
-      ]);
+      ];
+      setMeals(newMeals);
+      setCacheData(key, { date, meals: newMeals });
+      invalidateCachePrefix("today-");
       router.refresh();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "ထပ်ထည့်လို့ မရပါ။");
@@ -403,6 +435,19 @@ export default function DiaryClient({
   const dayCarb = round1(sum(allItems, "carbs"));
   const dayFat = round1(sum(allItems, "fat"));
 
+  // ပထမအကြိမ် ဒေတာ မရသေးရင် စောင့်နေတဲ့ ပုံစံ ပြတယ်။
+  if (loading && meals.length === 0) {
+    return (
+      <div className="mt-6 flex flex-col items-center justify-center py-10">
+        <div
+          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#16a34a]"
+          aria-hidden
+        />
+        <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <section className="mt-4 rounded-2xl border p-5 text-center">
@@ -415,6 +460,9 @@ export default function DiaryClient({
 
       {message && (
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{message}</p>
+      )}
+      {error && meals.length === 0 && (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
       )}
 
       {meals.length === 0 ? (

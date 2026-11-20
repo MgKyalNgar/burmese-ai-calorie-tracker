@@ -1,15 +1,21 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
+import { useCachedData } from "@/lib/useCachedData";
+import { todayYangon, type TodayData } from "@/lib/meal";
 
-// Home က login session (cookies) ကို ဖတ်လို့ prerender လုပ်လို့ မရဘူး —
-// blocking route အဖြစ် ခွင့်ပြုတယ် (Next 16 Cache Components)။
-export const instant = false;
-
-// ရန်ကုန်စံတော်ချိန်နဲ့ ဒီနေ့ ရက်စွဲ (YYYY-MM-DD)။
-function todayYangon(): string {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Yangon" });
+// Home ကို client component အဖြစ် ပြောင်းထားတယ် —
+// ဒေတာကို ဖုန်းထဲ cache ထားတော့ tab ပြန်ကူးတိုင်း server ကို
+// ပြန်စောင့်စရာ မလိုဘူး၊ မှတ်ထားတာကို ချက်ချင်း ပြတယ်။
+async function fetchToday(): Promise<TodayData> {
+  const res = await fetch("/api/today");
+  const data = await res.json();
+  if (res.status === 401) return { needsLogin: true } as TodayData;
+  if (!res.ok) throw new Error(data?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
+  return data as TodayData;
 }
 
 const MEAL_LABELS: Record<string, string> = {
@@ -49,70 +55,48 @@ function CalorieRing({ eaten, target }: { eaten: number; target: number }) {
   );
 }
 
-export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+export default function Home() {
+  const router = useRouter();
+  const key = `today-${todayYangon()}`;
+  const { data, loading, error } = useCachedData<TodayData>(key, fetchToday);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
-  if (!profile) redirect("/onboarding");
+  useEffect(() => {
+    if (data?.needsLogin) router.push("/login");
+    else if (data?.needsOnboarding) router.push("/onboarding");
+  }, [data, router]);
 
-  const today = todayYangon();
-  const target = profile.daily_calorie_target ?? 1800;
-
-  // ဒီနေ့ စားပြီးသား meals + ရေ + ဝိတ် + streak ကို တစ်ပြိုင်တည်း ဆွဲတယ် —
-  // တစ်ခုချင်း စောင့်နေရင် tab ကူးတိုင်း စက္ကန့်ပိုင်း ကြာလို့။
-  const [{ data: meals }, { data: water }, { data: latestWeight }, { data: mealDays }] =
-    await Promise.all([
-      supabase
-        .from("meals")
-        .select("id, meal_type, total_calories, total_protein, total_carbs, total_fat, created_at")
-        .eq("user_id", user.id)
-        .eq("logged_date", today)
-        .eq("status", "confirmed")
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("water_logs")
-        .select("cups")
-        .eq("user_id", user.id)
-        .eq("logged_date", today),
-      supabase
-        .from("weight_logs")
-        .select("weight_kg, logged_date")
-        .eq("user_id", user.id)
-        .order("logged_date", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("meals")
-        .select("logged_date")
-        .eq("user_id", user.id)
-        .eq("status", "confirmed")
-        .order("logged_date", { ascending: false })
-        .limit(60),
-    ]);
-
-  const eaten = (meals ?? []).reduce((s, m) => s + Number(m.total_calories ?? 0), 0);
-  const protein = (meals ?? []).reduce((s, m) => s + Number(m.total_protein ?? 0), 0);
-  const carbs = (meals ?? []).reduce((s, m) => s + Number(m.total_carbs ?? 0), 0);
-  const fat = (meals ?? []).reduce((s, m) => s + Number(m.total_fat ?? 0), 0);
-
-  const cups = (water ?? []).reduce((s, w) => s + Number(w.cups ?? 0), 0);
-  const daySet = new Set((mealDays ?? []).map((m) => m.logged_date as string));
-  let streak = 0;
-  const cursor = new Date(`${today}T12:00:00+06:30`);
-  // ဒီနေ့ မမှတ်ရသေးရင် မနေ့က စပြီး ရေတွက်တယ်။
-  if (!daySet.has(today)) cursor.setDate(cursor.getDate() - 1);
-  while (daySet.has(cursor.toLocaleDateString("en-CA", { timeZone: "Asia/Yangon" }))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
+  // ပထမအကြိမ် ဒေတာ မရသေးရင် စောင့်နေတဲ့ ပုံစံ ပြတယ်။
+  if (loading || !data || data.needsLogin || data.needsOnboarding) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center bg-white px-5 pb-24">
+        <div
+          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#16a34a]"
+          aria-hidden
+        />
+        <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
+        <BottomNav />
+      </main>
+    );
   }
+
+  if (error) {
+    return (
+      <main className="mx-auto min-h-screen max-w-md bg-white px-5 pb-24 pt-8">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 rounded-xl bg-[#16a34a] px-5 py-2.5 font-semibold text-white"
+        >
+          ပြန်စမ်းမယ်
+        </button>
+        <BottomNav />
+      </main>
+    );
+  }
+
+  const { target, eaten, protein, carbs, fat, cups, latestWeightKg, streak } =
+    data;
 
   // Macro target (ခန့်မှန်း) — protein 20%, carbs 50%, fat 30%။
   const macroTargets = {
@@ -124,14 +108,17 @@ export default async function Home() {
   return (
     <main className="mx-auto max-w-md min-h-screen bg-white px-5 pb-24 pt-8">
       <h1>
-        မင်္ဂလာပါ{profile.display_name ? `၊ ${profile.display_name}` : ""} 👋
+        မင်္ဂလာပါ{data.displayName ? `၊ ${data.displayName}` : ""} 👋
       </h1>
-      <p className="caption mt-1">ဒီနေ့ {today} · 🔥 Streak {streak} ရက်</p>
+      <p className="caption mt-1">
+        ဒီနေ့ {data.date} · 🔥 Streak {streak} ရက်
+      </p>
 
       <section className="mt-6 rounded-2xl border p-5 text-center">
         <CalorieRing eaten={eaten} target={target} />
         <p className="caption mt-2">
-          စားပြီး {eaten.toLocaleString()} kcal · Target {target.toLocaleString()} kcal
+          စားပြီး {eaten.toLocaleString()} kcal · Target{" "}
+          {target.toLocaleString()} kcal
         </p>
       </section>
 
@@ -172,7 +159,7 @@ export default async function Home() {
         <div className="flex-1 rounded-2xl border p-4 text-center">
           <p className="caption">⚖️ ဝိတ်</p>
           <p className="hero-num text-[#15803d]">
-            {latestWeight ? Number(latestWeight.weight_kg) : "—"}
+            {latestWeightKg !== null ? latestWeightKg : "—"}
           </p>
           <p className="caption">kg</p>
         </div>
@@ -180,7 +167,7 @@ export default async function Home() {
 
       <section className="mt-4 rounded-2xl border p-5">
         <h2>ဒီနေ့ စားပြီးသား</h2>
-        {(meals ?? []).length === 0 ? (
+        {data.meals.length === 0 ? (
           <div className="mt-3 text-center">
             <p className="text-[#52677f]">ဒီနေ့ ဘာမှ မမှတ်ရသေးဘူး။</p>
             <Link
@@ -192,7 +179,7 @@ export default async function Home() {
           </div>
         ) : (
           <ul className="mt-3 space-y-2">
-            {(meals ?? []).map((m) => (
+            {data.meals.map((m) => (
               <li
                 key={m.id}
                 className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5"

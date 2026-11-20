@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { invalidateCachePrefix } from "@/lib/useCachedData";
 import {
   MEAL_TYPES,
   defaultMealType,
@@ -137,6 +138,10 @@ export default function ReviewForm({
         throw new Error("သိမ်းလို့ မရပါ — ပြန်စမ်းပေးပါ။");
       }
 
+      // သိမ်းပြီးပြီ — Home/Diary cache ကို ဖျက်တယ် (နောက်တစ်ခါ ဖွင့်ရင်
+      // အသစ်ကို ပြန်ဆွဲမယ်)။
+      invalidateCachePrefix("today-");
+      invalidateCachePrefix("diary-");
       router.push("/diary");
       router.refresh();
     } catch (err) {

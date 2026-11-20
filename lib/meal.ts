@@ -57,6 +57,31 @@ export interface MealRow {
   meal_items: MealItemRow[];
 }
 
+// /api/today က ပြန်တဲ့ Home ဒေတာ ပုံစံ။
+export interface TodayData {
+  date: string;
+  displayName: string;
+  target: number;
+  eaten: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  cups: number;
+  latestWeightKg: number | null;
+  streak: number;
+  meals: { id: string; meal_type: string; total_calories: number | null }[];
+  needsLogin?: boolean;
+  needsOnboarding?: boolean;
+}
+
+// /api/diary က ပြန်တဲ့ Diary ဒေတာ ပုံစံ။
+export interface DiaryData {
+  date: string;
+  meals: MealRow[];
+  needsLogin?: boolean;
+  needsOnboarding?: boolean;
+}
+
 // ရန်ကုန်စံတော်ချိန်နဲ့ ဒီနေ့ ရက်စွဲ (YYYY-MM-DD)။
 export function todayYangon(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Yangon" });
