@@ -16,13 +16,28 @@ const BAD_KEY_ERROR =
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 // AI ကို strict JSON ပဲ ပြန်ခိုင်းတဲ့ prompt — မြန်မာ + အင်္ဂလိပ် နာမည်ပါ။
+// (ပြင်ထားချက် 21 Nov 2026, အဆင့် ၁: မြန်မာအစာ သိအောင် + garnish ခွဲခြားတာ
+// + ကယ်လိုရီကို macro ကနေ တွက်ခိုင်းတာ — ဓာတ်ပုံက မုန့်ဟင်းခါးကို
+// "ငှက်ပျောသီးဖီးကြက်သားခေါက်ဆွဲ" လို့ မှားသိတာ၊ macro ပေါင်းနဲ့ ကယ်လိုရီ
+// မကိုက်တာ (427 vs 380) တွေကို ပြင်တာ။)
 const ANALYZE_PROMPT = `You are a nutrition assistant for Myanmar food. Analyze the food in the photo and/or the user's text description. Identify the main dish and estimate a typical single serving.
 
 Respond with ONLY a JSON object, no markdown fences, no other text:
 {"name_mm": "<food name in Myanmar language>", "name_en": "<food name in English>", "grams": <estimated portion in grams, number>, "calories": <estimated kcal, number>, "protein": <protein grams, number>, "carbs": <carbohydrate grams, number>, "fat": <fat grams, number>, "note": "<one short sentence in Myanmar about the dish>"}
 
+Common Myanmar dishes — recognize them by their distinctive look:
+- မုန့်ဟင်းခါး (Mohinga): FISH broth (never chicken), rice noodles, banana stem slices, bean sprouts, boiled egg, fish cake. A bowl of noodles in light brown fish broth with banana stem on top IS mohinga — never call it banana noodle soup.
+- ရှမ်းခေါက်ဆွဲ (Shan Noodles): rice noodles with chicken or pork, pickled mustard greens, crushed peanuts, garlic oil.
+- အုန်းနို့ခေါက်ဆွဲ (Ohn No Khao Swe): coconut-milk broth, chicken, wheat egg noodles.
+- လက်ဖက်သုပ် (Tea Leaf Salad): fermented tea leaves mixed with peanuts, sesame seeds, tomato, fried garlic, cabbage.
+- နန်းကြီးသုပ် (Nangyi Salad): thick round rice noodles with chicken curry sauce, bean sprouts, lime.
+- ကြာဇံဟင်းခါး (Glass Noodle Soup): clear broth with glass noodles, chicken, mushroom.
+
 Rules:
 - All numbers must be 0 or greater.
+- Garnish is NOT the main ingredient: banana stem slices, bean sprouts, coriander, spring onion, lime, chilli flakes sprinkled on top do not make the dish a banana or bean-sprout dish. Name the dish by its broth and noodles, not by its garnish.
+- Estimate macros first, then compute calories from them: calories MUST equal protein x 4 + carbs x 4 + fat x 9 (rounded to a whole number). Never give a calorie number that disagrees with your own macros.
+- Estimate a typical single serving of the same dish the same way every time (a noodle soup bowl is usually about 400-500 g), so photo and text results agree.
 - If several foods are visible, pick the main one and mention the others in the note.
 - If you cannot identify the food at all, use name_mm "မသိရသေးတဲ့ အစားအစာ", name_en "Unknown food", grams 100, and your best rough estimate, and say so in the note.`;
 
@@ -50,17 +65,28 @@ function parseAnalyzedFood(data: unknown): AnalyzedFood {
     throw new Error("အစားအစာကို ခွဲခြားလို့ မရပါ။");
   }
   const grams = clampNonNegative(d.grams);
+  // macro တွေကို 1 decimal လှီးထားတယ် — AI က float အရှည်
+  // (ဥပမာ 15.300000190734863) ပြန်ရင် Review/Diary မှာ အဲဒီအတိုင်း
+  // ပါသွားမှာစိုးလို့။
+  const protein = round1(clampNonNegative(d.protein));
+  const carbs = round1(clampNonNegative(d.carbs));
+  const fat = round1(clampNonNegative(d.fat));
+  // ကယ်လိုရီကို macro ကနေ ပြန်တွက်တယ် (Atwater: P×4 + C×4 + F×9) —
+  // AI ပြန်တဲ့ ကယ်လိုရီနဲ့ macro ပေါင်း မကိုက်တာကို ပြင်တာ
+  // (ဥပမာ ဓာတ်ပုံ 380 kcal vs macro ပေါင်း 427 kcal)။
+  // Prompt မှာလည်း ဒီအတိုင်း တွက်ခိုင်းထားတယ် — ဒါက safety net။
+  // macro အားလုံး 0 ဆိုရင်တော့ AI ရဲ့ ကယ်လိုရီကို အတိုင်း ထားတယ်။
+  const fromMacros = Math.round(protein * 4 + carbs * 4 + fat * 9);
+  const calories =
+    fromMacros > 0 ? fromMacros : Math.round(clampNonNegative(d.calories));
   return {
     name_mm: nameMm || nameEn,
     name_en: nameEn || nameMm,
     grams: grams > 0 ? Math.round(grams) : 100,
-    calories: Math.round(clampNonNegative(d.calories)),
-    // macro တွေကို 1 decimal လှီးထားတယ် — AI က float အရှည်
-    // (ဥပမာ 15.300000190734863) ပြန်ရင် Review/Diary မှာ အဲဒီအတိုင်း
-    // ပါသွားမှာစိုးလို့။
-    protein: round1(clampNonNegative(d.protein)),
-    carbs: round1(clampNonNegative(d.carbs)),
-    fat: round1(clampNonNegative(d.fat)),
+    calories,
+    protein,
+    carbs,
+    fat,
     note: String(d.note ?? "").trim(),
   };
 }
