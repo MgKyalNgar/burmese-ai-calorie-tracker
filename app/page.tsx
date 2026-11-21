@@ -118,6 +118,8 @@ export default function Home() {
 
   const { target, eaten, protein, carbs, fat, cups, latestWeightKg, streak } =
     data;
+  // ရေ ပန်းတိုင် — cache အဟောင်းမှာ မပါရင် default 8။
+  const waterGoal = data.waterGoal ?? 8;
 
   // Macro target (ခန့်မှန်း) — protein 20%, carbs 50%, fat 30%။
   const macroTargets = {
@@ -178,7 +180,10 @@ export default function Home() {
       <section className="mt-4 flex gap-3">
         <div className="flex-1 rounded-2xl border p-4 text-center">
           <p className="caption">💧 ရေ</p>
-          <p className="hero-num text-[#15803d]">{cups}</p>
+          <p className="hero-num text-[#15803d]">
+            {cups}
+            <span className="text-base text-[#52677f]">/{waterGoal}</span>
+          </p>
           <p className="caption">ခွက်</p>
         </div>
         <div className="flex-1 rounded-2xl border p-4 text-center">

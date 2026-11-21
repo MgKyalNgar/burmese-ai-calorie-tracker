@@ -270,6 +270,15 @@ export default function ProgressPage() {
   const [weightMsg, setWeightMsg] = useState("");
   const [waterBusy, setWaterBusy] = useState(false);
   const [waterMsg, setWaterMsg] = useState("");
+  // ရေမှတ်မယ့် ရက် — ဒီနေ့က စတယ်၊ အတိတ်နေ့လည်း ရွေးလို့ရတယ်။
+  const [waterDate, setWaterDate] = useState(todayYangon());
+  // ရေ ပန်းတိုင် — server က ရတာနဲ့ sync လုပ်တယ် (default 8)။
+  const [waterGoal, setWaterGoal] = useState(8);
+  const [goalBusy, setGoalBusy] = useState(false);
+
+  useEffect(() => {
+    if (data?.waterGoal) setWaterGoal(data.waterGoal);
+  }, [data]);
 
   useEffect(() => {
     if (data?.needsLogin) router.push("/login");
@@ -310,17 +319,68 @@ export default function ProgressPage() {
       const res = await fetch("/api/water", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cups: 1 }),
+        body: JSON.stringify({ cups: 1, logged_date: waterDate }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d?.error ?? "မှတ်လို့ မရပါ။");
-      setWaterMsg(`ရေမှတ်ပြီးပြီ ✅ ဒီနေ့ စုစုပေါင်း ${d.cupsToday} ခွက်`);
+      const label =
+        waterDate === todayYangon() ? "ဒီနေ့" : formatDateDMY(waterDate);
+      setWaterMsg(`ရေမှတ်ပြီးပြီ ✅ ${label} စုစုပေါင်း ${d.cupsToday} ခွက်`);
       invalidateCachePrefix("today-");
       setTick((t) => t + 1);
     } catch (err) {
       setWaterMsg(err instanceof Error ? err.message : "မှတ်လို့ မရပါ။");
     } finally {
       setWaterBusy(false);
+    }
+  }
+
+  // မှားနှိပ်တာ ပြန်ဖျက်တယ် — ရွေးထားတဲ့ ရက်ရဲ့ နောက်ဆုံး မှတ်တမ်းကနေ ၁ ခွက် လျှော့တယ်။
+  async function handleUndoWater() {
+    setWaterBusy(true);
+    setWaterMsg("");
+    try {
+      const res = await fetch("/api/water", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "undo", logged_date: waterDate }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d?.error ?? "ဖျက်လို့ မရပါ။");
+      const label =
+        waterDate === todayYangon() ? "ဒီနေ့" : formatDateDMY(waterDate);
+      setWaterMsg(`၁ ခွက် ပြန်ဖျက်ပြီးပြီ ✅ ${label} စုစုပေါင်း ${d.cupsToday} ခွက်`);
+      invalidateCachePrefix("today-");
+      setTick((t) => t + 1);
+    } catch (err) {
+      setWaterMsg(err instanceof Error ? err.message : "ဖျက်လို့ မရပါ။");
+    } finally {
+      setWaterBusy(false);
+    }
+  }
+
+  // ပန်းတိုင် − / + ခလုတ် — နှိပ်တာနဲ့ server မှာ သိမ်းတယ်။
+  async function handleChangeGoal(delta: number) {
+    const next = Math.min(20, Math.max(1, waterGoal + delta));
+    if (next === waterGoal) return;
+    setGoalBusy(true);
+    setWaterMsg("");
+    try {
+      const res = await fetch("/api/water-goal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goal: next }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d?.error ?? "သိမ်းလို့ မရပါ။");
+      setWaterGoal(d.goal);
+      setWaterMsg(`ပန်းတိုင် ${d.goal} ခွက် ထားပြီးပြီ ✅`);
+      invalidateCachePrefix("today-");
+      setTick((t) => t + 1);
+    } catch (err) {
+      setWaterMsg(err instanceof Error ? err.message : "သိမ်းလို့ မရပါ။");
+    } finally {
+      setGoalBusy(false);
     }
   }
 
@@ -449,15 +509,71 @@ export default function ProgressPage() {
             </div>
           ))}
         </div>
-        <p className="caption mt-3">ဒီနေ့ စုစုပေါင်း {todayCups} ခွက် သောက်ပြီးပြီ</p>
-        <button
-          type="button"
-          onClick={handleAddWater}
-          disabled={waterBusy}
-          className="mt-3 w-full rounded-xl border border-sky-500 py-2.5 font-semibold text-sky-600 disabled:opacity-50"
-        >
-          {waterBusy ? "မှတ်နေတယ်…" : "+1 ခွက် 💧"}
-        </button>
+
+        {/* ပန်းတိုင် + ဒီနေ့ အခြေအနေ */}
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <p>
+            ဒီနေ့ {todayCups} / {waterGoal} ခွက်
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="caption">ပန်းတိုင်</span>
+            <button
+              type="button"
+              onClick={() => handleChangeGoal(-1)}
+              disabled={goalBusy || waterGoal <= 1}
+              aria-label="ပန်းတိုင် လျှော့မယ်"
+              className="h-9 w-9 rounded-xl border bg-white font-bold disabled:opacity-30"
+            >
+              −
+            </button>
+            <span className="w-12 text-center font-semibold">{waterGoal} ခွက်</span>
+            <button
+              type="button"
+              onClick={() => handleChangeGoal(1)}
+              disabled={goalBusy || waterGoal >= 20}
+              aria-label="ပန်းတိုင် တိုးမယ်"
+              className="h-9 w-9 rounded-xl border bg-white font-bold disabled:opacity-30"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+          <div
+            className="h-full rounded-full bg-sky-500"
+            style={{ width: `${waterGoal > 0 ? Math.min(100, (todayCups / waterGoal) * 100) : 0}%` }}
+          />
+        </div>
+
+        {/* ရက်ရွေး + မှတ်/ဖျက် */}
+        <label className="mt-4 block">
+          <span className="caption">မှတ်မယ့် ရက် (အတိတ်နေ့လည်း ရတယ်)</span>
+          <input
+            type="date"
+            value={waterDate}
+            max={todayYangon()}
+            onChange={(e) => setWaterDate(e.target.value || todayYangon())}
+            className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
+          />
+        </label>
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            onClick={handleAddWater}
+            disabled={waterBusy}
+            className="flex-1 rounded-xl border border-sky-500 py-2.5 font-semibold text-sky-600 disabled:opacity-50"
+          >
+            {waterBusy ? "မှတ်နေတယ်…" : "+1 ခွက် 💧"}
+          </button>
+          <button
+            type="button"
+            onClick={handleUndoWater}
+            disabled={waterBusy}
+            className="flex-1 rounded-xl border py-2.5 font-semibold text-[#334155] disabled:opacity-50"
+          >
+            {waterBusy ? "ဖျက်နေတယ်…" : "−1 ခွက် ↩️"}
+          </button>
+        </div>
         {waterMsg && <p className="caption mt-2">{waterMsg}</p>}
       </section>
 

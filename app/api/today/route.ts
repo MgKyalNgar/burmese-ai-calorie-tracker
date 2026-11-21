@@ -90,6 +90,12 @@ export async function GET() {
     carbs,
     fat,
     cups,
+    // ရေ ပန်းတိုင် — migration SQL မထည့်ရသေးရင် ကော်လံ မရှိလို့
+    // undefined ဖြစ်ပြီး default 8 ခွက် သုံးတယ်။
+    waterGoal:
+      typeof profile.daily_water_goal === "number"
+        ? profile.daily_water_goal
+        : 8,
     // Weight log မရှိသေးရင် onboarding weight ကို ပြတယ် —
     // အရင် "— kg" ပဲ ပြနေလို့။
     latestWeightKg: latestWeight

@@ -79,6 +79,18 @@ export async function GET() {
 
   const target = profile.daily_calorie_target ?? 1800;
 
+  // ရေ ပန်းတိုင် — migration SQL မထည့်ရသေးရင် ကော်လံ မရှိလို့
+  // query error ဖြစ်ပြီး null ပြန်တယ် → default 8 ခွက် သုံးတယ်။
+  const { data: goalRow } = await supabase
+    .from("profiles")
+    .select("daily_water_goal")
+    .eq("id", user.id)
+    .maybeSingle();
+  const waterGoal =
+    typeof goalRow?.daily_water_goal === "number"
+      ? goalRow.daily_water_goal
+      : 8;
+
   // ဒီအပတ် တနင်္လာ–တနင်္ဂနွေ — ရက်တိုင်း စားပြီးသား ကယ်လိုရီ ပေါင်းတယ်။
   const eatenByDate = new Map<string, number>();
   const loggedSet = new Set<string>();
@@ -110,6 +122,7 @@ export async function GET() {
       kg: Number(w.weight_kg),
     })),
     waterWeek,
+    waterGoal,
     loggedDays: [...loggedSet].sort(),
   });
 }
