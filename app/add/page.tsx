@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import ReviewForm, { type ReviewInitial } from "@/components/ReviewForm";
 import { createClient } from "@/lib/supabase/client";
@@ -25,6 +26,8 @@ export default function AddPage() {
   const [mode, setMode] = useState<Mode>("photo");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  // key မရှိလို့ AI စစ်မရတဲ့ error — Profile သွားတဲ့ link ပြဖို့။
+  const [noKeyError, setNoKeyError] = useState(false);
 
   // Photo mode
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -82,13 +85,17 @@ export default function AddPage() {
     }
     setBusy(true);
     setMessage("");
+    setNoKeyError(false);
     try {
       const form = new FormData();
       form.append("photo", photoFile);
       if (photoHint.trim()) form.append("text", photoHint.trim());
       const res = await fetch("/api/analyze", { method: "POST", body: form });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "AI စစ်လို့ မရပါ။");
+      if (!res.ok) {
+        if (data?.code === "NO_API_KEY") setNoKeyError(true);
+        throw new Error(data?.error ?? "AI စစ်လို့ မရပါ။");
+      }
       setReview({
         food: data.result as AnalyzedFood,
         source: "photo",
@@ -109,6 +116,7 @@ export default function AddPage() {
     }
     setBusy(true);
     setMessage("");
+    setNoKeyError(false);
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -116,7 +124,10 @@ export default function AddPage() {
         body: JSON.stringify({ text: textInput.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "AI စစ်လို့ မရပါ။");
+      if (!res.ok) {
+        if (data?.code === "NO_API_KEY") setNoKeyError(true);
+        throw new Error(data?.error ?? "AI စစ်လို့ မရပါ။");
+      }
       setReview({ food: data.result as AnalyzedFood, source: "text" });
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "AI စစ်လို့ မရပါ။");
@@ -187,6 +198,7 @@ export default function AddPage() {
   function resetReview() {
     setReview(null);
     setMessage("");
+    setNoKeyError(false);
   }
 
   const tabs: { value: Mode; label: string }[] = [
@@ -228,6 +240,7 @@ export default function AddPage() {
                 onClick={() => {
                   setMode(t.value);
                   setMessage("");
+                  setNoKeyError(false);
                 }}
                 className={`rounded-xl border px-2 py-2.5 text-sm ${
                   mode === t.value
@@ -455,6 +468,14 @@ export default function AddPage() {
           {message && (
             <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-red-700">
               {message}
+              {noKeyError && (
+                <Link
+                  href="/profile"
+                  className="mt-1 block font-semibold text-[#15803d] underline"
+                >
+                  Profile မှာ Gemini key ထည့်မယ် →
+                </Link>
+              )}
             </p>
           )}
         </>

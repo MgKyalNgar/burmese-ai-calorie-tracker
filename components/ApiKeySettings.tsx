@@ -58,13 +58,24 @@ export default function ApiKeySettings() {
   }
 
   async function handleTest() {
+    // input မှာ key ရိုက်ထားရင် အဲဒီ key ကို မသိမ်းဘဲ စမ်းတယ် —
+    // ရိုက်မထားရင် သိမ်းထားတဲ့ key ကို စမ်းတယ်။
+    const typedKey = key.trim();
     setBusy(true);
     setMessage("");
     try {
-      const res = await fetch("/api/api-key/test", { method: "POST" });
+      const res = await fetch("/api/api-key/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(typedKey ? { key: typedKey } : {}),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "စမ်းလို့ မရပါ။");
-      setMessage(`Key အလုပ်လုပ်ပါတယ် ✅ (${data.reply ?? "OK"})`);
+      setMessage(
+        typedKey
+          ? `Key အလုပ်လုပ်ပါတယ် ✅ (${data.reply ?? "OK"}) — သိမ်းမယ် နှိပ်ပြီး သိမ်းလို့ရပြီ`
+          : `Key အလုပ်လုပ်ပါတယ် ✅ (${data.reply ?? "OK"})`,
+      );
       await loadStatus();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "စမ်းလို့ မရပါ။");
@@ -134,25 +145,27 @@ export default function ApiKeySettings() {
         >
           သိမ်းမယ်
         </button>
+        {/* စမ်းမယ် — key ရိုက်ထားရင် (မသိမ်းခင် စမ်းတာ) (သို့)
+            သိမ်းထားတဲ့ key ရှိရင် ပေါ်တယ်။ */}
+        {(status?.configured || key.trim()) && (
+          <button
+            type="button"
+            onClick={handleTest}
+            disabled={busy}
+            className="flex-1 rounded-xl border border-[#16a34a] py-2.5 font-semibold text-[#15803d] disabled:opacity-50"
+          >
+            စမ်းမယ်
+          </button>
+        )}
         {status?.configured && (
-          <>
-            <button
-              type="button"
-              onClick={handleTest}
-              disabled={busy}
-              className="flex-1 rounded-xl border border-[#16a34a] py-2.5 font-semibold text-[#15803d] disabled:opacity-50"
-            >
-              စမ်းမယ်
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={busy}
-              className="rounded-xl border border-red-300 px-4 py-2.5 font-semibold text-red-600 disabled:opacity-50"
-            >
-              ဖျက်မယ်
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={busy}
+            className="rounded-xl border border-red-300 px-4 py-2.5 font-semibold text-red-600 disabled:opacity-50"
+          >
+            ဖျက်မယ်
+          </button>
         )}
       </div>
 

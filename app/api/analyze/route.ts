@@ -165,7 +165,11 @@ export async function POST(request: Request) {
     .eq("is_active", true)
     .maybeSingle();
   if (keyError || !row) {
-    return NextResponse.json({ error: NO_KEY_ERROR }, { status: 404 });
+    // code: NO_API_KEY — frontend က Profile သွားတဲ့ link ပြဖို့။
+    return NextResponse.json(
+      { error: NO_KEY_ERROR, code: "NO_API_KEY" },
+      { status: 404 },
+    );
   }
   let apiKey: string;
   try {
