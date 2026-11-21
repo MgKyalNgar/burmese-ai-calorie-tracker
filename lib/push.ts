@@ -5,9 +5,12 @@ import { createECDH } from "crypto";
 // VAPID keys မရှိရင် false ပြန်တယ် — Vercel env မှာ key ထည့်ဖို့ လိုတယ်။
 
 export function configureWebPush(): boolean {
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT ?? "mailto:mkko32@gmail.com";
+  // env ထဲက တန်ဖိုးမှာ paste လုပ်ရင်း ပါလာတဲ့ space/newline တွေကို ဖယ်တယ် —
+  // Vercel မှာ public key 88 လုံး (87 + newline) ဖြစ်နေလို့ setVapidDetails က throw လုပ်ခဲ့တယ်။
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim();
+  const privateKey = process.env.VAPID_PRIVATE_KEY?.trim();
+  const subject =
+    process.env.VAPID_SUBJECT?.trim() ?? "mailto:mkko32@gmail.com";
   if (!publicKey || !privateKey) return false;
   try {
     webpush.setVapidDetails(subject, publicKey, privateKey);
@@ -43,8 +46,8 @@ export function checkVapidKeys(): {
   pairValid: boolean;
   error: string | null;
 } {
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
-  const privateKey = process.env.VAPID_PRIVATE_KEY ?? "";
+  const publicKey = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim();
+  const privateKey = (process.env.VAPID_PRIVATE_KEY ?? "").trim();
   const result = {
     hasPublicKey: publicKey.length > 0,
     publicKeyLen: publicKey.length,
