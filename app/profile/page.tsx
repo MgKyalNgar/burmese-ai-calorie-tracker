@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import LogoutButton from "@/components/LogoutButton";
 import ApiKeySettings from "@/components/ApiKeySettings";
+import ReminderSettings from "@/components/ReminderSettings";
 import { useCachedData } from "@/lib/useCachedData";
 import type { ProfileData } from "@/lib/meal";
 
@@ -113,6 +114,8 @@ export default function ProfilePage() {
       </section>
 
       <ApiKeySettings />
+
+      <ReminderSettings />
 
       <div className="mt-4">
         <LogoutButton />
