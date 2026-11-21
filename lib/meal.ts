@@ -158,6 +158,15 @@ export function todayYangon(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Yangon" });
 }
 
+// YYYY-MM-DD ရက်စွဲကို ရက် n ရက် ရွှေ့တယ် (အနှုတ်ဆိုရင် နောက်ပြန်ရွှေ့တယ်) —
+// Diary ရက်ရွေ့တာမှာ သုံးတယ်။
+export function addDaysIso(iso: string, days: number): string {
+  const d = new Date(`${iso}T12:00:00+06:30`);
+  if (Number.isNaN(d.getTime())) return iso;
+  d.setDate(d.getDate() + days);
+  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Yangon" });
+}
+
 // ရန်ကုန်စံတော်ချိန် နာရီ (0–23)။
 export function yangonHour(): number {
   return Number(

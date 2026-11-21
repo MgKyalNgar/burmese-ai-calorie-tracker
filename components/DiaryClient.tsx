@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +12,8 @@ import {
 import {
   MEAL_LABELS,
   MEAL_TYPES,
+  addDaysIso,
+  formatDateDMY,
   round1,
   todayYangon,
   type DiaryData,
@@ -20,9 +22,9 @@ import {
   type MealType,
 } from "@/lib/meal";
 
-// /api/diary ကနေ ဒီနေ့ မှတ်တမ်းတွေ ဆွဲတယ် (module-level stable fetcher)။
-async function fetchDiary(): Promise<DiaryData> {
-  const res = await fetch("/api/diary");
+// /api/diary ကနေ ရက်တစ်ရက်ရဲ့ မှတ်တမ်းတွေ ဆွဲတယ် (module-level stable fetcher)။
+async function fetchDiary(date: string): Promise<DiaryData> {
+  const res = await fetch(`/api/diary?date=${date}`);
   const data = await res.json();
   if (res.status === 401) return { needsLogin: true } as DiaryData;
   if (!res.ok) throw new Error(data?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
@@ -243,15 +245,31 @@ function sum(items: MealItemRow[], key: "calories" | "protein" | "carbs" | "fat"
 
 export default function DiaryClient() {
   const router = useRouter();
-  const date = todayYangon();
+  // ကြည့်နေတဲ့ ရက် — ဒီနေ့က စတယ်၊ ‹ › နဲ့ ရွှေ့လို့ရတယ် (အနာဂတ်ကို မရဘူး)။
+  const [date, setDate] = useState(todayYangon());
+  const today = todayYangon();
+  const isToday = date === today;
+  const isYesterday = date === addDaysIso(today, -1);
   const key = `diary-${date}`;
+  // fetcher က date ကို closure ကနေ ယူတယ် — date ပြောင်းတိုင်း key လည်း
+  // ပြောင်းတော့ hook က ပြန်ဆွဲတယ်။
+  const fetcher = useCallback(() => fetchDiary(date), [date]);
   // ဒေတာကို cache နဲ့ ဆွဲတယ် — tab ပြန်ကူးတိုင်း မှတ်ထားတာကို ချက်ချင်း ပြတယ်။
-  const { data, loading, error } = useCachedData<DiaryData>(key, fetchDiary);
+  const { data, loading, error } = useCachedData<DiaryData>(key, fetcher);
   const [meals, setMeals] = useState<MealRow[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+
+  // ရက်ပြောင်းရင် အရင်ရက်ရဲ့ စာရင်း မပြနေအောင် ရှင်းတယ် —
+  // အသစ်ဆွဲပြီးမှ အဲဒီနေ့ရဲ့ စာရင်း ပေါ်မယ်။
+  useEffect(() => {
+    setMeals([]);
+    setEditingId(null);
+    setDeletingId(null);
+    setMessage("");
+  }, [date]);
 
   // ဆွဲလို့ရတဲ့ ဒေတာကို local state ထဲ ထည့်တယ်။
   useEffect(() => {
@@ -352,6 +370,8 @@ export default function DiaryClient() {
   }
 
   // ထပ်ထည့်မယ် — အဲဒီ item အတိုင်း ဒီနေ့ အစာအမျိုးအစားတူ ထဲကို ထပ်မှတ်တယ်။
+  // အတိတ်နေ့ကို ကြည့်နေရင်လည်း ဒီနေ့ထဲကိုပဲ ထပ်ထည့်တယ် (အဲဒီနေ့ထဲကို မဟုတ်ဘူး) —
+  // ဒီနေ့ ပြန်ကြည့်မှ ပေါ်မယ်။
   async function repeatItem(item: MealItemRow, meal: MealRow) {
     setBusyId(item.id);
     setMessage("");
@@ -368,7 +388,7 @@ export default function DiaryClient() {
         .from("meals")
         .insert({
           user_id: user.id,
-          logged_date: date,
+          logged_date: todayYangon(),
           meal_type: meal.meal_type,
           photo_url: meal.photo_url,
           source: meal.source,
@@ -403,24 +423,30 @@ export default function DiaryClient() {
         await supabase.from("meals").delete().eq("id", newMeal.id);
         throw new Error("ထပ်ထည့်လို့ မရပါ။");
       }
-      const newMeals = [
-        ...meals,
-        {
-          id: newMeal.id,
-          meal_type: meal.meal_type,
-          photo_url: meal.photo_url,
-          source: meal.source,
-          total_calories: Number(item.calories ?? 0),
-          total_protein: Number(item.protein ?? 0),
-          total_carbs: Number(item.carbs ?? 0),
-          total_fat: Number(item.fat ?? 0),
-          created_at: new Date().toISOString(),
-          meal_items: [newItem as MealItemRow],
-        },
-      ];
-      setMeals(newMeals);
-      setCacheData(key, { date, meals: newMeals });
+      // ဒီနေ့ Diary + Home cache ကို ဖျက်တယ် — နောက်တစ်ခါ ဖွင့်ရင် အသစ် ပြမယ်။
+      invalidateCachePrefix("diary-");
       invalidateCachePrefix("today-");
+      if (isToday) {
+        const newMeals = [
+          ...meals,
+          {
+            id: newMeal.id,
+            meal_type: meal.meal_type,
+            photo_url: meal.photo_url,
+            source: meal.source,
+            total_calories: Number(item.calories ?? 0),
+            total_protein: Number(item.protein ?? 0),
+            total_carbs: Number(item.carbs ?? 0),
+            total_fat: Number(item.fat ?? 0),
+            created_at: new Date().toISOString(),
+            meal_items: [newItem as MealItemRow],
+          },
+        ];
+        setMeals(newMeals);
+        setCacheData(key, { date, meals: newMeals });
+      } else {
+        setMessage("ဒီနေ့ ထပ်ထည့်ပြီးပြီ ✅ — Home မှာ ကြည့်လို့ရပြီ");
+      }
       router.refresh();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "ထပ်ထည့်လို့ မရပါ။");
@@ -450,8 +476,48 @@ export default function DiaryClient() {
 
   return (
     <>
+      {/* ရက်ရွေ့တာ — ‹ မနေ့က / နောက်နေ့ › (အနာဂတ်ကို မရဘူး) */}
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setDate(addDaysIso(date, -1))}
+          aria-label="မနေ့က"
+          className="h-10 w-10 rounded-xl border text-xl font-bold text-[#334155]"
+        >
+          ‹
+        </button>
+        <div className="text-center">
+          <p className="font-semibold">
+            {isToday ? `ဒီနေ့ · ${formatDateDMY(date)}` : formatDateDMY(date)}
+          </p>
+          {!isToday && (
+            <p className="caption">
+              {isYesterday ? "မနေ့က · " : ""}
+              <button
+                type="button"
+                onClick={() => setDate(today)}
+                className="font-semibold text-[#15803d] underline"
+              >
+                ဒီနေ့ကို ပြန်သွားမယ်
+              </button>
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setDate(addDaysIso(date, 1))}
+          disabled={isToday}
+          aria-label="နောက်နေ့"
+          className="h-10 w-10 rounded-xl border text-xl font-bold text-[#334155] disabled:opacity-30"
+        >
+          ›
+        </button>
+      </div>
+
       <section className="mt-4 rounded-2xl border p-5 text-center">
-        <p className="caption">ဒီနေ့ စုစုပေါင်း</p>
+        <p className="caption">
+          {isToday ? "ဒီနေ့ စုစုပေါင်း" : `${formatDateDMY(date)} စုစုပေါင်း`}
+        </p>
         <p className="hero-num text-[#15803d]">{dayCal.toLocaleString()}</p>
         <p className="caption">
           kcal · Protein {dayPro}g · Carbs {dayCarb}g · Fat {dayFat}g
@@ -467,7 +533,11 @@ export default function DiaryClient() {
 
       {meals.length === 0 ? (
         <div className="mt-6 rounded-2xl border p-5 text-center">
-          <p className="text-[#52677f]">ဒီနေ့ ဘာမှ မမှတ်ရသေးဘူး။</p>
+          <p className="text-[#52677f]">
+            {isToday
+              ? "ဒီနေ့ ဘာမှ မမှတ်ရသေးဘူး။"
+              : `${formatDateDMY(date)} မှာ ဘာမှ မမှတ်ရသေးဘူး။`}
+          </p>
           <Link
             href="/add"
             className="mt-3 inline-block rounded-xl bg-[#16a34a] px-5 py-2.5 font-semibold text-white"
