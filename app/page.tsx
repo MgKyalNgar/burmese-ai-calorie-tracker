@@ -17,8 +17,21 @@ import {
 // ပြန်စောင့်စရာ မလိုဘူး၊ မှတ်ထားတာကို ချက်ချင်း ပြတယ်။
 async function fetchToday(): Promise<TodayData> {
   const res = await fetch("/api/today");
+  if (res.status === 401) {
+    // Login ပြီးခါစ session cookie က server ကို မရောက်သေးတဲ့
+    // ခဏတာ 401 ဖြစ်နိုင်လို့ (login → Home ကန်ထုတ်တာ 2 ခါ တွေ့ဖူးတယ် —
+    // 21 Nov 2026 မနက် main အကောင့်နဲ့ keyless အကောင့် 2 ခုလုံး),
+    // 1.5 စက္ကန့်စောင့်ပြီး တစ်ခါ ပြန်စမ်းတယ်။
+    // ဒုတိယအကြိမ်လည်း 401 ဆိုမှ တကယ် login မဝင်သေးဘူးလို့ သတ်မှတ်တယ်။
+    await new Promise((r) => setTimeout(r, 1500));
+    const retry = await fetch("/api/today");
+    const retryData = await retry.json();
+    if (retry.status === 401) return { needsLogin: true } as TodayData;
+    if (!retry.ok)
+      throw new Error(retryData?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
+    return retryData as TodayData;
+  }
   const data = await res.json();
-  if (res.status === 401) return { needsLogin: true } as TodayData;
   if (!res.ok) throw new Error(data?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
   return data as TodayData;
 }

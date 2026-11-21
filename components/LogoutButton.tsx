@@ -10,8 +10,15 @@ export default function LogoutButton() {
 
   async function handleLogout() {
     setBusy(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // signOut မအောင်ရင် ခလုတ်ကို ပြန်ဖွင့်ပေးတယ် —
+      // မဟုတ်ရင် "ထွက်နေပါတယ်…" ဆိုပြီး အမြဲ ပိတ်နေမယ်။
+      setBusy(false);
+      return;
+    }
     router.push("/login");
     router.refresh();
   }
