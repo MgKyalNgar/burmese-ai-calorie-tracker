@@ -156,7 +156,7 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
           <polyline points={points} fill="none" stroke="#16a34a" strokeWidth="2" />
         )}
         {weights.map((w, i) => (
-          <g key={`${w.date}-${i}`}>
+          <g key={w.id ?? `${w.date}-${i}`}>
             <circle cx={x(i)} cy={y(w.kg)} r="4" fill="#16a34a" />
             <text
               x={x(i)}
@@ -268,6 +268,13 @@ export default function ProgressPage() {
   const [weightDate, setWeightDate] = useState(todayYangon());
   const [weightBusy, setWeightBusy] = useState(false);
   const [weightMsg, setWeightMsg] = useState("");
+  // ဝိတ် history ပြင်/ဖျက် — ပြင်နေတဲ့ row ရဲ့ id + ရိုက်ထားတဲ့ kg။
+  const [editingWeightId, setEditingWeightId] = useState<string | null>(null);
+  const [editWeightKg, setEditWeightKg] = useState("");
+  const [deletingWeightId, setDeletingWeightId] = useState<string | null>(
+    null,
+  );
+  const [weightEditBusy, setWeightEditBusy] = useState(false);
   const [waterBusy, setWaterBusy] = useState(false);
   const [waterMsg, setWaterMsg] = useState("");
   // ရေမှတ်မယ့် ရက် — ဒီနေ့က စတယ်၊ အတိတ်နေ့လည်း ရွေးလို့ရတယ်။
@@ -309,6 +316,57 @@ export default function ProgressPage() {
       setWeightMsg(err instanceof Error ? err.message : "သိမ်းလို့ မရပါ။");
     } finally {
       setWeightBusy(false);
+    }
+  }
+
+  // မှတ်ထားတဲ့ ဝိတ် ပြင်တယ် — PATCH /api/weight။
+  async function handleEditWeight(id: string) {
+    const kg = Number(editWeightKg);
+    if (!Number.isFinite(kg) || kg < 20 || kg > 300) {
+      setWeightMsg("ဝိတ် ၂၀ မှ ၃၀၀ kg အတွင်း ထည့်ပေးပါ။");
+      return;
+    }
+    setWeightEditBusy(true);
+    setWeightMsg("");
+    try {
+      const res = await fetch("/api/weight", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, weight_kg: kg }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d?.error ?? "ပြင်လို့ မရပါ။");
+      setWeightMsg("ဝိတ် ပြင်ပြီးပြီ ✅");
+      setEditingWeightId(null);
+      invalidateCachePrefix("today-");
+      setTick((t) => t + 1);
+    } catch (err) {
+      setWeightMsg(err instanceof Error ? err.message : "ပြင်လို့ မရပါ။");
+    } finally {
+      setWeightEditBusy(false);
+    }
+  }
+
+  // မှတ်ထားတဲ့ ဝိတ် ဖျက်တယ် — DELETE /api/weight။
+  async function handleDeleteWeight(id: string) {
+    setWeightEditBusy(true);
+    setWeightMsg("");
+    try {
+      const res = await fetch("/api/weight", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d?.error ?? "ဖျက်လို့ မရပါ။");
+      setWeightMsg("ဝိတ် ဖျက်ပြီးပြီ ✅");
+      setDeletingWeightId(null);
+      invalidateCachePrefix("today-");
+      setTick((t) => t + 1);
+    } catch (err) {
+      setWeightMsg(err instanceof Error ? err.message : "ဖျက်လို့ မရပါ။");
+    } finally {
+      setWeightEditBusy(false);
     }
   }
 
@@ -471,6 +529,111 @@ export default function ProgressPage() {
           {weightBusy ? "သိမ်းနေတယ်…" : "သိမ်းမယ် ✅"}
         </button>
         {weightMsg && <p className="caption mt-2">{weightMsg}</p>}
+
+        {/* ဝိတ် မှတ်တမ်း — အသစ်ဆုံး အရင်၊ ပြင်/ဖျက် လို့ရတယ် */}
+        {data.weights.length > 0 && (
+          <div className="mt-5">
+            <h3 className="font-semibold">ဝိတ် မှတ်တမ်း</h3>
+            <ul className="mt-2 space-y-2">
+              {[...data.weights].reverse().map((w) => (
+                <li
+                  key={w.id}
+                  className="rounded-xl bg-slate-50 px-3 py-2.5"
+                >
+                  {editingWeightId === w.id ? (
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="caption">{formatDateDMY(w.date)}</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min={20}
+                          max={300}
+                          step="0.1"
+                          value={editWeightKg}
+                          onChange={(e) => setEditWeightKg(e.target.value)}
+                          className="h-9 flex-1 rounded-xl border bg-white px-3 text-center"
+                        />
+                        <span className="caption">kg</span>
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditingWeightId(null)}
+                          disabled={weightEditBusy}
+                          className="flex-1 rounded-lg border bg-white py-1.5 disabled:opacity-50"
+                        >
+                          မပြင်တော့ဘူး
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditWeight(w.id)}
+                          disabled={weightEditBusy}
+                          className="flex-1 rounded-lg bg-[#16a34a] py-1.5 font-semibold text-white disabled:opacity-50"
+                        >
+                          {weightEditBusy ? "သိမ်းနေတယ်…" : "သိမ်းမယ်"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="font-semibold">{w.kg} kg</p>
+                        <p className="caption">{formatDateDMY(w.date)}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingWeightId(w.id);
+                            setEditWeightKg(String(w.kg));
+                            setDeletingWeightId(null);
+                          }}
+                          className="rounded-lg border bg-white px-3 py-1.5"
+                        >
+                          ✏️ ပြင်မယ်
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingWeightId(w.id)}
+                          className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-red-600"
+                        >
+                          🗑️ ဖျက်မယ်
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {deletingWeightId === w.id && (
+                    <div className="mt-2 rounded-xl border border-red-300 bg-red-50 p-3">
+                      <p>
+                        {formatDateDMY(w.date)} ရဲ့ {w.kg} kg မှတ်တမ်းကို
+                        ဖျက်မှာလား?
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setDeletingWeightId(null)}
+                          className="flex-1 rounded-lg border bg-white py-1.5"
+                        >
+                          မဖျက်ဘူး
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteWeight(w.id)}
+                          disabled={weightEditBusy}
+                          className="flex-1 rounded-lg bg-red-600 py-1.5 font-semibold text-white disabled:opacity-50"
+                        >
+                          {weightEditBusy ? "ဖျက်နေတယ်…" : "ဖျက်မယ်"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       {/* ပြက္ခဒိန် */}

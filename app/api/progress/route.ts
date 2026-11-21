@@ -58,10 +58,11 @@ export async function GET() {
         .limit(1000),
       supabase
         .from("weight_logs")
-        .select("logged_date, weight_kg")
+        .select("id, logged_date, weight_kg")
         .eq("user_id", user.id)
         .gte("logged_date", sixtyDaysAgo)
         .order("logged_date", { ascending: true })
+        .order("created_at", { ascending: true })
         .limit(500),
       supabase
         .from("water_logs")
@@ -118,6 +119,7 @@ export async function GET() {
   return NextResponse.json({
     week,
     weights: (weights ?? []).map((w) => ({
+      id: w.id as string,
       date: w.logged_date as string,
       kg: Number(w.weight_kg),
     })),

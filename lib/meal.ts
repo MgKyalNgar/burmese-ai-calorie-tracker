@@ -106,7 +106,7 @@ export interface DiaryData {
 // /api/progress က ပြန်တဲ့ Progress ဒေတာ ပုံစံ။
 export interface ProgressData {
   week: { date: string; eaten: number; target: number }[];
-  weights: { date: string; kg: number }[];
+  weights: { id: string; date: string; kg: number }[];
   waterWeek: { date: string; cups: number }[];
   waterGoal: number;
   loggedDays: string[];
