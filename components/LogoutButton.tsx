@@ -19,6 +19,10 @@ export default function LogoutButton() {
       setBusy(false);
       return;
     }
+    // Sign out အောင်ပြီးရင် busy ကို ပြန်ပိတ်မှ သွားတယ် —
+    // မဟုတ်ရင် App Router က Profile စာမျက်နှာကို cache ထဲ
+    // busy=true အတိုင်း သိမ်းထားပြီး ပြန်လာရင် ခလုတ် ပိတ်နေမယ်။
+    setBusy(false);
     router.push("/login");
     router.refresh();
   }
