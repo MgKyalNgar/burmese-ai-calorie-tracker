@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import LogoutButton from "@/components/LogoutButton";
 import ApiKeySettings from "@/components/ApiKeySettings";
 import ReminderSettings from "@/components/ReminderSettings";
-import { useCachedData } from "@/lib/useCachedData";
+import ThemeSettings from "@/components/ThemeSettings";
+import {
+  invalidateCache,
+  invalidateCachePrefix,
+  useCachedData,
+} from "@/lib/useCachedData";
 import type { ProfileData } from "@/lib/meal";
 
 // Profile ကို client component အဖြစ် ပြောင်းထားတယ် —
@@ -32,6 +37,41 @@ export default function ProfilePage() {
     "profile",
     fetchProfile,
   );
+
+  // Target ပြင်တဲ့ form state။
+  const [editingTarget, setEditingTarget] = useState(false);
+  const [targetInput, setTargetInput] = useState("");
+  const [targetMsg, setTargetMsg] = useState("");
+  const [savingTarget, setSavingTarget] = useState(false);
+  // သိမ်းပြီးသား target အသစ် — cache ပြန်မဆွဲခင် မျက်နှာပြင်မှာ တန်းပြဖို့။
+  const [savedTarget, setSavedTarget] = useState<number | null>(null);
+
+  const saveTarget = async () => {
+    const value = Number(targetInput);
+    setTargetMsg("");
+    setSavingTarget(true);
+    try {
+      const res = await fetch("/api/target", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target: value }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body?.error ?? "သိမ်းလို့ မရပါ။");
+      setSavedTarget(body.target);
+      setEditingTarget(false);
+      setTargetMsg("✅ Target သိမ်းပြီးပါပြီ။");
+      // Home / Progress က target အဟောင်း မပြစေဖို့ cache ဖျက်တယ် —
+      // tab ပြန်ကူးတိုင်း အသစ် ပြန်ဆွဲတယ်။
+      invalidateCache("profile");
+      invalidateCachePrefix("today-");
+      invalidateCachePrefix("progress-");
+    } catch (e) {
+      setTargetMsg(e instanceof Error ? e.message : "သိမ်းလို့ မရပါ။");
+    } finally {
+      setSavingTarget(false);
+    }
+  };
 
   useEffect(() => {
     if (data?.needsLogin) router.push("/login");
@@ -96,13 +136,66 @@ export default function ProfilePage() {
             <div className="flex justify-between">
               <dt>တစ်နေ့တာ target</dt>
               <dd className="font-semibold text-[var(--theme-dark)]">
-                {(profile.daily_calorie_target ?? 0).toLocaleString()} kcal
+                {(savedTarget ?? profile.daily_calorie_target ?? 0).toLocaleString()} kcal
               </dd>
             </div>
           </dl>
         ) : (
           <p className="mt-3 text-[#52677f]">
             Profile မရှိသေးဘူး — Onboarding ဖြည့်ပေးပါ။
+          </p>
+        )}
+        {profile &&
+          (editingTarget ? (
+            <div className="mt-4">
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={targetInput}
+                  onChange={(e) => setTargetInput(e.target.value)}
+                  placeholder="ဥပမာ 2000"
+                  className="w-full rounded-xl border bg-white px-3 py-2.5"
+                />
+                <button
+                  type="button"
+                  onClick={saveTarget}
+                  disabled={savingTarget}
+                  className="shrink-0 rounded-xl bg-[var(--theme)] px-4 py-2.5 font-semibold text-white disabled:opacity-50"
+                >
+                  {savingTarget ? "သိမ်းနေတယ်…" : "သိမ်းမယ်"}
+                </button>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <p className="caption">၈၀၀ မှ ၆,၀၀၀ kcal အထိ ထားလို့ ရပါတယ်။</p>
+                <button
+                  type="button"
+                  onClick={() => setEditingTarget(false)}
+                  className="caption shrink-0 underline"
+                >
+                  မပြင်တော့ဘူး
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setTargetInput(
+                  String(savedTarget ?? profile.daily_calorie_target ?? ""),
+                );
+                setTargetMsg("");
+                setEditingTarget(true);
+              }}
+              className="mt-4 w-full rounded-xl bg-slate-100 py-2.5 font-semibold"
+            >
+              Target ပြင်မယ်
+            </button>
+          ))}
+        {targetMsg && <p className="caption mt-2">{targetMsg}</p>}
+        {profile && (
+          <p className="caption mt-2">
+            Onboarding ပြန်ဖြည့်ရင် target အသစ် auto တွက်ပေးမယ်။
           </p>
         )}
         <Link
@@ -112,6 +205,8 @@ export default function ProfilePage() {
           Profile ပြင်မယ်
         </Link>
       </section>
+
+      <ThemeSettings />
 
       <ApiKeySettings />
 
