@@ -6,11 +6,38 @@
   --fs-title: 18px;
   --fs-body: 14px;
   --fs-caption: 12px;
+  /* Theme color — အစိမ်းက အခု default။ အရောင်ပြောင်းချင်ရင်
+     <html> မှာ data-theme="purple" / "red" ထားရုံနဲ့ app တစ်ခုလုံး
+     ပြောင်းသွားတယ် (နောက် update က User setting က အဲဒါကို ထားမယ်)။
+     Component တွေမှာ အစိမ်းကုဒ် အသေ (#16a34a / #15803d) မသုံးဘူး —
+     var(--theme) / var(--theme-dark) / var(--theme-soft) ပဲ သုံးတယ်။ */
+  --theme: #16a34a;
+  --theme-dark: #15803d;
+  --theme-soft: #f0fdf4;
+  --theme-ring: #bbf7d0;
   --green: #16a34a;
   --green-dark: #15803d;
   --ink: #0f172a;
   --ink-2: #334155;
   --ink-3: #52677f;
+}
+
+[data-theme="purple"] {
+  --theme: #9333ea;
+  --theme-dark: #7e22ce;
+  --theme-soft: #faf5ff;
+  --theme-ring: #e9d5ff;
+  --green: #9333ea;
+  --green-dark: #7e22ce;
+}
+
+[data-theme="red"] {
+  --theme: #dc2626;
+  --theme-dark: #b91c1c;
+  --theme-soft: #fef2f2;
+  --theme-ring: #fecaca;
+  --green: #dc2626;
+  --green-dark: #b91c1c;
 }
 
 body {

@@ -244,7 +244,7 @@ export default function AddPage() {
                 }}
                 className={`rounded-xl border px-2 py-2.5 text-sm ${
                   mode === t.value
-                    ? "border-[#16a34a] bg-[#16a34a] font-semibold text-white"
+                    ? "border-[var(--theme)] bg-[var(--theme)] font-semibold text-white"
                     : "text-[#334155]"
                 }`}
               >
@@ -299,7 +299,7 @@ export default function AddPage() {
                   type="button"
                   onClick={() => cameraRef.current?.click()}
                   disabled={busy}
-                  className="flex-1 rounded-xl bg-[#16a34a] py-2.5 font-semibold text-white disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
                 >
                   📷 ကင်မရာ
                 </button>
@@ -307,7 +307,7 @@ export default function AddPage() {
                   type="button"
                   onClick={() => galleryRef.current?.click()}
                   disabled={busy}
-                  className="flex-1 rounded-xl border border-[#16a34a] py-2.5 font-semibold text-[#15803d] disabled:opacity-50"
+                  className="flex-1 rounded-xl border border-[var(--theme)] py-2.5 font-semibold text-[var(--theme-dark)] disabled:opacity-50"
                 >
                   🖼️ Gallery
                 </button>
@@ -342,7 +342,7 @@ export default function AddPage() {
                 type="button"
                 onClick={analyzePhoto}
                 disabled={busy || !photoFile}
-                className="mt-3 w-full rounded-xl bg-[#16a34a] py-2.5 font-semibold text-white disabled:opacity-50"
+                className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
               >
                 {busy ? "AI စစ်နေတယ်…" : "🤖 AI နဲ့ စစ်မယ်"}
               </button>
@@ -367,7 +367,7 @@ export default function AddPage() {
                 type="button"
                 onClick={analyzeText}
                 disabled={busy || !textInput.trim()}
-                className="mt-3 w-full rounded-xl bg-[#16a34a] py-2.5 font-semibold text-white disabled:opacity-50"
+                className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
               >
                 {busy ? "AI စစ်နေတယ်…" : "🤖 AI နဲ့ စစ်မယ်"}
               </button>
@@ -404,7 +404,7 @@ export default function AddPage() {
                       onClick={() => pickSearchFood(f)}
                       className={`w-full rounded-xl border px-3 py-2.5 text-left ${
                         pickedFood?.id === f.id
-                          ? "border-[#16a34a] bg-green-50"
+                          ? "border-[var(--theme)] bg-[var(--theme-soft)]"
                           : ""
                       }`}
                     >
@@ -456,7 +456,7 @@ export default function AddPage() {
                   <button
                     type="button"
                     onClick={confirmSearchFood}
-                    className="mt-3 w-full rounded-xl bg-[#16a34a] py-2.5 font-semibold text-white"
+                    className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white"
                   >
                     စစ်ဆေးပြီး သိမ်းမယ် →
                   </button>
@@ -471,7 +471,7 @@ export default function AddPage() {
               {noKeyError && (
                 <Link
                   href="/profile"
-                  className="mt-1 block font-semibold text-[#15803d] underline"
+                  className="mt-1 block font-semibold text-[var(--theme-dark)] underline"
                 >
                   Profile မှာ Gemini key ထည့်မယ် →
                 </Link>

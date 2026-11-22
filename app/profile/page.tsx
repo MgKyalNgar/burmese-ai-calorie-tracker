@@ -41,7 +41,7 @@ export default function ProfilePage() {
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center bg-white px-5 pb-24">
         <div
-          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#16a34a]"
+          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme)]"
           aria-hidden
         />
         <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
@@ -95,7 +95,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex justify-between">
               <dt>တစ်နေ့တာ target</dt>
-              <dd className="font-semibold text-[#15803d]">
+              <dd className="font-semibold text-[var(--theme-dark)]">
                 {(profile.daily_calorie_target ?? 0).toLocaleString()} kcal
               </dd>
             </div>
@@ -107,7 +107,7 @@ export default function ProfilePage() {
         )}
         <Link
           href="/onboarding"
-          className="mt-4 block rounded-xl bg-[#16a34a] py-2.5 text-center font-semibold text-white"
+          className="mt-4 block rounded-xl bg-[var(--theme)] py-2.5 text-center font-semibold text-white"
         >
           Profile ပြင်မယ်
         </Link>

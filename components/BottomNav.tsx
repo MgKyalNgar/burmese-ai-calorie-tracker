@@ -27,22 +27,39 @@ export default function BottomNav() {
 
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
+  // အောက်ခြေ tab bar — login/signup/onboarding မှာ မပြဘူး။
+  // ပုံ ၃ (Liquid Glass) ပုံစံနဲ့ ရေပေါ်မှန် pill — နောက်ခံကို မှုန်ပြပြီး
+  // အပေါ်က စာတွေ မြင်ရတယ်။ အလယ် + Add ကတော့ theme အရောင် စက်ဝိုင်းခလုတ်။
   return (
-    <nav className="fixed bottom-0 left-1/2 z-10 w-full max-w-md -translate-x-1/2 border-t bg-white">
+    <nav className="fixed bottom-4 left-1/2 z-10 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-3xl border border-white/60 bg-white/70 shadow-lg shadow-slate-900/10 backdrop-blur-xl">
       <ul className="flex">
         {TABS.map((tab) => {
           const active =
             tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+          const isAdd = tab.href === "/add";
           return (
             <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
                 className={`flex flex-col items-center gap-0.5 py-2 ${
-                  active ? "font-bold text-[#15803d]" : "text-[#52677f]"
+                  active ? "font-bold text-[var(--theme-dark)]" : "text-[#52677f]"
                 }`}
               >
-                <span aria-hidden>{tab.icon}</span>
-                <span className="caption">{tab.label}</span>
+                {isAdd ? (
+                  <span
+                    aria-hidden
+                    className={`flex h-11 w-11 items-center justify-center rounded-full bg-[var(--theme)] text-xl text-white shadow-md ${
+                      active ? "ring-2 ring-[var(--theme-ring)]" : ""
+                    }`}
+                  >
+                    {tab.icon}
+                  </span>
+                ) : (
+                  <>
+                    <span aria-hidden>{tab.icon}</span>
+                    <span className="caption">{tab.label}</span>
+                  </>
+                )}
               </Link>
             </li>
           );

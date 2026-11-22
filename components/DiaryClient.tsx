@@ -230,7 +230,7 @@ function EditItemForm({
           type="button"
           onClick={handleSave}
           disabled={busy}
-          className="flex-1 rounded-xl bg-[#16a34a] py-2 font-semibold text-white disabled:opacity-50"
+          className="flex-1 rounded-xl bg-[var(--theme)] py-2 font-semibold text-white disabled:opacity-50"
         >
           {busy ? "သိမ်းနေတယ်…" : "သိမ်းမယ်"}
         </button>
@@ -466,7 +466,7 @@ export default function DiaryClient() {
     return (
       <div className="mt-6 flex flex-col items-center justify-center py-10">
         <div
-          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#16a34a]"
+          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme)]"
           aria-hidden
         />
         <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
@@ -496,7 +496,7 @@ export default function DiaryClient() {
               <button
                 type="button"
                 onClick={() => setDate(today)}
-                className="font-semibold text-[#15803d] underline"
+                className="font-semibold text-[var(--theme-dark)] underline"
               >
                 ဒီနေ့ကို ပြန်သွားမယ်
               </button>
@@ -518,7 +518,7 @@ export default function DiaryClient() {
         <p className="caption">
           {isToday ? "ဒီနေ့ စုစုပေါင်း" : `${formatDateDMY(date)} စုစုပေါင်း`}
         </p>
-        <p className="hero-num text-[#15803d]">{dayCal.toLocaleString()}</p>
+        <p className="hero-num text-[var(--theme-dark)]">{dayCal.toLocaleString()}</p>
         <p className="caption">
           kcal · Protein {dayPro}g · Carbs {dayCarb}g · Fat {dayFat}g
         </p>
@@ -540,7 +540,7 @@ export default function DiaryClient() {
           </p>
           <Link
             href="/add"
-            className="mt-3 inline-block rounded-xl bg-[#16a34a] px-5 py-2.5 font-semibold text-white"
+            className="mt-3 inline-block rounded-xl bg-[var(--theme)] px-5 py-2.5 font-semibold text-white"
           >
             + အစားအစာ ထည့်မယ်
           </Link>

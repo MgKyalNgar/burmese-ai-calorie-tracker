@@ -87,7 +87,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-xl bg-[#16a34a] py-3 font-semibold text-white disabled:opacity-50"
+          className="w-full rounded-xl bg-[var(--theme)] py-3 font-semibold text-white disabled:opacity-50"
         >
           {busy ? "ဝင်နေပါတယ်…" : "ဝင်မယ်"}
         </button>
@@ -103,7 +103,7 @@ export default function LoginPage() {
 
       <p className="mt-6 text-center">
         အကောင့် မရှိသေးဘူးလား?{" "}
-        <Link href="/signup" className="font-semibold text-[#15803d] underline">
+        <Link href="/signup" className="font-semibold text-[var(--theme-dark)] underline">
           အကောင့် ဖွင့်မယ်
         </Link>
       </p>

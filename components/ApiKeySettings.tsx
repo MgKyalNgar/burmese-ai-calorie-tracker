@@ -110,7 +110,7 @@ export default function ApiKeySettings() {
       </p>
 
       {status?.configured ? (
-        <p className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-[#15803d]">
+        <p className="mt-3 rounded-lg bg-[var(--theme-soft)] px-3 py-2 text-[var(--theme-dark)]">
           Key ရှိပြီးသား: {status.key_hint}
           {status.last_tested_at && (
             <span className="caption block">
@@ -141,7 +141,7 @@ export default function ApiKeySettings() {
           type="button"
           onClick={handleSave}
           disabled={busy}
-          className="flex-1 rounded-xl bg-[#16a34a] py-2.5 font-semibold text-white disabled:opacity-50"
+          className="flex-1 rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
         >
           သိမ်းမယ်
         </button>
@@ -152,7 +152,7 @@ export default function ApiKeySettings() {
             type="button"
             onClick={handleTest}
             disabled={busy}
-            className="flex-1 rounded-xl border border-[#16a34a] py-2.5 font-semibold text-[#15803d] disabled:opacity-50"
+            className="flex-1 rounded-xl border border-[var(--theme)] py-2.5 font-semibold text-[var(--theme-dark)] disabled:opacity-50"
           >
             စမ်းမယ်
           </button>
@@ -175,7 +175,7 @@ export default function ApiKeySettings() {
           href="https://aistudio.google.com/apikey"
           target="_blank"
           rel="noreferrer"
-          className="font-semibold text-[#15803d] underline"
+          className="font-semibold text-[var(--theme-dark)] underline"
         >
           Google AI Studio
         </a>{" "}

@@ -129,7 +129,7 @@ export default function NotificationBell() {
                   <div
                     key={n.id}
                     className={`border-b px-4 py-3 last:border-b-0 ${
-                      n.read ? "" : "bg-green-50"
+                      n.read ? "" : "bg-[var(--theme-soft)]"
                     }`}
                   >
                     <p className="font-semibold">{n.title}</p>

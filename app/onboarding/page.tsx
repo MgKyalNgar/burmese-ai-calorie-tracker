@@ -166,7 +166,7 @@ export default function OnboardingPage() {
                 onClick={() => setGender(opt.value)}
                 className={`flex-1 rounded-xl border py-2.5 font-semibold ${
                   gender === opt.value
-                    ? "border-[#16a34a] bg-green-50 text-[#15803d]"
+                    ? "border-[var(--theme)] bg-[var(--theme-soft)] text-[var(--theme-dark)]"
                     : ""
                 }`}
               >
@@ -229,7 +229,7 @@ export default function OnboardingPage() {
                 onClick={() => setGoal(opt.value)}
                 className={`flex-1 rounded-xl border py-2.5 font-semibold ${
                   goal === opt.value
-                    ? "border-[#16a34a] bg-green-50 text-[#15803d]"
+                    ? "border-[var(--theme)] bg-[var(--theme-soft)] text-[var(--theme-dark)]"
                     : ""
                 }`}
               >
@@ -254,9 +254,9 @@ export default function OnboardingPage() {
         </label>
 
         {target != null && (
-          <div className="rounded-2xl bg-green-50 p-5 text-center">
+          <div className="rounded-2xl bg-[var(--theme-soft)] p-5 text-center">
             <p className="caption">တစ်နေ့တာ ကယ်လိုရီ target</p>
-            <p className="hero-num text-[#15803d]">
+            <p className="hero-num text-[var(--theme-dark)]">
               {target.toLocaleString()} kcal
             </p>
           </div>
@@ -269,7 +269,7 @@ export default function OnboardingPage() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-xl bg-[#16a34a] py-3 font-semibold text-white disabled:opacity-50"
+          className="w-full rounded-xl bg-[var(--theme)] py-3 font-semibold text-white disabled:opacity-50"
         >
           {busy ? "သိမ်းနေပါတယ်…" : "သိမ်းပြီး စမယ်"}
         </button>

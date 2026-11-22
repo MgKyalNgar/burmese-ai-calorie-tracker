@@ -58,7 +58,7 @@ function CalorieRing({ eaten, target }: { eaten: number; target: number }) {
           cy="64"
           r={r}
           fill="none"
-          stroke="#16a34a"
+          style={{ stroke: "var(--theme)" }}
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={`${pct * circ} ${circ}`}
@@ -66,7 +66,7 @@ function CalorieRing({ eaten, target }: { eaten: number; target: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <p className="caption">ကျန်တာ</p>
-        <p className="hero-num text-[#15803d]">{remaining.toLocaleString()}</p>
+        <p className="hero-num text-[var(--theme-dark)]">{remaining.toLocaleString()}</p>
         <p className="caption">kcal</p>
       </div>
     </div>
@@ -91,7 +91,7 @@ export default function Home() {
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center bg-white px-5 pb-24">
         <div
-          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#16a34a]"
+          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme)]"
           aria-hidden
         />
         <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
@@ -107,7 +107,7 @@ export default function Home() {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="mt-4 rounded-xl bg-[#16a34a] px-5 py-2.5 font-semibold text-white"
+          className="mt-4 rounded-xl bg-[var(--theme)] px-5 py-2.5 font-semibold text-white"
         >
           ပြန်စမ်းမယ်
         </button>
@@ -141,7 +141,7 @@ export default function Home() {
       </p>
       {refreshing && <p className="caption mt-1">အသစ်ဆွဲနေတယ်…</p>}
 
-      <section className="mt-6 rounded-2xl border p-5 text-center">
+      <section className="mt-6 rounded-3xl border border-[var(--theme-ring)] bg-[var(--theme-soft)] p-5 text-center">
         <CalorieRing eaten={eaten} target={target} />
         <p className="caption mt-2">
           စားပြီး {eaten.toLocaleString()} kcal · Target{" "}
@@ -169,7 +169,7 @@ export default function Home() {
             </div>
             <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-200">
               <div
-                className="h-full rounded-full bg-[#16a34a]"
+                className="h-full rounded-full bg-[var(--theme)]"
                 style={{ width: `${goal > 0 ? Math.min(100, (value / goal) * 100) : 0}%` }}
               />
             </div>
@@ -180,7 +180,7 @@ export default function Home() {
       <section className="mt-4 flex gap-3">
         <div className="flex-1 rounded-2xl border p-4 text-center">
           <p className="caption">💧 ရေ</p>
-          <p className="hero-num text-[#15803d]">
+          <p className="hero-num text-[var(--theme-dark)]">
             {cups}
             <span className="text-base text-[#52677f]">/{waterGoal}</span>
           </p>
@@ -188,7 +188,7 @@ export default function Home() {
         </div>
         <div className="flex-1 rounded-2xl border p-4 text-center">
           <p className="caption">⚖️ ဝိတ်</p>
-          <p className="hero-num text-[#15803d]">
+          <p className="hero-num text-[var(--theme-dark)]">
             {latestWeightKg !== null ? latestWeightKg : "—"}
           </p>
           <p className="caption">kg</p>
@@ -202,7 +202,7 @@ export default function Home() {
             <p className="text-[#52677f]">ဒီနေ့ ဘာမှ မမှတ်ရသေးဘူး။</p>
             <Link
               href="/add"
-              className="mt-3 inline-block rounded-xl bg-[#16a34a] px-5 py-2.5 font-semibold text-white"
+              className="mt-3 inline-block rounded-xl bg-[var(--theme)] px-5 py-2.5 font-semibold text-white"
             >
               + အစားအစာ ထည့်မယ်
             </Link>

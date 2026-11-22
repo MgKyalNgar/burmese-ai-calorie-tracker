@@ -302,7 +302,7 @@ export default function ReviewForm({
               disabled={busy}
               className={`rounded-xl border px-2 py-2.5 ${
                 mealType === t.value
-                  ? "border-[#16a34a] bg-[#16a34a] font-semibold text-white"
+                  ? "border-[var(--theme)] bg-[var(--theme)] font-semibold text-white"
                   : "text-[#334155]"
               }`}
             >
@@ -329,7 +329,7 @@ export default function ReviewForm({
           type="button"
           onClick={handleSave}
           disabled={busy}
-          className="flex-1 rounded-xl bg-[#16a34a] py-2.5 font-semibold text-white disabled:opacity-50"
+          className="flex-1 rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
         >
           {busy ? "သိမ်းနေတယ်…" : "သိမ်းမယ် ✅"}
         </button>

@@ -196,7 +196,7 @@ export default function ReminderSettings() {
           type="button"
           onClick={handleEnable}
           disabled={busy}
-          className="mt-3 w-full rounded-xl bg-[#16a34a] py-2.5 font-semibold text-white disabled:opacity-50"
+          className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
         >
           {busy ? "ဖွင့်နေတယ်…" : "Reminder ဖွင့်မယ် 🔔"}
         </button>

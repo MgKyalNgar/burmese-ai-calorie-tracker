@@ -83,13 +83,13 @@ export default function SignupPage() {
           <p className="rounded-lg bg-red-50 px-3 py-2 text-red-600">{error}</p>
         )}
         {done && (
-          <p className="rounded-lg bg-green-50 px-3 py-2 text-[#15803d]">{done}</p>
+          <p className="rounded-lg bg-[var(--theme-soft)] px-3 py-2 text-[var(--theme-dark)]">{done}</p>
         )}
 
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-xl bg-[#16a34a] py-3 font-semibold text-white disabled:opacity-50"
+          className="w-full rounded-xl bg-[var(--theme)] py-3 font-semibold text-white disabled:opacity-50"
         >
           {busy ? "ဖွင့်နေပါတယ်…" : "အကောင့် ဖွင့်မယ်"}
         </button>
@@ -97,7 +97,7 @@ export default function SignupPage() {
 
       <p className="mt-6 text-center">
         အကောင့် ရှိပြီးသားလား?{" "}
-        <Link href="/login" className="font-semibold text-[#15803d] underline">
+        <Link href="/login" className="font-semibold text-[var(--theme-dark)] underline">
           Login ဝင်မယ်
         </Link>
       </p>

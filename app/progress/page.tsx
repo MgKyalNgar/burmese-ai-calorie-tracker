@@ -78,7 +78,7 @@ function BarChart({ week }: { week: ProgressData["week"] }) {
                       ? "bg-slate-100"
                       : over
                         ? "bg-[#f59e0b]"
-                        : "bg-[#16a34a]"
+                        : "bg-[var(--theme)]"
                   }`}
                   style={{ height: `${Math.max(hPct, d.eaten > 0 ? 4 : 2)}%` }}
                 />
@@ -153,16 +153,16 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
         <line x1={padL} y1={padT} x2={padL} y2={H - padB} stroke="#e2e8f0" />
         <line x1={padL} y1={H - padB} x2={W - padR} y2={H - padB} stroke="#e2e8f0" />
         {weights.length > 1 && (
-          <polyline points={points} fill="none" stroke="#16a34a" strokeWidth="2" />
+          <polyline points={points} fill="none" style={{ stroke: "var(--theme)" }} strokeWidth="2" />
         )}
         {weights.map((w, i) => (
           <g key={w.id ?? `${w.date}-${i}`}>
-            <circle cx={x(i)} cy={y(w.kg)} r="4" fill="#16a34a" />
+            <circle cx={x(i)} cy={y(w.kg)} r="4" style={{ fill: "var(--theme)" }} />
             <text
               x={x(i)}
               y={y(w.kg) - 8}
               fontSize="11"
-              fill="#15803d"
+              style={{ fill: "var(--theme-dark)" }}
               textAnchor="middle"
             >
               {w.kg}
@@ -233,22 +233,22 @@ function MonthCalendar({ loggedDays }: { loggedDays: string[] }) {
                 // အရင် solid အစိမ်းနဲ့ မှတ်ထားတဲ့နေ့ အစက်ရောင်တူပြီး
                 // ရောနေလို့ (ဒီနေ့ မှတ်ပြီးရင် အစက်ပါ မမြင်ရဘူး)။
                 today === `${year}-${mm}-${String(day).padStart(2, "0")}`
-                  ? "font-bold text-[#15803d] ring-2 ring-[#16a34a]"
+                  ? "font-bold text-[var(--theme-dark)] ring-2 ring-[var(--theme)]"
                   : ""
               }`}
             >
               {day}
               {logged.has(`${year}-${mm}-${String(day).padStart(2, "0")}`) && (
-                <span className="absolute bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#16a34a]" />
+                <span className="absolute bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[var(--theme)]" />
               )}
             </span>
           ),
         )}
       </div>
       <p className="caption mt-2 text-[#52677f]">
-        <span className="mr-1 inline-block h-2.5 w-2.5 rounded-full border-2 border-[#16a34a]" />
+        <span className="mr-1 inline-block h-2.5 w-2.5 rounded-full border-2 border-[var(--theme)]" />
         ဒီနေ့{" "}
-        <span className="ml-2 mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[#16a34a]" />
+        <span className="ml-2 mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[var(--theme)]" />
         မှတ်ထားတဲ့ ရက်
       </p>
     </div>
@@ -446,7 +446,7 @@ export default function ProgressPage() {
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center bg-white px-5 pb-24">
         <div
-          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#16a34a]"
+          className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme)]"
           aria-hidden
         />
         <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
@@ -462,7 +462,7 @@ export default function ProgressPage() {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="mt-4 rounded-xl bg-[#16a34a] px-5 py-2.5 font-semibold text-white"
+          className="mt-4 rounded-xl bg-[var(--theme)] px-5 py-2.5 font-semibold text-white"
         >
           ပြန်စမ်းမယ်
         </button>
@@ -524,7 +524,7 @@ export default function ProgressPage() {
           type="button"
           onClick={handleAddWeight}
           disabled={weightBusy}
-          className="mt-3 w-full rounded-xl bg-[#16a34a] py-2.5 font-semibold text-white disabled:opacity-50"
+          className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
         >
           {weightBusy ? "သိမ်းနေတယ်…" : "သိမ်းမယ် ✅"}
         </button>
@@ -569,7 +569,7 @@ export default function ProgressPage() {
                           type="button"
                           onClick={() => handleEditWeight(w.id)}
                           disabled={weightEditBusy}
-                          className="flex-1 rounded-lg bg-[#16a34a] py-1.5 font-semibold text-white disabled:opacity-50"
+                          className="flex-1 rounded-lg bg-[var(--theme)] py-1.5 font-semibold text-white disabled:opacity-50"
                         >
                           {weightEditBusy ? "သိမ်းနေတယ်…" : "သိမ်းမယ်"}
                         </button>
