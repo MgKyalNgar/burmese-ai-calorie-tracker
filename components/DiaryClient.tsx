@@ -4,13 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { FETCH_FALLBACK, useLang } from "@/lib/i18n";
 import {
   setCacheData,
   invalidateCachePrefix,
   useCachedData,
 } from "@/lib/useCachedData";
 import {
-  MEAL_LABELS,
   MEAL_TYPES,
   addDaysIso,
   formatDateDMY,
@@ -27,7 +27,7 @@ async function fetchDiary(date: string): Promise<DiaryData> {
   const res = await fetch(`/api/diary?date=${date}`);
   const data = await res.json();
   if (res.status === 401) return { needsLogin: true } as DiaryData;
-  if (!res.ok) throw new Error(data?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
+  if (!res.ok) throw new Error(data?.error ?? FETCH_FALLBACK);
   return data as DiaryData;
 }
 
@@ -66,6 +66,7 @@ function EditItemForm({
   onDone: (updated: MealItemRow) => void;
   onCancel: () => void;
 }) {
+  const { t } = useLang();
   const [nameMm, setNameMm] = useState(item.food_name_mm ?? "");
   const [nameEn, setNameEn] = useState(item.food_name_en ?? "");
   const [grams, setGrams] = useState(Number(item.amount ?? 100));
@@ -105,7 +106,7 @@ function EditItemForm({
 
   async function handleSave() {
     if (!nameMm.trim() && !nameEn.trim()) {
-      setMessage("အစားအစာ နာမည် ထည့်ပေးပါ။");
+      setMessage(t("review.nameRequired"));
       return;
     }
     setBusy(true);
@@ -136,10 +137,10 @@ function EditItemForm({
           user_edited: true,
         })
         .eq("id", item.id);
-      if (error) throw new Error("ပြင်လို့ မရပါ — ပြန်စမ်းပေးပါ။");
+      if (error) throw new Error(t("common.editErrorRetry"));
       onDone(updated);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "ပြင်လို့ မရပါ။");
+      setMessage(err instanceof Error ? err.message : t("common.editError"));
     } finally {
       setBusy(false);
     }
@@ -148,7 +149,7 @@ function EditItemForm({
   return (
     <div className="mt-2 rounded-xl bg-slate-50 p-3">
       <label className="block">
-        <span className="caption">အစားအစာ (မြန်မာ)</span>
+        <span className="caption">{t("diary.foodNameMy")}</span>
         <input
           type="text"
           value={nameMm}
@@ -170,7 +171,7 @@ function EditItemForm({
           type="button"
           onClick={() => changeGrams(grams - 10)}
           className="h-9 w-9 rounded-xl border bg-white font-bold"
-          aria-label="လျှော့မယ်"
+          aria-label={t("common.decrease")}
         >
           −
         </button>
@@ -186,7 +187,7 @@ function EditItemForm({
           type="button"
           onClick={() => changeGrams(grams + 10)}
           className="h-9 w-9 rounded-xl border bg-white font-bold"
-          aria-label="တိုးမယ်"
+          aria-label={t("common.increase")}
         >
           +
         </button>
@@ -224,7 +225,7 @@ function EditItemForm({
           disabled={busy}
           className="flex-1 rounded-xl border bg-white py-2 font-semibold text-[#334155] disabled:opacity-50"
         >
-          မပြင်တော့ဘူး
+          {t("common.cancel")}
         </button>
         <button
           type="button"
@@ -232,7 +233,7 @@ function EditItemForm({
           disabled={busy}
           className="flex-1 rounded-xl bg-[var(--theme)] py-2 font-semibold text-white disabled:opacity-50"
         >
-          {busy ? "သိမ်းနေတယ်…" : "သိမ်းမယ်"}
+          {busy ? t("common.saving") : t("common.save")}
         </button>
       </div>
     </div>
@@ -244,6 +245,7 @@ function sum(items: MealItemRow[], key: "calories" | "protein" | "carbs" | "fat"
 }
 
 export default function DiaryClient() {
+  const { t } = useLang();
   const router = useRouter();
   // ကြည့်နေတဲ့ ရက် — ဒီနေ့က စတယ်၊ ‹ › နဲ့ ရွှေ့လို့ရတယ် (အနာဂတ်ကို မရဘူး)။
   const [date, setDate] = useState(todayYangon());
@@ -332,7 +334,7 @@ export default function DiaryClient() {
         .from("meal_items")
         .delete()
         .eq("id", item.id);
-      if (error) throw new Error("ဖျက်လို့ မရပါ — ပြန်စမ်းပေးပါ။");
+      if (error) throw new Error(t("common.deleteErrorRetry"));
       const meal = meals.find((m) => m.id === item.meal_id);
       const remaining = (meal?.meal_items ?? []).filter((i) => i.id !== item.id);
       if (meal && remaining.length === 0) {
@@ -363,7 +365,7 @@ export default function DiaryClient() {
       setDeletingId(null);
       router.refresh();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "ဖျက်လို့ မရပါ။");
+      setMessage(err instanceof Error ? err.message : t("common.deleteError"));
     } finally {
       setBusyId(null);
     }
@@ -381,7 +383,7 @@ export default function DiaryClient() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        setMessage("Login အရင် ဝင်ပေးပါ။");
+        setMessage(t("common.loginFirst"));
         return;
       }
       const { data: newMeal, error: mealError } = await supabase
@@ -400,7 +402,7 @@ export default function DiaryClient() {
         })
         .select("id")
         .single();
-      if (mealError || !newMeal) throw new Error("ထပ်ထည့်လို့ မရပါ။");
+      if (mealError || !newMeal) throw new Error(t("common.repeatError"));
       const { data: newItem, error: itemError } = await supabase
         .from("meal_items")
         .insert({
@@ -421,7 +423,7 @@ export default function DiaryClient() {
         .single();
       if (itemError || !newItem) {
         await supabase.from("meals").delete().eq("id", newMeal.id);
-        throw new Error("ထပ်ထည့်လို့ မရပါ။");
+        throw new Error(t("common.repeatError"));
       }
       // ဒီနေ့ Diary + Home cache ကို ဖျက်တယ် — နောက်တစ်ခါ ဖွင့်ရင် အသစ် ပြမယ်။
       invalidateCachePrefix("diary-");
@@ -445,11 +447,11 @@ export default function DiaryClient() {
         setMeals(newMeals);
         setCacheData(key, { date, meals: newMeals });
       } else {
-        setMessage("ဒီနေ့ ထပ်ထည့်ပြီးပြီ ✅ — Home မှာ ကြည့်လို့ရပြီ");
+        setMessage(t("diary.repeatedToday"));
       }
       router.refresh();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "ထပ်ထည့်လို့ မရပါ။");
+      setMessage(err instanceof Error ? err.message : t("common.repeatError"));
     } finally {
       setBusyId(null);
     }
@@ -469,7 +471,7 @@ export default function DiaryClient() {
           className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme)]"
           aria-hidden
         />
-        <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
+        <p className="mt-4 text-[#52677f]">{t("common.loading")}</p>
       </div>
     );
   }
@@ -481,24 +483,26 @@ export default function DiaryClient() {
         <button
           type="button"
           onClick={() => setDate(addDaysIso(date, -1))}
-          aria-label="မနေ့က"
+          aria-label={t("diary.prevDay")}
           className="h-10 w-10 rounded-xl border text-xl font-bold text-[#334155]"
         >
           ‹
         </button>
         <div className="text-center">
           <p className="font-semibold">
-            {isToday ? `ဒီနေ့ · ${formatDateDMY(date)}` : formatDateDMY(date)}
+            {isToday
+              ? t("diary.todayLabel", { date: formatDateDMY(date) })
+              : formatDateDMY(date)}
           </p>
           {!isToday && (
             <p className="caption">
-              {isYesterday ? "မနေ့က · " : ""}
+              {isYesterday ? t("diary.yesterdayPrefix") : ""}
               <button
                 type="button"
                 onClick={() => setDate(today)}
                 className="font-semibold text-[var(--theme-dark)] underline"
               >
-                ဒီနေ့ကို ပြန်သွားမယ်
+                {t("diary.backToToday")}
               </button>
             </p>
           )}
@@ -507,7 +511,7 @@ export default function DiaryClient() {
           type="button"
           onClick={() => setDate(addDaysIso(date, 1))}
           disabled={isToday}
-          aria-label="နောက်နေ့"
+          aria-label={t("diary.nextDay")}
           className="h-10 w-10 rounded-xl border text-xl font-bold text-[#334155] disabled:opacity-30"
         >
           ›
@@ -516,7 +520,9 @@ export default function DiaryClient() {
 
       <section className="mt-4 rounded-2xl bg-white shadow-sm p-5 text-center">
         <p className="caption">
-          {isToday ? "ဒီနေ့ စုစုပေါင်း" : `${formatDateDMY(date)} စုစုပေါင်း`}
+          {isToday
+            ? t("diary.todayTotal")
+            : t("diary.dateTotal", { date: formatDateDMY(date) })}
         </p>
         <p className="hero-num text-[var(--theme-dark)]">{dayCal.toLocaleString()}</p>
         <p className="caption">
@@ -528,32 +534,34 @@ export default function DiaryClient() {
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{message}</p>
       )}
       {error && meals.length === 0 && (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">
+          {error === FETCH_FALLBACK ? t("common.loadError") : error}
+        </p>
       )}
 
       {meals.length === 0 ? (
         <div className="mt-6 rounded-2xl bg-white shadow-sm p-5 text-center">
           <p className="text-[#52677f]">
             {isToday
-              ? "ဒီနေ့ ဘာမှ မမှတ်ရသေးဘူး။"
-              : `${formatDateDMY(date)} မှာ ဘာမှ မမှတ်ရသေးဘူး။`}
+              ? t("diary.emptyToday")
+              : t("diary.emptyDate", { date: formatDateDMY(date) })}
           </p>
           <Link
             href="/add"
             className="mt-3 inline-block rounded-xl bg-[var(--theme)] px-5 py-2.5 font-semibold text-white"
           >
-            + အစားအစာ ထည့်မယ်
+            {t("common.addFood")}
           </Link>
         </div>
       ) : (
-        MEAL_TYPES.map(({ value, label }) => {
+        MEAL_TYPES.map(({ value }) => {
           const group = meals.filter((m) => m.meal_type === value);
           if (group.length === 0) return null;
           const items = group.flatMap((m) => m.meal_items);
           return (
             <section key={value} className="mt-4 rounded-2xl bg-white shadow-sm p-5">
               <div className="flex items-baseline justify-between">
-                <h2>{label}</h2>
+                <h2>{t(`meal.${value}`)}</h2>
                 <span className="caption">
                   {Math.round(sum(items, "calories"))} kcal
                 </span>
@@ -571,7 +579,9 @@ export default function DiaryClient() {
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold">
-                            {item.food_name_mm ?? item.food_name_en ?? "အစားအစာ"}
+                            {item.food_name_mm ??
+                              item.food_name_en ??
+                              t("diary.unnamedFood")}
                           </p>
                           {item.food_name_en && item.food_name_mm && (
                             <p className="caption">{item.food_name_en}</p>
@@ -599,7 +609,7 @@ export default function DiaryClient() {
                             onClick={() => setEditingId(item.id)}
                             className="flex-1 rounded-lg border bg-white px-2 py-1.5"
                           >
-                            ✏️ ပြင်မယ်
+                            {t("diary.editFood")}
                           </button>
                           <button
                             type="button"
@@ -607,7 +617,7 @@ export default function DiaryClient() {
                             disabled={busyId === item.id}
                             className="flex-1 rounded-lg border bg-white px-2 py-1.5 disabled:opacity-50"
                           >
-                            🔁 ထပ်ထည့်မယ်
+                            {t("diary.repeat")}
                           </button>
                           <button
                             type="button"
@@ -615,21 +625,21 @@ export default function DiaryClient() {
                             disabled={busyId === item.id}
                             className="flex-1 rounded-lg border border-red-300 bg-white px-2 py-1.5 text-red-600 disabled:opacity-50"
                           >
-                            🗑️ ဖျက်မယ်
+                            {t("diary.delete")}
                           </button>
                         </div>
                       )}
 
                       {deletingId === item.id && (
                         <div className="mt-2 rounded-xl border border-red-300 bg-red-50 p-3">
-                          <p>ဒီမှတ်တမ်းကို ဖျက်မှာလား?</p>
+                          <p>{t("diary.deleteConfirm")}</p>
                           <div className="mt-2 flex gap-2">
                             <button
                               type="button"
                               onClick={() => setDeletingId(null)}
                               className="flex-1 rounded-lg border bg-white py-1.5"
                             >
-                              မဖျက်ဘူး
+                              {t("common.dontDelete")}
                             </button>
                             <button
                               type="button"
@@ -637,7 +647,7 @@ export default function DiaryClient() {
                               disabled={busyId === item.id}
                               className="flex-1 rounded-lg bg-red-600 py-1.5 font-semibold text-white disabled:opacity-50"
                             >
-                              {busyId === item.id ? "ဖျက်နေတယ်…" : "ဖျက်မယ်"}
+                              {busyId === item.id ? t("common.deleting") : t("common.delete")}
                             </button>
                           </div>
                         </div>

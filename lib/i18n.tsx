@@ -1,0 +1,670 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+
+export type Lang = "my" | "en";
+
+// UI စာသားအားလုံး — မြန်မာ (my) + အင်္ဂလိပ် (en)။
+// Key မရှိတဲ့ ဘာသာမှာ မြန်မာစာကို fallback အဖြစ် ပြတယ်။
+export const STRINGS: Record<Lang, Record<string, string>> = {
+  my: {
+    "common.loading": "ခနစောင့်ပါ…",
+    "common.refreshing": "အသစ်ဆွဲနေတယ်…",
+    "common.retry": "ပြန်စမ်းမယ်",
+    "common.loadError": "ဒေတာ ဆွဲလို့ မရပါ။",
+    "common.saveError": "သိမ်းလို့ မရပါ။",
+    "common.saveErrorRetry": "သိမ်းလို့ မရပါ — ပြန်စမ်းပေးပါ။",
+    "common.editError": "ပြင်လို့ မရပါ။",
+    "common.editErrorRetry": "ပြင်လို့ မရပါ — ပြန်စမ်းပေးပါ။",
+    "common.deleteError": "ဖျက်လို့ မရပါ။",
+    "common.deleteErrorRetry": "ဖျက်လို့ မရပါ — ပြန်စမ်းပေးပါ။",
+    "common.logError": "မှတ်လို့ မရပါ။",
+    "common.repeatError": "ထပ်ထည့်လို့ မရပါ။",
+    "common.loginFirst": "Login အရင် ဝင်ပေးပါ။",
+    "common.saving": "သိမ်းနေတယ်…",
+    "common.save": "သိမ်းမယ်",
+    "common.cancel": "မပြင်တော့ဘူး",
+    "common.delete": "ဖျက်မယ်",
+    "common.deleting": "ဖျက်နေတယ်…",
+    "common.edit": "ပြင်မယ်",
+    "common.dontDelete": "မဖျက်ဘူး",
+    "common.decrease": "လျှော့မယ်",
+    "common.increase": "တိုးမယ်",
+    "common.today": "ဒီနေ့",
+    "common.addFood": "+ အစားအစာ ထည့်မယ်",
+
+    "meal.breakfast": "မနက်စာ",
+    "meal.lunch": "နေ့လည်စာ",
+    "meal.dinner": "ညစာ",
+    "meal.snack": "အဆာပြေ",
+
+    "weekday.sun": "နွေ",
+    "weekday.mon": "လာ",
+    "weekday.tue": "ဂါ",
+    "weekday.wed": "ဟူး",
+    "weekday.thu": "ကြာ",
+    "weekday.fri": "သော",
+    "weekday.sat": "နေ",
+    "month.1": "ဇန်နဝါရီ",
+    "month.2": "ဖေဖော်ဝါရီ",
+    "month.3": "မတ်",
+    "month.4": "ဧပြီ",
+    "month.5": "မေ",
+    "month.6": "ဇွန်",
+    "month.7": "ဇူလိုင်",
+    "month.8": "သြဂုတ်",
+    "month.9": "စက်တင်ဘာ",
+    "month.10": "အောက်တိုဘာ",
+    "month.11": "နိုဝင်ဘာ",
+    "month.12": "ဒီဇင်ဘာ",
+
+    "home.greeting": "မင်္ဂလာပါ{name} 👋",
+    "home.todayStreak": "ဒီနေ့ {date} · 🔥 Streak {streak} ရက်",
+    "home.streakNote": "Streak ဆိုတာ အစာမှတ်တဲ့ ရက် ဆက်တိုက်ပါ",
+    "home.remaining": "ကျန်တာ",
+    "home.eatenTarget": "စားပြီး {eaten} · Target {target}",
+    "home.water": "💧 ရေ",
+    "home.cups": "ခွက်",
+    "home.weight": "⚖️ ဝိတ်",
+    "home.todayMeals": "ဒီနေ့ စားပြီးသား",
+    "home.emptyMeals": "ဒီနေ့ ဘာမှ မမှတ်ရသေးဘူး။",
+    "home.addFood": "+ ထည့်မယ်",
+
+    "add.title": "+ အစားအစာ ထည့်မယ်",
+    "add.tabPhoto": "📷 ဓာတ်ပုံ",
+    "add.tabText": "✍️ စာရိုက်",
+    "add.tabSearch": "🔍 ရှာဖွေ",
+    "add.tabManual": "📝 လက်နဲ့",
+    "add.manualNote":
+      "AI မသုံးဘဲ ကိုယ်တိုင် ဖြည့်မယ် — နာမည်၊ ဂရမ်၊ ကယ်လိုရီနဲ့ macro ကို ရိုက်ထည့်ပြီး သိမ်းလို့ရတယ်။",
+    "add.photoTitle": "ဓာတ်ပုံနဲ့ ထည့်မယ်",
+    "add.photoNote":
+      "ပုံရိုက်လိုက် — AI က အစားအစာကို ခွဲပြီး ကယ်လိုရီ ခန့်မှန်းပေးမယ်။",
+    "add.photoAlt": "ရွေးထားတဲ့ ဓာတ်ပုံ",
+    "add.photoRemove": "ဓာတ်ပုံ ဖျက်မယ်",
+    "add.camera": "📷 ကင်မရာ",
+    "add.hintLabel": "မှတ်ချက် (မဖြစ်မနေ မဟုတ်ပါ)",
+    "add.hintPlaceholder": "ဥပမာ: မုန့်ဟင်းခါး၊ ငါးနဲ့",
+    "add.analyzing": "AI စစ်နေတယ်…",
+    "add.analyze": "🤖 AI နဲ့ စစ်မယ်",
+    "add.textTitle": "စာရိုက်ပြီး ထည့်မယ်",
+    "add.textNote": "ဘာစားခဲ့လဲ ရိုက်ထည့်လိုက် — AI က ကယ်လိုရီ ခန့်မှန်းပေးမယ်။",
+    "add.textPlaceholder": "ဥပမာ: မုန့်ဟင်းခါး တစ်ပွဲ၊ ကြက်ဥ တစ်လုံး",
+    "add.searchTitle": "ရှာဖွေပြီး ထည့်မယ်",
+    "add.searchNote":
+      "သိမ်းထားတဲ့ အစားအစာ စာရင်းထဲက ရှာတယ် — AI မသုံးဘူး၊ မြန်တယ်။",
+    "add.searchPlaceholder": "ဥပမာ: မုန့်ဟင်းခါး / rice",
+    "add.searching": "ရှာနေတယ်…",
+    "add.notFound": "မတွေ့ပါ — ဓာတ်ပုံ (သို့) စာရိုက်ပြီး ထည့်ကြည့်ပါ။",
+    "add.amount": "ပမာဏ (ဂရမ်)",
+    "add.reviewSave": "စစ်ဆေးပြီး သိမ်းမယ် →",
+    "add.noKeyLink": "Profile မှာ Gemini key ထည့်မယ် →",
+    "add.notImage": "ဓာတ်ပုံဖိုင် မဟုတ်ပါ — ပုံပဲ ရွေးပေးပါ။",
+    "add.tooBig": "ဓာတ်ပုံ အရမ်းကြီးနေတယ် — 5MB အောက် ပုံပဲ သုံးပေးပါ။",
+    "add.pickPhotoFirst": "ဓာတ်ပုံ အရင် ရွေးပေးပါ။",
+    "add.analyzeError": "AI စစ်လို့ မရပါ။",
+    "add.typeFirst": "ဘာစားခဲ့လဲ ဆိုတာ အရင် ရိုက်ပေးပါ။",
+
+    "review.title": "စစ်ဆေးပြီး သိမ်းမယ်",
+    "review.foodNameMy": "အစားအစာ (မြန်မာ)",
+    "review.amount": "ပမာဏ (ဂရမ်)",
+    "review.calories": "ကယ်လိုရီ (kcal)",
+    "review.whichMeal": "ဘယ်အစာ အမျိုးအစားလဲ?",
+    "review.back": "ပြန်ပြင်မယ်",
+    "review.save": "သိမ်းမယ် ✅",
+    "review.nameRequired": "အစားအစာ နာမည် ထည့်ပေးပါ။",
+
+    "diary.todayLabel": "ဒီနေ့ · {date}",
+    "diary.yesterdayPrefix": "မနေ့က · ",
+    "diary.backToToday": "ဒီနေ့ကို ပြန်သွားမယ်",
+    "diary.prevDay": "မနေ့က",
+    "diary.nextDay": "နောက်နေ့",
+    "diary.todayTotal": "ဒီနေ့ စုစုပေါင်း",
+    "diary.dateTotal": "{date} စုစုပေါင်း",
+    "diary.emptyToday": "ဒီနေ့ ဘာမှ မမှတ်ရသေးဘူး။",
+    "diary.emptyDate": "{date} မှာ ဘာမှ မမှတ်ရသေးဘူး။",
+    "diary.unnamedFood": "အစားအစာ",
+    "diary.editFood": "✏️ ပြင်မယ်",
+    "diary.repeat": "🔁 ထပ်ထည့်မယ်",
+    "diary.delete": "🗑️ ဖျက်မယ်",
+    "diary.deleteConfirm": "ဒီမှတ်တမ်းကို ဖျက်မှာလား?",
+    "diary.repeatedToday": "ဒီနေ့ ထပ်ထည့်ပြီးပြီ ✅ — Home မှာ ကြည့်လို့ရပြီ",
+    "diary.foodNameMy": "အစားအစာ (မြန်မာ)",
+
+    "progress.subtitle": "ဒီအပတ် ဘယ်လို သွားလဲ ကြည့်မယ်",
+    "progress.weekCalories": "ဒီအပတ် ကယ်လိုရီ",
+    "progress.legendOver": "Target {target} kcal · လိမ္မော်ရောင် = target ကျော်တယ်",
+    "progress.emptyWeek": "ဒီအပတ် ဘာမှ မမှတ်ရသေးဘူး။",
+    "progress.weightTrend": "ဝိတ် trend",
+    "progress.weightChartLabel": "ဝိတ် trend chart",
+    "progress.noWeight": "ဝိတ် မမှတ်ရသေးဘူး — အောက်က form နဲ့ ထည့်ပေးပါ။",
+    "progress.weightCount": "{count} ခု မှတ်ထားတယ် · {from} → {to}",
+    "progress.weightLabel": "ဝိတ် (kg)",
+    "progress.dateLabel": "ရက်စွဲ",
+    "progress.saveWeight": "သိမ်းမယ် ✅",
+    "progress.weightSaved": "ဝိတ် သိမ်းပြီးပြီ ✅",
+    "progress.weightUpdated": "ဝိတ် ပြင်ပြီးပြီ ✅",
+    "progress.weightDeleted": "ဝိတ် ဖျက်ပြီးပြီ ✅",
+    "progress.weightRange": "ဝိတ် ၂၀ မှ ၃၀၀ kg အတွင်း ထည့်ပေးပါ။",
+    "progress.weightHistory": "ဝိတ် မှတ်တမ်း",
+    "progress.editWeight": "✏️ ပြင်မယ်",
+    "progress.deleteWeight": "🗑️ ဖျက်မယ်",
+    "progress.deleteWeightConfirm": "{date} ရဲ့ {kg} kg မှတ်တမ်းကို ဖျက်မှာလား?",
+    "progress.calendar": "မှတ်တမ်း ပြက္ခဒိန်",
+    "progress.todayLegend": "ဒီနေ့",
+    "progress.loggedDayLegend": "မှတ်ထားတဲ့ ရက်",
+    "progress.waterTitle": "💧 ရေ — ဒီအပတ်",
+    "progress.todayCups": "ဒီနေ့ {cups} / {goal} ခွက်",
+    "progress.goalLabel": "ပန်းတိုင်",
+    "progress.goalDecrease": "ပန်းတိုင် လျှော့မယ်",
+    "progress.goalIncrease": "ပန်းတိုင် တိုးမယ်",
+    "progress.cupsUnit": "{goal} ခွက်",
+    "progress.waterDateLabel": "မှတ်မယ့် ရက် (အတိတ်နေ့လည်း ရတယ်)",
+    "progress.addCup": "+1 ခွက် 💧",
+    "progress.undoCup": "−1 ခွက် ↩️",
+    "progress.loggingWater": "မှတ်နေတယ်…",
+    "progress.waterLogged": "ရေမှတ်ပြီးပြီ ✅ {label} စုစုပေါင်း {cups} ခွက်",
+    "progress.waterUndone":
+      "၁ ခွက် ပြန်ဖျက်ပြီးပြီ ✅ {label} စုစုပေါင်း {cups} ခွက်",
+    "progress.goalSet": "ပန်းတိုင် {goal} ခွက် ထားပြီးပြီ ✅",
+
+    "profile.myInfo": "ကိုယ့်အချက်အလက်",
+    "profile.name": "နာမည်",
+    "profile.gender": "ကျား / မ",
+    "profile.male": "ကျား",
+    "profile.female": "မ",
+    "profile.age": "အသက်",
+    "profile.height": "အရပ်",
+    "profile.weight": "ဝိတ်",
+    "profile.goal": "ပန်းတိုင်",
+    "profile.goalLose": "ဝိတ်ချမယ်",
+    "profile.goalMaintain": "ထိန်းမယ်",
+    "profile.goalGain": "ဝိတ်တက်မယ်",
+    "profile.dailyTarget": "တစ်နေ့တာ target",
+    "profile.noProfile": "Profile မရှိသေးဘူး — Onboarding ဖြည့်ပေးပါ။",
+    "profile.editTarget": "Target ပြင်မယ်",
+    "profile.targetRange": "၈၀၀ မှ ၆,၀၀၀ kcal အထိ ထားလို့ ရပါတယ်။",
+    "profile.targetSaved": "✅ Target သိမ်းပြီးပါပြီ။",
+    "profile.targetNote": "Onboarding ပြန်ဖြည့်ရင် target အသစ် auto တွက်ပေးမယ်။",
+    "profile.editProfile": "Profile ပြင်မယ်",
+    "profile.targetPlaceholder": "ဥပမာ 2000",
+
+    "theme.title": "App အရောင်",
+    "theme.green": "အစိမ်း",
+    "theme.purple": "ခရမ်း",
+    "theme.red": "အနီ",
+
+    "lang.title": "ဘာသာစကား",
+
+    "auth.tagline": "မြန်မာအစားအစာ ပုံရိုက်လိုက်၊ ကယ်လိုရီသိလိုက်",
+    "auth.email": "အီးမေးလ်",
+    "auth.password": "စကားဝှက်",
+    "auth.passwordMin": "စကားဝှက် (အနည်းဆုံး ၆ လုံး)",
+    "auth.signingIn": "ဝင်နေပါတယ်…",
+    "auth.signIn": "ဝင်မယ်",
+    "auth.googleSignIn": "Google နဲ့ ဝင်မယ်",
+    "auth.noAccount": "အကောင့် မရှိသေးဘူးလား?",
+    "auth.createAccount": "အကောင့် ဖွင့်မယ်",
+    "auth.hasAccount": "အကောင့် ရှိပြီးသားလား?",
+    "auth.loginLink": "Login ဝင်မယ်",
+    "auth.signupTitle": "အကောင့် ဖွင့်မယ်",
+    "auth.signupSubtitle": "အီးမေးလ်နဲ့ စကားဝှက် ထည့်ပြီး အကောင့် ဖွင့်ပါ။",
+    "auth.creating": "ဖွင့်နေပါတယ်…",
+    "auth.passwordShort": "စကားဝှက်က အနည်းဆုံး ၆ လုံး ရှိရမယ်။",
+    "auth.alreadyRegistered":
+      "ဒီအီးမေးလ်နဲ့ အကောင့် ရှိပြီးသားပါ — login ဝင်ကြည့်ပါ။",
+    "auth.signupDone":
+      "အကောင့် ဖွင့်ပြီးပြီ ✅ အီးမေးလ်ထဲက အတည်ပြုလင့်ခ်ကို နှိပ်ပြီး login ဝင်ပေးပါ။",
+    "auth.invalidCredentials": "အီးမေးလ် (သို့) စကားဝှက် မှားနေပါတယ်။",
+    "auth.emailNotConfirmed":
+      "အီးမေးလ်ကို အရင် အတည်ပြုပေးပါ — inbox ထဲက link ကို နှိပ်ပါ။",
+    "auth.tooManyRequests": "ခဏစောင့်ပြီး ပြန်ကြိုးစားပေးပါ။",
+
+    "onboarding.loading": "ဖွင့်နေပါတယ်…",
+    "onboarding.title": "ကိုယ့်အကြောင်း ပြောပြပါ",
+    "onboarding.subtitle": "တစ်နေ့တာ ကယ်လိုရီ target ကို တွက်ပေးဖို့ လိုပါတယ်။",
+    "onboarding.name": "နာမည် (မထည့်လဲ ရတယ်)",
+    "onboarding.namePlaceholder": "ဥပမာ — ကိုကြယ်ငါး",
+    "onboarding.gender": "ကျား / မ",
+    "onboarding.female": "မ",
+    "onboarding.male": "ကျား",
+    "onboarding.age": "အသက်",
+    "onboarding.height": "အရပ် (cm)",
+    "onboarding.weight": "ဝိတ် (kg)",
+    "onboarding.goal": "ပန်းတိုင်",
+    "onboarding.goalLose": "ဝိတ်ချမယ်",
+    "onboarding.goalMaintain": "ထိန်းမယ်",
+    "onboarding.goalGain": "ဝိတ်တက်မယ်",
+    "onboarding.activity": "တစ်နေ့တာ လှုပ်ရှားမှု",
+    "onboarding.actSedentary": "ထိုင်များတယ် (လှုပ်ရှားမှု နည်းတယ်)",
+    "onboarding.actLight": "ပေါ့ပေါ့ပါးပါး လှုပ်ရှားတယ်",
+    "onboarding.actModerate": "အလယ်အလတ် လှုပ်ရှားတယ်",
+    "onboarding.actActive": "များများ လှုပ်ရှားတယ်",
+    "onboarding.targetLabel": "တစ်နေ့တာ ကယ်လိုရီ target",
+    "onboarding.invalid": "အသက်၊ အရပ်၊ ဝိတ် မှန်မှန်ကန်ကန် ထည့်ပေးပါ။",
+    "onboarding.saving": "သိမ်းနေပါတယ်…",
+    "onboarding.save": "သိမ်းပြီး စမယ်",
+    "onboarding.saveFailed": "သိမ်းလို့ မရပါ — ",
+
+    "apiKey.statusError": "Key အခြေအနေ စစ်လို့ မရပါ။",
+    "apiKey.serverError": "Server ကို ဆက်သွယ်လို့ မရပါ။",
+    "apiKey.enterFirst": "API key ကို အရင် ထည့်ပေးပါ။",
+    "apiKey.saved": "API key သိမ်းပြီးပြီ ✅",
+    "apiKey.testError": "စမ်းလို့ မရပါ။",
+    "apiKey.works": "Key အလုပ်လုပ်ပါတယ် ✅ ({reply})",
+    "apiKey.worksSave":
+      "Key အလုပ်လုပ်ပါတယ် ✅ ({reply}) — သိမ်းမယ် နှိပ်ပြီး သိမ်းလို့ရပြီ",
+    "apiKey.confirmDelete": "API key ကို ဖျက်မှာလား?",
+    "apiKey.deleted": "API key ဖျက်ပြီးပြီ။",
+    "apiKey.intro":
+      "ကိုယ့် Gemini API key ကို ထည့်ပါ — server မှာပဲ encrypted သိမ်းတယ်၊ ဘယ်သူမှ မြင်လို့ မရဘူး။",
+    "apiKey.configured": "Key ရှိပြီးသား: {hint}",
+    "apiKey.lastTested": "နောက်ဆုံး စမ်းတာ:",
+    "apiKey.notConfigured": "API key မထည့်ရသေးဘူး။",
+    "apiKey.newKey": "API key အသစ်",
+    "apiKey.test": "စမ်းမယ်",
+    "apiKey.getKeyPrefix": "Key ထုတ်ဖို့:",
+    "apiKey.getKeySuffix": "မှာ Create API key နှိပ်ပါ။",
+
+    "reminder.unsupported": "ဒီ browser က push notification မထောက်ပံ့ဘူး။",
+    "reminder.noVapid": "VAPID key မရှိသေးဘူး — Vercel env စစ်ပေးပါ။",
+    "reminder.denied":
+      "Browser setting မှာ notification ပိတ်ထားတယ် — browser setting ကနေ ဖွင့်ပေးပါ။",
+    "reminder.notGranted": "Notification ခွင့်မပေးလို့ Reminder ဖွင့်လို့ မရဘူး။",
+    "reminder.enabled": "Reminder ဖွင့်ပြီးပြီ ✅ ထမင်းချိန်ရောက်ရင် သတိပေးမယ်",
+    "reminder.enableError": "Reminder ဖွင့်လို့ မရပါ။",
+    "reminder.disabled": "Reminder ပိတ်ပြီးပြီ",
+    "reminder.disableError": "Reminder ပိတ်လို့ မရပါ။",
+    "reminder.timesSaved": "သတိပေးချိန် သိမ်းပြီးပြီ ✅",
+    "reminder.intro":
+      "ထမင်းချိန်ရောက်ပြီး မမှတ်ရသေးရင် သတိပေးမယ် — ညနေ မမှတ်ရသေးရင်လည်း သတိပေးတယ်။",
+    "reminder.disable": "Reminder ပိတ်မယ်",
+    "reminder.disabling": "ပိတ်နေတယ်…",
+    "reminder.enable": "Reminder ဖွင့်မယ် 🔔",
+    "reminder.enabling": "ဖွင့်နေတယ်…",
+    "reminder.breakfastTime": "မနက်စာ သတိပေးချိန်",
+    "reminder.lunchTime": "နေ့လည်စာ သတိပေးချိန်",
+    "reminder.dinnerTime": "ညစာ သတိပေးချိန်",
+    "reminder.eveningTime": "ညနေ သတိပေးချိန် (မမှတ်ရသေးရင်)",
+
+    "bell.close": "ပိတ်မယ်",
+    "bell.title": "သတိပေးချက်များ",
+    "bell.empty": "သတိပေးစာ မရှိသေးဘူး 🔔",
+    "bell.loadError": "Noti ဆွဲလို့ မရပါ။",
+    "bell.readError": "ဖတ်ပြီးသား မှတ်လို့ မရပါ။",
+
+    "logout.signingOut": "ထွက်နေပါတယ်…",
+    "logout.signOut": "အကောင့်ကနေ ထွက်မယ်",
+  },
+  en: {
+    "common.loading": "Please wait…",
+    "common.refreshing": "Refreshing…",
+    "common.retry": "Try again",
+    "common.loadError": "Couldn't load the data.",
+    "common.saveError": "Couldn't save.",
+    "common.saveErrorRetry": "Couldn't save — please try again.",
+    "common.editError": "Couldn't update.",
+    "common.editErrorRetry": "Couldn't update — please try again.",
+    "common.deleteError": "Couldn't delete.",
+    "common.deleteErrorRetry": "Couldn't delete — please try again.",
+    "common.logError": "Couldn't log it.",
+    "common.repeatError": "Couldn't add it again.",
+    "common.loginFirst": "Please log in first.",
+    "common.saving": "Saving…",
+    "common.save": "Save",
+    "common.cancel": "Cancel",
+    "common.delete": "Delete",
+    "common.deleting": "Deleting…",
+    "common.edit": "Edit",
+    "common.dontDelete": "Don't delete",
+    "common.decrease": "Decrease",
+    "common.increase": "Increase",
+    "common.today": "Today",
+    "common.addFood": "+ Add food",
+
+    "meal.breakfast": "Breakfast",
+    "meal.lunch": "Lunch",
+    "meal.dinner": "Dinner",
+    "meal.snack": "Snack",
+
+    "weekday.sun": "Sun",
+    "weekday.mon": "Mon",
+    "weekday.tue": "Tue",
+    "weekday.wed": "Wed",
+    "weekday.thu": "Thu",
+    "weekday.fri": "Fri",
+    "weekday.sat": "Sat",
+    "month.1": "January",
+    "month.2": "February",
+    "month.3": "March",
+    "month.4": "April",
+    "month.5": "May",
+    "month.6": "June",
+    "month.7": "July",
+    "month.8": "August",
+    "month.9": "September",
+    "month.10": "October",
+    "month.11": "November",
+    "month.12": "December",
+
+    "home.greeting": "Hello{name} 👋",
+    "home.todayStreak": "Today {date} · 🔥 {streak}-day streak",
+    "home.streakNote": "A streak counts consecutive days you log meals",
+    "home.remaining": "Left",
+    "home.eatenTarget": "Eaten {eaten} · Target {target}",
+    "home.water": "💧 Water",
+    "home.cups": "cups",
+    "home.weight": "⚖️ Weight",
+    "home.todayMeals": "Today's meals",
+    "home.emptyMeals": "Nothing logged today yet.",
+    "home.addFood": "+ Add",
+
+    "add.title": "+ Add food",
+    "add.tabPhoto": "📷 Photo",
+    "add.tabText": "✍️ Text",
+    "add.tabSearch": "🔍 Search",
+    "add.tabManual": "📝 Manual",
+    "add.manualNote":
+      "Fill it in yourself without AI — type the name, grams, calories and macros, then save.",
+    "add.photoTitle": "Add with a photo",
+    "add.photoNote":
+      "Take a photo — AI will identify the food and estimate the calories.",
+    "add.photoAlt": "Selected photo",
+    "add.photoRemove": "Remove photo",
+    "add.camera": "📷 Camera",
+    "add.hintLabel": "Note (optional)",
+    "add.hintPlaceholder": "e.g. mohinga, with fish",
+    "add.analyzing": "AI is checking…",
+    "add.analyze": "🤖 Check with AI",
+    "add.textTitle": "Add by typing",
+    "add.textNote": "Type what you ate — AI will estimate the calories.",
+    "add.textPlaceholder": "e.g. one bowl of mohinga, one egg",
+    "add.searchTitle": "Add from the food list",
+    "add.searchNote": "Search the saved food list — no AI, fast.",
+    "add.searchPlaceholder": "e.g. mohinga / rice",
+    "add.searching": "Searching…",
+    "add.notFound": "Not found — try a photo or typing instead.",
+    "add.amount": "Amount (grams)",
+    "add.reviewSave": "Review and save →",
+    "add.noKeyLink": "Add your Gemini key in Profile →",
+    "add.notImage": "That's not an image file — please pick a photo.",
+    "add.tooBig": "Photo is too large — please use a photo under 5MB.",
+    "add.pickPhotoFirst": "Please pick a photo first.",
+    "add.analyzeError": "AI couldn't check it.",
+    "add.typeFirst": "Please type what you ate first.",
+
+    "review.title": "Review and save",
+    "review.foodNameMy": "Food name (Myanmar)",
+    "review.amount": "Amount (grams)",
+    "review.calories": "Calories (kcal)",
+    "review.whichMeal": "Which meal is this?",
+    "review.back": "Go back",
+    "review.save": "Save ✅",
+    "review.nameRequired": "Please enter the food name.",
+
+    "diary.todayLabel": "Today · {date}",
+    "diary.yesterdayPrefix": "Yesterday · ",
+    "diary.backToToday": "Back to today",
+    "diary.prevDay": "Previous day",
+    "diary.nextDay": "Next day",
+    "diary.todayTotal": "Today's total",
+    "diary.dateTotal": "{date} total",
+    "diary.emptyToday": "Nothing logged today yet.",
+    "diary.emptyDate": "Nothing logged on {date}.",
+    "diary.unnamedFood": "Food",
+    "diary.editFood": "✏️ Edit",
+    "diary.repeat": "🔁 Add again",
+    "diary.delete": "🗑️ Delete",
+    "diary.deleteConfirm": "Delete this entry?",
+    "diary.repeatedToday": "Added again for today ✅ — see it on Home",
+    "diary.foodNameMy": "Food name (Myanmar)",
+
+    "progress.subtitle": "See how this week is going",
+    "progress.weekCalories": "This week's calories",
+    "progress.legendOver": "Target {target} kcal · Orange = over target",
+    "progress.emptyWeek": "Nothing logged this week yet.",
+    "progress.weightTrend": "Weight trend",
+    "progress.weightChartLabel": "Weight trend chart",
+    "progress.noWeight": "No weight logged yet — add one with the form below.",
+    "progress.weightCount": "{count} entries · {from} → {to}",
+    "progress.weightLabel": "Weight (kg)",
+    "progress.dateLabel": "Date",
+    "progress.saveWeight": "Save ✅",
+    "progress.weightSaved": "Weight saved ✅",
+    "progress.weightUpdated": "Weight updated ✅",
+    "progress.weightDeleted": "Weight deleted ✅",
+    "progress.weightRange": "Please enter a weight between 20 and 300 kg.",
+    "progress.weightHistory": "Weight history",
+    "progress.editWeight": "✏️ Edit",
+    "progress.deleteWeight": "🗑️ Delete",
+    "progress.deleteWeightConfirm": "Delete the {kg} kg entry from {date}?",
+    "progress.calendar": "Log calendar",
+    "progress.todayLegend": "Today",
+    "progress.loggedDayLegend": "Logged day",
+    "progress.waterTitle": "💧 Water — this week",
+    "progress.todayCups": "Today {cups} / {goal} cups",
+    "progress.goalLabel": "Goal",
+    "progress.goalDecrease": "Decrease goal",
+    "progress.goalIncrease": "Increase goal",
+    "progress.cupsUnit": "{goal} cups",
+    "progress.waterDateLabel": "Date to log (past days work too)",
+    "progress.addCup": "+1 cup 💧",
+    "progress.undoCup": "−1 cup ↩️",
+    "progress.loggingWater": "Logging…",
+    "progress.waterLogged": "Water logged ✅ {label} — {cups} cups total",
+    "progress.waterUndone": "Removed 1 cup ✅ {label} — {cups} cups total",
+    "progress.goalSet": "Goal set to {goal} cups ✅",
+
+    "profile.myInfo": "My info",
+    "profile.name": "Name",
+    "profile.gender": "Gender",
+    "profile.male": "Male",
+    "profile.female": "Female",
+    "profile.age": "Age",
+    "profile.height": "Height",
+    "profile.weight": "Weight",
+    "profile.goal": "Goal",
+    "profile.goalLose": "Lose weight",
+    "profile.goalMaintain": "Maintain",
+    "profile.goalGain": "Gain weight",
+    "profile.dailyTarget": "Daily target",
+    "profile.noProfile": "No profile yet — please fill in Onboarding.",
+    "profile.editTarget": "Edit target",
+    "profile.targetRange": "You can set 800 to 6,000 kcal.",
+    "profile.targetSaved": "✅ Target saved.",
+    "profile.targetNote":
+      "Filling in Onboarding again will auto-calculate a new target.",
+    "profile.editProfile": "Edit profile",
+    "profile.targetPlaceholder": "e.g. 2000",
+
+    "theme.title": "App color",
+    "theme.green": "Green",
+    "theme.purple": "Purple",
+    "theme.red": "Red",
+
+    "lang.title": "Language",
+
+    "auth.tagline": "Snap your food, know the calories",
+    "auth.email": "Email",
+    "auth.password": "Password",
+    "auth.passwordMin": "Password (at least 6 characters)",
+    "auth.signingIn": "Signing in…",
+    "auth.signIn": "Log in",
+    "auth.googleSignIn": "Continue with Google",
+    "auth.noAccount": "No account yet?",
+    "auth.createAccount": "Create account",
+    "auth.hasAccount": "Already have an account?",
+    "auth.loginLink": "Log in",
+    "auth.signupTitle": "Create account",
+    "auth.signupSubtitle": "Enter your email and password to create an account.",
+    "auth.creating": "Creating…",
+    "auth.passwordShort": "Password must be at least 6 characters.",
+    "auth.alreadyRegistered":
+      "This email already has an account — try logging in.",
+    "auth.signupDone":
+      "Account created ✅ Click the confirmation link in your email, then log in.",
+    "auth.invalidCredentials": "Email or password is wrong.",
+    "auth.emailNotConfirmed":
+      "Please confirm your email first — click the link in your inbox.",
+    "auth.tooManyRequests": "Please wait a bit and try again.",
+
+    "onboarding.loading": "Loading…",
+    "onboarding.title": "Tell us about yourself",
+    "onboarding.subtitle": "We need this to calculate your daily calorie target.",
+    "onboarding.name": "Name (optional)",
+    "onboarding.namePlaceholder": "e.g. Ko Kyal Ngar",
+    "onboarding.gender": "Gender",
+    "onboarding.female": "Female",
+    "onboarding.male": "Male",
+    "onboarding.age": "Age",
+    "onboarding.height": "Height (cm)",
+    "onboarding.weight": "Weight (kg)",
+    "onboarding.goal": "Goal",
+    "onboarding.goalLose": "Lose weight",
+    "onboarding.goalMaintain": "Maintain",
+    "onboarding.goalGain": "Gain weight",
+    "onboarding.activity": "Daily activity",
+    "onboarding.actSedentary": "Mostly sitting (low activity)",
+    "onboarding.actLight": "Light activity",
+    "onboarding.actModerate": "Moderate activity",
+    "onboarding.actActive": "Very active",
+    "onboarding.targetLabel": "Daily calorie target",
+    "onboarding.invalid": "Please enter your age, height and weight correctly.",
+    "onboarding.saving": "Saving…",
+    "onboarding.save": "Save and start",
+    "onboarding.saveFailed": "Couldn't save — ",
+
+    "apiKey.statusError": "Couldn't check the key status.",
+    "apiKey.serverError": "Couldn't reach the server.",
+    "apiKey.enterFirst": "Please enter your API key first.",
+    "apiKey.saved": "API key saved ✅",
+    "apiKey.testError": "Couldn't test it.",
+    "apiKey.works": "Key works ✅ ({reply})",
+    "apiKey.worksSave": "Key works ✅ ({reply}) — tap Save to store it",
+    "apiKey.confirmDelete": "Delete the API key?",
+    "apiKey.deleted": "API key deleted.",
+    "apiKey.intro":
+      "Enter your Gemini API key — it's stored encrypted on the server, nobody else can see it.",
+    "apiKey.configured": "Key saved: {hint}",
+    "apiKey.lastTested": "Last tested:",
+    "apiKey.notConfigured": "No API key added yet.",
+    "apiKey.newKey": "New API key",
+    "apiKey.test": "Test",
+    "apiKey.getKeyPrefix": "To get a key:",
+    "apiKey.getKeySuffix": ", tap Create API key.",
+
+    "reminder.unsupported": "This browser doesn't support push notifications.",
+    "reminder.noVapid": "VAPID key is missing — please check the Vercel env.",
+    "reminder.denied":
+      "Notifications are blocked in your browser settings — please enable them there.",
+    "reminder.notGranted": "Reminder can't be turned on without notification permission.",
+    "reminder.enabled": "Reminder is on ✅ We'll remind you at meal times",
+    "reminder.enableError": "Couldn't turn the reminder on.",
+    "reminder.disabled": "Reminder is off",
+    "reminder.disableError": "Couldn't turn the reminder off.",
+    "reminder.timesSaved": "Reminder times saved ✅",
+    "reminder.intro":
+      "We'll remind you if a meal isn't logged by meal time — and again in the evening if nothing is logged.",
+    "reminder.disable": "Turn reminder off",
+    "reminder.disabling": "Turning off…",
+    "reminder.enable": "Turn reminder on 🔔",
+    "reminder.enabling": "Turning on…",
+    "reminder.breakfastTime": "Breakfast reminder time",
+    "reminder.lunchTime": "Lunch reminder time",
+    "reminder.dinnerTime": "Dinner reminder time",
+    "reminder.eveningTime": "Evening reminder time (if not logged)",
+
+    "bell.close": "Close",
+    "bell.title": "Notifications",
+    "bell.empty": "No notifications yet 🔔",
+    "bell.loadError": "Couldn't load notifications.",
+    "bell.readError": "Couldn't mark as read.",
+
+    "logout.signingOut": "Logging out…",
+    "logout.signOut": "Log out",
+  },
+};
+
+// fetch fallback — API က error မပြန်ရင် သုံးတဲ့ sentinel။
+// UI မှာ ပြတဲ့အခါ t("common.loadError") အဖြစ် ပြောင်းပြတယ် —
+// server က ပြန်တဲ့ error စာတွေက ဒီအတိုင်း (မြန်မာလို) ဖြတ်သွားတယ်။
+export const FETCH_FALLBACK = "LOAD_FAILED";
+// NotificationBell က ဖတ်ပြီးသား မှတ်တဲ့ fallback အတွက် သီးသန့် sentinel
+// (load error နဲ့ ခွဲဖို့ — error state တစ်ခုတည်း မျှသုံးထားလို့)။
+export const MARK_READ_FAILED = "READ_FAILED";
+
+export function getStoredLang(): Lang {
+  try {
+    return localStorage.getItem("ct-lang") === "en" ? "en" : "my";
+  } catch {
+    return "my";
+  }
+}
+
+export function storeLang(lang: Lang): void {
+  try {
+    localStorage.setItem("ct-lang", lang);
+  } catch {
+    // သိမ်းမရရင် ဒီ session မှာပဲ ဘာသာစကား ပြောင်းတယ်။
+  }
+}
+
+export type TFn = (
+  key: string,
+  vars?: Record<string, string | number>,
+) => string;
+
+function translate(lang: Lang, key: string, vars?: Record<string, string | number>): string {
+  let s = STRINGS[lang][key] ?? STRINGS.my[key] ?? key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      s = s.split(`{${k}}`).join(String(v));
+    }
+  }
+  return s;
+}
+
+const LangContext = createContext<{
+  lang: Lang;
+  setLang: (lang: Lang) => void;
+  t: TFn;
+}>({
+  lang: "my",
+  setLang: () => {},
+  t: (key, vars) => translate("my", key, vars),
+});
+
+export function LangProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>("my");
+  // SSR မှာ localStorage မရှိဘူး — client မှာ mount ဖြစ်မှ ဖတ်တယ်။
+  useEffect(() => {
+    setLangState(getStoredLang());
+  }, []);
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+  const setLang = useCallback((l: Lang) => {
+    setLangState(l);
+    storeLang(l);
+  }, []);
+  const t = useCallback<TFn>(
+    (key, vars) => translate(lang, key, vars),
+    [lang],
+  );
+  return (
+    <LangContext.Provider value={{ lang, setLang, t }}>
+      {children}
+    </LangContext.Provider>
+  );
+}
+
+export function useLang(): { lang: Lang; setLang: (lang: Lang) => void; t: TFn } {
+  return useContext(LangContext);
+}

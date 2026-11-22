@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLang } from "@/lib/i18n";
 
 // App အရောင် ရွေးတာ — အစိမ်း (default) / ခရမ်း / အနီ။
 // အရောင်တွေက app/globals.css မှာ [data-theme] variable အဖြစ် အသင့်ရှိပြီးသား —
@@ -9,12 +10,13 @@ import { useEffect, useState } from "react";
 // မချိတ်ထားဘူး) — app ကို ပြန်ဖွင့်တိုင်း layout က script က အရင် ဖတ်ပြီး
 // အရောင် တပ်ပေးတယ်။
 const THEMES = [
-  { value: "green", label: "အစိမ်း", dot: "#16a34a" },
-  { value: "purple", label: "ခရမ်း", dot: "#9333ea" },
-  { value: "red", label: "အနီ", dot: "#dc2626" },
+  { value: "green", key: "theme.green", dot: "#16a34a" },
+  { value: "purple", key: "theme.purple", dot: "#9333ea" },
+  { value: "red", key: "theme.red", dot: "#dc2626" },
 ] as const;
 
 export default function ThemeSettings() {
+  const { t } = useLang();
   const [theme, setTheme] = useState<string>("green");
 
   useEffect(() => {
@@ -41,25 +43,25 @@ export default function ThemeSettings() {
 
   return (
     <section className="mt-4 rounded-2xl bg-white p-5 shadow-sm">
-      <h2>App အရောင်</h2>
+      <h2>{t("theme.title")}</h2>
       <div className="mt-3 flex gap-3">
-        {THEMES.map((t) => (
+        {THEMES.map((th) => (
           <button
-            key={t.value}
+            key={th.value}
             type="button"
-            onClick={() => pick(t.value)}
+            onClick={() => pick(th.value)}
             className={`flex flex-1 flex-col items-center gap-1.5 rounded-xl py-3 font-semibold ${
-              theme === t.value
+              theme === th.value
                 ? "bg-[var(--theme-soft)] ring-2 ring-[var(--theme)]"
                 : "bg-slate-50"
             }`}
           >
             <span
               className="h-6 w-6 rounded-full"
-              style={{ background: t.dot }}
+              style={{ background: th.dot }}
               aria-hidden
             />
-            {t.label}
+            {t(th.key)}
           </button>
         ))}
       </div>

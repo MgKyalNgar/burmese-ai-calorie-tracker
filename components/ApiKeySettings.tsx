@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLang } from "@/lib/i18n";
 import { formatDateTimeDMY } from "@/lib/meal";
 
 // API Key Settings — ကိုယ့် Gemini API key ကို server-side encrypted သိမ်းတယ်။
@@ -12,6 +13,7 @@ type Status = {
 };
 
 export default function ApiKeySettings() {
+  const { t } = useLang();
   const [status, setStatus] = useState<Status | null>(null);
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
@@ -22,9 +24,9 @@ export default function ApiKeySettings() {
       const res = await fetch("/api/api-key");
       const data = await res.json();
       if (res.ok) setStatus(data);
-      else setMessage(data?.error ?? "Key အခြေအနေ စစ်လို့ မရပါ။");
+      else setMessage(data?.error ?? t("apiKey.statusError"));
     } catch {
-      setMessage("Server ကို ဆက်သွယ်လို့ မရပါ။");
+      setMessage(t("apiKey.serverError"));
     }
   }
 
@@ -34,7 +36,7 @@ export default function ApiKeySettings() {
 
   async function handleSave() {
     if (!key.trim()) {
-      setMessage("API key ကို အရင် ထည့်ပေးပါ။");
+      setMessage(t("apiKey.enterFirst"));
       return;
     }
     setBusy(true);
@@ -46,12 +48,12 @@ export default function ApiKeySettings() {
         body: JSON.stringify({ key: key.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "သိမ်းလို့ မရပါ။");
+      if (!res.ok) throw new Error(data?.error ?? t("common.saveError"));
       setKey("");
-      setMessage("API key သိမ်းပြီးပြီ ✅");
+      setMessage(t("apiKey.saved"));
       await loadStatus();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "သိမ်းလို့ မရပါ။");
+      setMessage(err instanceof Error ? err.message : t("common.saveError"));
     } finally {
       setBusy(false);
     }
@@ -70,32 +72,32 @@ export default function ApiKeySettings() {
         body: JSON.stringify(typedKey ? { key: typedKey } : {}),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "စမ်းလို့ မရပါ။");
+      if (!res.ok) throw new Error(data?.error ?? t("apiKey.testError"));
       setMessage(
         typedKey
-          ? `Key အလုပ်လုပ်ပါတယ် ✅ (${data.reply ?? "OK"}) — သိမ်းမယ် နှိပ်ပြီး သိမ်းလို့ရပြီ`
-          : `Key အလုပ်လုပ်ပါတယ် ✅ (${data.reply ?? "OK"})`,
+          ? t("apiKey.worksSave", { reply: data.reply ?? "OK" })
+          : t("apiKey.works", { reply: data.reply ?? "OK" }),
       );
       await loadStatus();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "စမ်းလို့ မရပါ။");
+      setMessage(err instanceof Error ? err.message : t("apiKey.testError"));
     } finally {
       setBusy(false);
     }
   }
 
   async function handleDelete() {
-    if (!confirm("API key ကို ဖျက်မှာလား?")) return;
+    if (!confirm(t("apiKey.confirmDelete"))) return;
     setBusy(true);
     setMessage("");
     try {
       const res = await fetch("/api/api-key", { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "ဖျက်လို့ မရပါ။");
-      setMessage("API key ဖျက်ပြီးပြီ။");
+      if (!res.ok) throw new Error(data?.error ?? t("common.deleteError"));
+      setMessage(t("apiKey.deleted"));
       await loadStatus();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "ဖျက်လို့ မရပါ။");
+      setMessage(err instanceof Error ? err.message : t("common.deleteError"));
     } finally {
       setBusy(false);
     }
@@ -105,27 +107,26 @@ export default function ApiKeySettings() {
     <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
       <h2>Gemini API Key</h2>
       <p className="caption mt-1">
-        ကိုယ့် Gemini API key ကို ထည့်ပါ — server မှာပဲ encrypted သိမ်းတယ်၊
-        ဘယ်သူမှ မြင်လို့ မရဘူး။
+        {t("apiKey.intro")}
       </p>
 
       {status?.configured ? (
         <p className="mt-3 rounded-lg bg-[var(--theme-soft)] px-3 py-2 text-[var(--theme-dark)]">
-          Key ရှိပြီးသား: {status.key_hint}
+          {t("apiKey.configured", { hint: status.key_hint ?? "" })}
           {status.last_tested_at && (
             <span className="caption block">
-              နောက်ဆုံး စမ်းတာ:{" "}
+              {t("apiKey.lastTested")}{" "}
               {formatDateTimeDMY(status.last_tested_at)} ·{" "}
               {status.test_status ?? ""}
             </span>
           )}
         </p>
       ) : (
-        <p className="caption mt-3">API key မထည့်ရသေးဘူး။</p>
+        <p className="caption mt-3">{t("apiKey.notConfigured")}</p>
       )}
 
       <label className="mt-4 block">
-        <span className="caption">API key အသစ်</span>
+        <span className="caption">{t("apiKey.newKey")}</span>
         <input
           type="password"
           value={key}
@@ -143,7 +144,7 @@ export default function ApiKeySettings() {
           disabled={busy}
           className="flex-1 rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
         >
-          သိမ်းမယ်
+          {t("common.save")}
         </button>
         {/* စမ်းမယ် — key ရိုက်ထားရင် (မသိမ်းခင် စမ်းတာ) (သို့)
             သိမ်းထားတဲ့ key ရှိရင် ပေါ်တယ်။ */}
@@ -154,7 +155,7 @@ export default function ApiKeySettings() {
             disabled={busy}
             className="flex-1 rounded-xl border border-[var(--theme)] py-2.5 font-semibold text-[var(--theme-dark)] disabled:opacity-50"
           >
-            စမ်းမယ်
+            {t("apiKey.test")}
           </button>
         )}
         {status?.configured && (
@@ -164,13 +165,13 @@ export default function ApiKeySettings() {
             disabled={busy}
             className="rounded-xl border border-red-300 px-4 py-2.5 font-semibold text-red-600 disabled:opacity-50"
           >
-            ဖျက်မယ်
+            {t("common.delete")}
           </button>
         )}
       </div>
 
       <p className="caption mt-3">
-        Key ထုတ်ဖို့:{" "}
+        {t("apiKey.getKeyPrefix")}{" "}
         <a
           href="https://aistudio.google.com/apikey"
           target="_blank"
@@ -179,7 +180,7 @@ export default function ApiKeySettings() {
         >
           Google AI Studio
         </a>{" "}
-        မှာ Create API key နှိပ်ပါ။
+        {t("apiKey.getKeySuffix")}
       </p>
 
       {message && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2">{message}</p>}

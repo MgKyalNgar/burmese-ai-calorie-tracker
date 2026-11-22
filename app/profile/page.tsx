@@ -8,11 +8,13 @@ import LogoutButton from "@/components/LogoutButton";
 import ApiKeySettings from "@/components/ApiKeySettings";
 import ReminderSettings from "@/components/ReminderSettings";
 import ThemeSettings from "@/components/ThemeSettings";
+import LanguageSettings from "@/components/LanguageSettings";
 import {
   invalidateCache,
   invalidateCachePrefix,
   useCachedData,
 } from "@/lib/useCachedData";
+import { FETCH_FALLBACK, useLang } from "@/lib/i18n";
 import type { ProfileData } from "@/lib/meal";
 
 // Profile ကို client component အဖြစ် ပြောင်းထားတယ် —
@@ -21,18 +23,13 @@ async function fetchProfile(): Promise<ProfileData> {
   const res = await fetch("/api/profile");
   const data = await res.json();
   if (res.status === 401) return { needsLogin: true } as ProfileData;
-  if (!res.ok) throw new Error(data?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
+  if (!res.ok) throw new Error(data?.error ?? FETCH_FALLBACK);
   return data as ProfileData;
 }
 
-const GOAL_LABELS: Record<string, string> = {
-  lose: "ဝိတ်ချမယ်",
-  maintain: "ထိန်းမယ်",
-  gain: "ဝိတ်တက်မယ်",
-};
-
 export default function ProfilePage() {
   const router = useRouter();
+  const { t } = useLang();
   const { data, loading, error } = useCachedData<ProfileData>(
     "profile",
     fetchProfile,
@@ -46,6 +43,12 @@ export default function ProfilePage() {
   // သိမ်းပြီးသား target အသစ် — cache ပြန်မဆွဲခင် မျက်နှာပြင်မှာ တန်းပြဖို့။
   const [savedTarget, setSavedTarget] = useState<number | null>(null);
 
+  const GOAL_LABELS: Record<string, string> = {
+    lose: t("profile.goalLose"),
+    maintain: t("profile.goalMaintain"),
+    gain: t("profile.goalGain"),
+  };
+
   const saveTarget = async () => {
     const value = Number(targetInput);
     setTargetMsg("");
@@ -57,17 +60,17 @@ export default function ProfilePage() {
         body: JSON.stringify({ target: value }),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error(body?.error ?? "သိမ်းလို့ မရပါ။");
+      if (!res.ok) throw new Error(body?.error ?? t("common.saveError"));
       setSavedTarget(body.target);
       setEditingTarget(false);
-      setTargetMsg("✅ Target သိမ်းပြီးပါပြီ။");
+      setTargetMsg(t("profile.targetSaved"));
       // Home / Progress က target အဟောင်း မပြစေဖို့ cache ဖျက်တယ် —
       // tab ပြန်ကူးတိုင်း အသစ် ပြန်ဆွဲတယ်။
       invalidateCache("profile");
       invalidateCachePrefix("today-");
       invalidateCachePrefix("progress-");
     } catch (e) {
-      setTargetMsg(e instanceof Error ? e.message : "သိမ်းလို့ မရပါ။");
+      setTargetMsg(e instanceof Error ? e.message : t("common.saveError"));
     } finally {
       setSavingTarget(false);
     }
@@ -84,7 +87,7 @@ export default function ProfilePage() {
           className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme)]"
           aria-hidden
         />
-        <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
+        <p className="mt-4 text-[#52677f]">{t("common.loading")}</p>
         <BottomNav />
       </main>
     );
@@ -98,43 +101,45 @@ export default function ProfilePage() {
       <p className="caption mt-1">{data.email}</p>
 
       {error && (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">
+          {error === FETCH_FALLBACK ? t("common.loadError") : error}
+        </p>
       )}
 
       <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
-        <h2>ကိုယ့်အချက်အလက်</h2>
+        <h2>{t("profile.myInfo")}</h2>
         {profile ? (
           <dl className="mt-3 space-y-2">
             <div className="flex justify-between">
-              <dt>နာမည်</dt>
+              <dt>{t("profile.name")}</dt>
               <dd className="font-semibold">{profile.display_name ?? "—"}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>ကျား / မ</dt>
+              <dt>{t("profile.gender")}</dt>
               <dd className="font-semibold">
-                {profile.gender === "male" ? "ကျား" : "မ"}
+                {profile.gender === "male" ? t("profile.male") : t("profile.female")}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt>အသက်</dt>
+              <dt>{t("profile.age")}</dt>
               <dd className="font-semibold">{profile.age ?? "—"}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>အရပ်</dt>
+              <dt>{t("profile.height")}</dt>
               <dd className="font-semibold">{profile.height_cm ?? "—"} cm</dd>
             </div>
             <div className="flex justify-between">
-              <dt>ဝိတ်</dt>
+              <dt>{t("profile.weight")}</dt>
               <dd className="font-semibold">{profile.weight_kg ?? "—"} kg</dd>
             </div>
             <div className="flex justify-between">
-              <dt>ပန်းတိုင်</dt>
+              <dt>{t("profile.goal")}</dt>
               <dd className="font-semibold">
                 {GOAL_LABELS[profile.goal as string] ?? profile.goal ?? "—"}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt>တစ်နေ့တာ target</dt>
+              <dt>{t("profile.dailyTarget")}</dt>
               <dd className="font-semibold text-[var(--theme-dark)]">
                 {(savedTarget ?? profile.daily_calorie_target ?? 0).toLocaleString()} kcal
               </dd>
@@ -142,7 +147,7 @@ export default function ProfilePage() {
           </dl>
         ) : (
           <p className="mt-3 text-[#52677f]">
-            Profile မရှိသေးဘူး — Onboarding ဖြည့်ပေးပါ။
+            {t("profile.noProfile")}
           </p>
         )}
         {profile &&
@@ -154,7 +159,7 @@ export default function ProfilePage() {
                   inputMode="numeric"
                   value={targetInput}
                   onChange={(e) => setTargetInput(e.target.value)}
-                  placeholder="ဥပမာ 2000"
+                  placeholder={t("profile.targetPlaceholder")}
                   className="w-full rounded-xl border bg-white px-3 py-2.5"
                 />
                 <button
@@ -163,17 +168,17 @@ export default function ProfilePage() {
                   disabled={savingTarget}
                   className="shrink-0 rounded-xl bg-[var(--theme)] px-4 py-2.5 font-semibold text-white disabled:opacity-50"
                 >
-                  {savingTarget ? "သိမ်းနေတယ်…" : "သိမ်းမယ်"}
+                  {savingTarget ? t("common.saving") : t("common.save")}
                 </button>
               </div>
               <div className="mt-2 flex items-center justify-between gap-2">
-                <p className="caption">၈၀၀ မှ ၆,၀၀၀ kcal အထိ ထားလို့ ရပါတယ်။</p>
+                <p className="caption">{t("profile.targetRange")}</p>
                 <button
                   type="button"
                   onClick={() => setEditingTarget(false)}
                   className="caption shrink-0 underline"
                 >
-                  မပြင်တော့ဘူး
+                  {t("common.cancel")}
                 </button>
               </div>
             </div>
@@ -189,24 +194,26 @@ export default function ProfilePage() {
               }}
               className="mt-4 w-full rounded-xl bg-slate-100 py-2.5 font-semibold"
             >
-              Target ပြင်မယ်
+              {t("profile.editTarget")}
             </button>
           ))}
         {targetMsg && <p className="caption mt-2">{targetMsg}</p>}
         {profile && (
           <p className="caption mt-2">
-            Onboarding ပြန်ဖြည့်ရင် target အသစ် auto တွက်ပေးမယ်။
+            {t("profile.targetNote")}
           </p>
         )}
         <Link
           href="/onboarding"
           className="mt-4 block rounded-xl bg-[var(--theme)] py-2.5 text-center font-semibold text-white"
         >
-          Profile ပြင်မယ်
+          {t("profile.editProfile")}
         </Link>
       </section>
 
       <ThemeSettings />
+
+      <LanguageSettings />
 
       <ApiKeySettings />
 

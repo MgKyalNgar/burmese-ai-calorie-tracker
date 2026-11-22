@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useLang } from "@/lib/i18n";
 
 export default function LogoutButton() {
+  const { t } = useLang();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -34,7 +36,7 @@ export default function LogoutButton() {
       disabled={busy}
       className="w-full rounded-xl border border-red-300 py-3 font-semibold text-red-600 disabled:opacity-50"
     >
-      {busy ? "ထွက်နေပါတယ်…" : "အကောင့်ကနေ ထွက်မယ်"}
+      {busy ? t("logout.signingOut") : t("logout.signOut")}
     </button>
   );
 }

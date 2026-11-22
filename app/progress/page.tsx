@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { invalidateCachePrefix, useCachedData } from "@/lib/useCachedData";
+import { FETCH_FALLBACK, useLang, type TFn } from "@/lib/i18n";
 import {
   formatDateDMY,
   formatDayMonth,
@@ -17,34 +18,29 @@ async function fetchProgress(): Promise<ProgressData> {
   const res = await fetch("/api/progress");
   const data = await res.json();
   if (res.status === 401) return { needsLogin: true } as ProgressData;
-  if (!res.ok) throw new Error(data?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
+  if (!res.ok) throw new Error(data?.error ?? FETCH_FALLBACK);
   return data as ProgressData;
 }
 
-const WEEKDAY_SHORT = ["နွေ", "လာ", "ဂါ", "ဟူး", "ကြာ", "သော", "နေ"];
-const WEEKDAY_HEADERS_MON_FIRST = ["လာ", "ဂါ", "ဟူး", "ကြာ", "သော", "နေ", "နွေ"];
-const MONTH_MM = [
-  "ဇန်နဝါရီ",
-  "ဖေဖော်ဝါရီ",
-  "မတ်",
-  "ဧပြီ",
-  "မေ",
-  "ဇွန်",
-  "ဇူလိုင်",
-  "သြဂုတ်",
-  "စက်တင်ဘာ",
-  "အောက်တိုဘာ",
-  "နိုဝင်ဘာ",
-  "ဒီဇင်ဘာ",
-];
+const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+const WEEKDAY_HEADERS_MON_FIRST_KEYS = [
+  "mon",
+  "tue",
+  "wed",
+  "thu",
+  "fri",
+  "sat",
+  "sun",
+] as const;
 
 // YYYY-MM-DD ရက်စွဲကို ရန်ကုန်အချိန်နဲ့ တွက်ပြီး နေ့အမည် အတိုရတယ်။
-function weekdayShort(date: string): string {
-  return WEEKDAY_SHORT[new Date(`${date}T12:00:00+06:30`).getDay()];
+function weekdayShort(date: string, t: TFn): string {
+  return t(`weekday.${WEEKDAY_KEYS[new Date(`${date}T12:00:00+06:30`).getDay()]}`);
 }
 
 // ဒီနေ့ ကယ်လိုရီ ရည်မှန်းချက် — ၇ ရက်စာ chart ထဲက target line အတွက်။
 function BarChart({ week }: { week: ProgressData["week"] }) {
+  const { t } = useLang();
   const maxEaten = Math.max(...week.map((d) => d.eaten), 0);
   const target = week[0]?.target ?? 0;
   const max = Math.max(maxEaten, target, 100);
@@ -95,17 +91,17 @@ function BarChart({ week }: { week: ProgressData["week"] }) {
         {week.map((d) => (
           <div key={d.date} className="flex-1 text-center">
             <p className="caption">
-              {weekdayShort(d.date)} {Number(d.date.slice(8, 10))}
+              {weekdayShort(d.date, t)} {Number(d.date.slice(8, 10))}
             </p>
           </div>
         ))}
       </div>
       <p className="caption mt-2 text-[#52677f]">
         <span className="inline-block h-0 w-4 border-t-2 border-dashed border-[#f59e0b] align-middle" />{" "}
-        Target {target.toLocaleString()} kcal · လိမ္မော်ရောင် = target ကျော်တယ်
+        {t("progress.legendOver", { target: target.toLocaleString() })}
       </p>
       {allZero && (
-        <p className="mt-2 text-[#52677f]">ဒီအပတ် ဘာမှ မမှတ်ရသေးဘူး။</p>
+        <p className="mt-2 text-[#52677f]">{t("progress.emptyWeek")}</p>
       )}
     </div>
   );
@@ -113,10 +109,11 @@ function BarChart({ week }: { week: ProgressData["week"] }) {
 
 // ဝိတ် trend — SVG line chart။
 function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
+  const { t } = useLang();
   if (weights.length === 0) {
     return (
       <p className="mt-3 text-[#52677f]">
-        ဝိတ် မမှတ်ရသေးဘူး — အောက်က form နဲ့ ထည့်ပေးပါ။
+        {t("progress.noWeight")}
       </p>
     );
   }
@@ -146,7 +143,7 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
 
   return (
     <div className="mt-3">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="ဝိတ် trend chart">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={t("progress.weightChartLabel")}>
         {/* min / max axis labels */}
         <text x={4} y={y(max) + 4} fontSize="11" fill="#52677f">
           {max}
@@ -191,8 +188,11 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
         )}
       </svg>
       <p className="caption mt-1 text-[#52677f]">
-        {weights.length} ခု မှတ်ထားတယ် · {formatDateDMY(weights[0].date)} →{" "}
-        {formatDateDMY(weights[weights.length - 1].date)}
+        {t("progress.weightCount", {
+          count: weights.length,
+          from: formatDateDMY(weights[0].date),
+          to: formatDateDMY(weights[weights.length - 1].date),
+        })}
       </p>
     </div>
   );
@@ -200,6 +200,7 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
 
 // ဒီလ ပြက္ခဒိန် — မှတ်ထားတဲ့ ရက်တွေမှာ အစိမ်းအစက်၊ ဒီနေ့ကို အစိမ်းဝိုင်း။
 function MonthCalendar({ loggedDays }: { loggedDays: string[] }) {
+  const { t } = useLang();
   const today = todayYangon();
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7)); // 1–12
@@ -218,12 +219,12 @@ function MonthCalendar({ loggedDays }: { loggedDays: string[] }) {
   return (
     <div className="mt-3">
       <p className="font-semibold">
-        {MONTH_MM[month - 1]} {year}
+        {t(`month.${month}`)} {year}
       </p>
       <div className="mt-2 grid grid-cols-7 gap-1 text-center">
-        {WEEKDAY_HEADERS_MON_FIRST.map((d) => (
+        {WEEKDAY_HEADERS_MON_FIRST_KEYS.map((d) => (
           <span key={d} className="caption font-semibold text-[#52677f]">
-            {d}
+            {t(`weekday.${d}`)}
           </span>
         ))}
         {cells.map((day, i) =>
@@ -251,15 +252,16 @@ function MonthCalendar({ loggedDays }: { loggedDays: string[] }) {
       </div>
       <p className="caption mt-2 text-[#52677f]">
         <span className="mr-1 inline-block h-2.5 w-2.5 rounded-full border-2 border-[var(--theme)]" />
-        ဒီနေ့{" "}
+        {t("progress.todayLegend")}{" "}
         <span className="ml-2 mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[var(--theme)]" />
-        မှတ်ထားတဲ့ ရက်
+        {t("progress.loggedDayLegend")}
       </p>
     </div>
   );
 }
 
 export default function ProgressPage() {
+  const { t } = useLang();
   const router = useRouter();
   // POST ပြီးတိုင်း tick ပြောင်းပြီး cache key အသစ်နဲ့ ပြန်ဆွဲတယ်
   // (ဒေတာ အဟောင်း ပြနေရင်း နောက်ကွယ်မှာ အသစ် ရောက်လာတယ်)။
@@ -299,7 +301,7 @@ export default function ProgressPage() {
   async function handleAddWeight() {
     const kg = Number(weightKg);
     if (!Number.isFinite(kg) || kg < 20 || kg > 300) {
-      setWeightMsg("ဝိတ် ၂၀ မှ ၃၀၀ kg အတွင်း ထည့်ပေးပါ။");
+      setWeightMsg(t("progress.weightRange"));
       return;
     }
     setWeightBusy(true);
@@ -311,13 +313,13 @@ export default function ProgressPage() {
         body: JSON.stringify({ weight_kg: kg, logged_date: weightDate }),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d?.error ?? "သိမ်းလို့ မရပါ။");
-      setWeightMsg("ဝိတ် သိမ်းပြီးပြီ ✅");
+      if (!res.ok) throw new Error(d?.error ?? t("common.saveError"));
+      setWeightMsg(t("progress.weightSaved"));
       setWeightKg("");
       invalidateCachePrefix("today-");
       setTick((t) => t + 1);
     } catch (err) {
-      setWeightMsg(err instanceof Error ? err.message : "သိမ်းလို့ မရပါ။");
+      setWeightMsg(err instanceof Error ? err.message : t("common.saveError"));
     } finally {
       setWeightBusy(false);
     }
@@ -327,7 +329,7 @@ export default function ProgressPage() {
   async function handleEditWeight(id: string) {
     const kg = Number(editWeightKg);
     if (!Number.isFinite(kg) || kg < 20 || kg > 300) {
-      setWeightMsg("ဝိတ် ၂၀ မှ ၃၀၀ kg အတွင်း ထည့်ပေးပါ။");
+      setWeightMsg(t("progress.weightRange"));
       return;
     }
     setWeightEditBusy(true);
@@ -339,13 +341,13 @@ export default function ProgressPage() {
         body: JSON.stringify({ id, weight_kg: kg }),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d?.error ?? "ပြင်လို့ မရပါ။");
-      setWeightMsg("ဝိတ် ပြင်ပြီးပြီ ✅");
+      if (!res.ok) throw new Error(d?.error ?? t("common.editError"));
+      setWeightMsg(t("progress.weightUpdated"));
       setEditingWeightId(null);
       invalidateCachePrefix("today-");
       setTick((t) => t + 1);
     } catch (err) {
-      setWeightMsg(err instanceof Error ? err.message : "ပြင်လို့ မရပါ။");
+      setWeightMsg(err instanceof Error ? err.message : t("common.editError"));
     } finally {
       setWeightEditBusy(false);
     }
@@ -362,13 +364,13 @@ export default function ProgressPage() {
         body: JSON.stringify({ id }),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d?.error ?? "ဖျက်လို့ မရပါ။");
-      setWeightMsg("ဝိတ် ဖျက်ပြီးပြီ ✅");
+      if (!res.ok) throw new Error(d?.error ?? t("common.deleteError"));
+      setWeightMsg(t("progress.weightDeleted"));
       setDeletingWeightId(null);
       invalidateCachePrefix("today-");
       setTick((t) => t + 1);
     } catch (err) {
-      setWeightMsg(err instanceof Error ? err.message : "ဖျက်လို့ မရပါ။");
+      setWeightMsg(err instanceof Error ? err.message : t("common.deleteError"));
     } finally {
       setWeightEditBusy(false);
     }
@@ -384,14 +386,16 @@ export default function ProgressPage() {
         body: JSON.stringify({ cups: 1, logged_date: waterDate }),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d?.error ?? "မှတ်လို့ မရပါ။");
+      if (!res.ok) throw new Error(d?.error ?? t("common.logError"));
       const label =
-        waterDate === todayYangon() ? "ဒီနေ့" : formatDateDMY(waterDate);
-      setWaterMsg(`ရေမှတ်ပြီးပြီ ✅ ${label} စုစုပေါင်း ${d.cupsToday} ခွက်`);
+        waterDate === todayYangon() ? t("common.today") : formatDateDMY(waterDate);
+      setWaterMsg(
+        t("progress.waterLogged", { label, cups: d.cupsToday }),
+      );
       invalidateCachePrefix("today-");
       setTick((t) => t + 1);
     } catch (err) {
-      setWaterMsg(err instanceof Error ? err.message : "မှတ်လို့ မရပါ။");
+      setWaterMsg(err instanceof Error ? err.message : t("common.logError"));
     } finally {
       setWaterBusy(false);
     }
@@ -408,14 +412,16 @@ export default function ProgressPage() {
         body: JSON.stringify({ action: "undo", logged_date: waterDate }),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d?.error ?? "ဖျက်လို့ မရပါ။");
+      if (!res.ok) throw new Error(d?.error ?? t("common.deleteError"));
       const label =
-        waterDate === todayYangon() ? "ဒီနေ့" : formatDateDMY(waterDate);
-      setWaterMsg(`၁ ခွက် ပြန်ဖျက်ပြီးပြီ ✅ ${label} စုစုပေါင်း ${d.cupsToday} ခွက်`);
+        waterDate === todayYangon() ? t("common.today") : formatDateDMY(waterDate);
+      setWaterMsg(
+        t("progress.waterUndone", { label, cups: d.cupsToday }),
+      );
       invalidateCachePrefix("today-");
       setTick((t) => t + 1);
     } catch (err) {
-      setWaterMsg(err instanceof Error ? err.message : "ဖျက်လို့ မရပါ။");
+      setWaterMsg(err instanceof Error ? err.message : t("common.deleteError"));
     } finally {
       setWaterBusy(false);
     }
@@ -434,13 +440,13 @@ export default function ProgressPage() {
         body: JSON.stringify({ goal: next }),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d?.error ?? "သိမ်းလို့ မရပါ။");
+      if (!res.ok) throw new Error(d?.error ?? t("common.saveError"));
       setWaterGoal(d.goal);
-      setWaterMsg(`ပန်းတိုင် ${d.goal} ခွက် ထားပြီးပြီ ✅`);
+      setWaterMsg(t("progress.goalSet", { goal: d.goal }));
       invalidateCachePrefix("today-");
       setTick((t) => t + 1);
     } catch (err) {
-      setWaterMsg(err instanceof Error ? err.message : "သိမ်းလို့ မရပါ။");
+      setWaterMsg(err instanceof Error ? err.message : t("common.saveError"));
     } finally {
       setGoalBusy(false);
     }
@@ -453,7 +459,7 @@ export default function ProgressPage() {
           className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme)]"
           aria-hidden
         />
-        <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
+        <p className="mt-4 text-[#52677f]">{t("common.loading")}</p>
         <BottomNav />
       </main>
     );
@@ -462,13 +468,15 @@ export default function ProgressPage() {
   if (error) {
     return (
       <main className="mx-auto min-h-screen max-w-md px-5 pb-24 pt-8">
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-red-700">
+          {error === FETCH_FALLBACK ? t("common.loadError") : error}
+        </p>
         <button
           type="button"
           onClick={() => window.location.reload()}
           className="mt-4 rounded-xl bg-[var(--theme)] px-5 py-2.5 font-semibold text-white"
         >
-          ပြန်စမ်းမယ်
+          {t("common.retry")}
         </button>
         <BottomNav />
       </main>
@@ -484,11 +492,11 @@ export default function ProgressPage() {
   return (
     <main className="mx-auto max-w-md min-h-screen px-5 pb-24 pt-8">
       <h1>Progress</h1>
-      <p className="caption mt-1">ဒီအပတ် ဘယ်လို သွားလဲ ကြည့်မယ်</p>
+      <p className="caption mt-1">{t("progress.subtitle")}</p>
 
       {/* ၇ ရက် ကယ်လိုရီ */}
       <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
-        <h2>ဒီအပတ် ကယ်လိုရီ</h2>
+        <h2>{t("progress.weekCalories")}</h2>
         <div className="mt-3">
           <BarChart week={data.week} />
         </div>
@@ -496,11 +504,11 @@ export default function ProgressPage() {
 
       {/* ဝိတ် trend + ထည့်မယ် */}
       <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
-        <h2>ဝိတ် trend</h2>
+        <h2>{t("progress.weightTrend")}</h2>
         <WeightChart weights={data.weights} />
         <div className="mt-4 flex gap-2">
           <label className="flex-1">
-            <span className="caption">ဝိတ် (kg)</span>
+            <span className="caption">{t("progress.weightLabel")}</span>
             <input
               type="number"
               inputMode="decimal"
@@ -514,7 +522,7 @@ export default function ProgressPage() {
             />
           </label>
           <label className="flex-1">
-            <span className="caption">ရက်စွဲ</span>
+            <span className="caption">{t("progress.dateLabel")}</span>
             <input
               type="date"
               value={weightDate}
@@ -530,14 +538,14 @@ export default function ProgressPage() {
           disabled={weightBusy}
           className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
         >
-          {weightBusy ? "သိမ်းနေတယ်…" : "သိမ်းမယ် ✅"}
+          {weightBusy ? t("common.saving") : t("progress.saveWeight")}
         </button>
         {weightMsg && <p className="caption mt-2">{weightMsg}</p>}
 
         {/* ဝိတ် မှတ်တမ်း — အသစ်ဆုံး အရင်၊ ပြင်/ဖျက် လို့ရတယ် */}
         {data.weights.length > 0 && (
           <div className="mt-5">
-            <h3 className="font-semibold">ဝိတ် မှတ်တမ်း</h3>
+            <h3 className="font-semibold">{t("progress.weightHistory")}</h3>
             <ul className="mt-2 space-y-2">
               {[...data.weights].reverse().map((w) => (
                 <li
@@ -567,7 +575,7 @@ export default function ProgressPage() {
                           disabled={weightEditBusy}
                           className="flex-1 rounded-lg border bg-white py-1.5 disabled:opacity-50"
                         >
-                          မပြင်တော့ဘူး
+                          {t("common.cancel")}
                         </button>
                         <button
                           type="button"
@@ -575,7 +583,7 @@ export default function ProgressPage() {
                           disabled={weightEditBusy}
                           className="flex-1 rounded-lg bg-[var(--theme)] py-1.5 font-semibold text-white disabled:opacity-50"
                         >
-                          {weightEditBusy ? "သိမ်းနေတယ်…" : "သိမ်းမယ်"}
+                          {weightEditBusy ? t("common.saving") : t("common.save")}
                         </button>
                       </div>
                     </div>
@@ -595,14 +603,14 @@ export default function ProgressPage() {
                           }}
                           className="rounded-lg border bg-white px-3 py-1.5"
                         >
-                          ✏️ ပြင်မယ်
+                          {t("progress.editWeight")}
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeletingWeightId(w.id)}
                           className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-red-600"
                         >
-                          🗑️ ဖျက်မယ်
+                          {t("progress.deleteWeight")}
                         </button>
                       </div>
                     </div>
@@ -611,8 +619,10 @@ export default function ProgressPage() {
                   {deletingWeightId === w.id && (
                     <div className="mt-2 rounded-xl border border-red-300 bg-red-50 p-3">
                       <p>
-                        {formatDateDMY(w.date)} ရဲ့ {w.kg} kg မှတ်တမ်းကို
-                        ဖျက်မှာလား?
+                        {t("progress.deleteWeightConfirm", {
+                          date: formatDateDMY(w.date),
+                          kg: w.kg,
+                        })}
                       </p>
                       <div className="mt-2 flex gap-2">
                         <button
@@ -620,7 +630,7 @@ export default function ProgressPage() {
                           onClick={() => setDeletingWeightId(null)}
                           className="flex-1 rounded-lg border bg-white py-1.5"
                         >
-                          မဖျက်ဘူး
+                          {t("common.dontDelete")}
                         </button>
                         <button
                           type="button"
@@ -628,7 +638,7 @@ export default function ProgressPage() {
                           disabled={weightEditBusy}
                           className="flex-1 rounded-lg bg-red-600 py-1.5 font-semibold text-white disabled:opacity-50"
                         >
-                          {weightEditBusy ? "ဖျက်နေတယ်…" : "ဖျက်မယ်"}
+                          {weightEditBusy ? t("common.deleting") : t("common.delete")}
                         </button>
                       </div>
                     </div>
@@ -642,13 +652,13 @@ export default function ProgressPage() {
 
       {/* ပြက္ခဒိန် */}
       <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
-        <h2>မှတ်တမ်း ပြက္ခဒိန်</h2>
+        <h2>{t("progress.calendar")}</h2>
         <MonthCalendar loggedDays={data.loggedDays} />
       </section>
 
       {/* ရေ */}
       <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
-        <h2>💧 ရေ — ဒီအပတ်</h2>
+        <h2>{t("progress.waterTitle")}</h2>
         <div className="mt-3 flex items-stretch gap-2" style={{ height: 96 }}>
           {data.waterWeek.map((d) => {
             const maxCups = Math.max(...data.waterWeek.map((x) => x.cups), 1);
@@ -671,7 +681,7 @@ export default function ProgressPage() {
           {data.waterWeek.map((d) => (
             <div key={d.date} className="flex-1 text-center">
               <p className="caption">
-                {weekdayShort(d.date)} {Number(d.date.slice(8, 10))}
+                {weekdayShort(d.date, t)} {Number(d.date.slice(8, 10))}
               </p>
             </div>
           ))}
@@ -680,25 +690,25 @@ export default function ProgressPage() {
         {/* ပန်းတိုင် + ဒီနေ့ အခြေအနေ */}
         <div className="mt-4 flex items-center justify-between gap-2">
           <p>
-            ဒီနေ့ {todayCups} / {waterGoal} ခွက်
+            {t("progress.todayCups", { cups: todayCups, goal: waterGoal })}
           </p>
           <div className="flex items-center gap-2">
-            <span className="caption">ပန်းတိုင်</span>
+            <span className="caption">{t("progress.goalLabel")}</span>
             <button
               type="button"
               onClick={() => handleChangeGoal(-1)}
               disabled={goalBusy || waterGoal <= 1}
-              aria-label="ပန်းတိုင် လျှော့မယ်"
+              aria-label={t("progress.goalDecrease")}
               className="h-9 w-9 rounded-xl border bg-white font-bold disabled:opacity-30"
             >
               −
             </button>
-            <span className="w-12 text-center font-semibold">{waterGoal} ခွက်</span>
+            <span className="w-12 text-center font-semibold">{t("progress.cupsUnit", { goal: waterGoal })}</span>
             <button
               type="button"
               onClick={() => handleChangeGoal(1)}
               disabled={goalBusy || waterGoal >= 20}
-              aria-label="ပန်းတိုင် တိုးမယ်"
+              aria-label={t("progress.goalIncrease")}
               className="h-9 w-9 rounded-xl border bg-white font-bold disabled:opacity-30"
             >
               +
@@ -714,7 +724,7 @@ export default function ProgressPage() {
 
         {/* ရက်ရွေး + မှတ်/ဖျက် */}
         <label className="mt-4 block">
-          <span className="caption">မှတ်မယ့် ရက် (အတိတ်နေ့လည်း ရတယ်)</span>
+          <span className="caption">{t("progress.waterDateLabel")}</span>
           <input
             type="date"
             value={waterDate}
@@ -730,7 +740,7 @@ export default function ProgressPage() {
             disabled={waterBusy}
             className="flex-1 rounded-xl border border-sky-500 py-2.5 font-semibold text-sky-600 disabled:opacity-50"
           >
-            {waterBusy ? "မှတ်နေတယ်…" : "+1 ခွက် 💧"}
+            {waterBusy ? t("progress.loggingWater") : t("progress.addCup")}
           </button>
           <button
             type="button"
@@ -738,7 +748,7 @@ export default function ProgressPage() {
             disabled={waterBusy}
             className="flex-1 rounded-xl border py-2.5 font-semibold text-[#334155] disabled:opacity-50"
           >
-            {waterBusy ? "ဖျက်နေတယ်…" : "−1 ခွက် ↩️"}
+            {waterBusy ? t("common.deleting") : t("progress.undoCup")}
           </button>
         </div>
         {waterMsg && <p className="caption mt-2">{waterMsg}</p>}

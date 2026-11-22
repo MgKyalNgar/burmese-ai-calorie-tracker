@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { invalidateCachePrefix } from "@/lib/useCachedData";
+import { useLang } from "@/lib/i18n";
 import {
   MEAL_TYPES,
   defaultMealType,
@@ -31,6 +32,7 @@ export default function ReviewForm({
   onCancel: () => void;
 }) {
   const router = useRouter();
+  const { t } = useLang();
   const [nameMm, setNameMm] = useState(initial.food.name_mm);
   const [nameEn, setNameEn] = useState(initial.food.name_en);
   const [grams, setGrams] = useState(Math.round(initial.food.grams) || 100);
@@ -78,7 +80,7 @@ export default function ReviewForm({
 
   async function handleSave() {
     if (!nameMm.trim() && !nameEn.trim()) {
-      setMessage("အစားအစာ နာမည် ထည့်ပေးပါ။");
+      setMessage(t("review.nameRequired"));
       return;
     }
     setBusy(true);
@@ -89,7 +91,7 @@ export default function ReviewForm({
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        setMessage("Login အရင် ဝင်ပေးပါ။");
+        setMessage(t("common.loginFirst"));
         return;
       }
       const today = todayYangon();
@@ -125,7 +127,7 @@ export default function ReviewForm({
         .select("id")
         .single();
       if (mealError || !meal) {
-        throw new Error("သိမ်းလို့ မရပါ — ပြန်စမ်းပေးပါ။");
+        throw new Error(t("common.saveErrorRetry"));
       }
 
       // 3) meal_items row သိမ်းတယ်။
@@ -147,7 +149,7 @@ export default function ReviewForm({
       if (itemError) {
         // Item မသိမ်းရင် meal အလွတ်ကြီး မကျန်အောင် ပြန်ဖျက်တယ်။
         await supabase.from("meals").delete().eq("id", meal.id);
-        throw new Error("သိမ်းလို့ မရပါ — ပြန်စမ်းပေးပါ။");
+        throw new Error(t("common.saveErrorRetry"));
       }
 
       // သိမ်းပြီးပြီ — Home/Diary cache ကို ဖျက်တယ် (နောက်တစ်ခါ ဖွင့်ရင်
@@ -161,7 +163,7 @@ export default function ReviewForm({
       router.refresh();
     } catch (err) {
       setMessage(
-        err instanceof Error ? err.message : "သိမ်းလို့ မရပါ — ပြန်စမ်းပေးပါ။",
+        err instanceof Error ? err.message : t("common.saveErrorRetry"),
       );
     } finally {
       setBusy(false);
@@ -170,7 +172,7 @@ export default function ReviewForm({
 
   return (
     <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
-      <h2>စစ်ဆေးပြီး သိမ်းမယ်</h2>
+      <h2>{t("review.title")}</h2>
       {initial.photoPreviewUrl && (
         <img
           src={initial.photoPreviewUrl}
@@ -183,7 +185,7 @@ export default function ReviewForm({
       )}
 
       <label className="mt-4 block">
-        <span className="caption">အစားအစာ (မြန်မာ)</span>
+        <span className="caption">{t("review.foodNameMy")}</span>
         <input
           type="text"
           value={nameMm}
@@ -208,14 +210,14 @@ export default function ReviewForm({
       </label>
 
       <div className="mt-4">
-        <span className="caption">ပမာဏ (ဂရမ်)</span>
+        <span className="caption">{t("review.amount")}</span>
         <div className="mt-1 flex items-center gap-2">
           <button
             type="button"
             onClick={() => changeGrams(grams - 10)}
             disabled={busy}
             className="h-10 w-10 rounded-xl border text-lg font-bold disabled:opacity-50"
-            aria-label="လျှော့မယ်"
+            aria-label={t("common.decrease")}
           >
             −
           </button>
@@ -233,7 +235,7 @@ export default function ReviewForm({
             onClick={() => changeGrams(grams + 10)}
             disabled={busy}
             className="h-10 w-10 rounded-xl border text-lg font-bold disabled:opacity-50"
-            aria-label="တိုးမယ်"
+            aria-label={t("common.increase")}
           >
             +
           </button>
@@ -243,7 +245,7 @@ export default function ReviewForm({
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <label className="block">
-          <span className="caption">ကယ်လိုရီ (kcal)</span>
+          <span className="caption">{t("review.calories")}</span>
           <input
             type="number"
             min={0}
@@ -292,21 +294,21 @@ export default function ReviewForm({
       </div>
 
       <div className="mt-4">
-        <span className="caption">ဘယ်အစာ အမျိုးအစားလဲ?</span>
+        <span className="caption">{t("review.whichMeal")}</span>
         <div className="mt-1 grid grid-cols-4 gap-2">
-          {MEAL_TYPES.map((t) => (
+          {MEAL_TYPES.map((mt) => (
             <button
-              key={t.value}
+              key={mt.value}
               type="button"
-              onClick={() => setMealType(t.value)}
+              onClick={() => setMealType(mt.value)}
               disabled={busy}
               className={`rounded-xl border px-2 py-2.5 ${
-                mealType === t.value
+                mealType === mt.value
                   ? "border-[var(--theme)] bg-[var(--theme)] font-semibold text-white"
                   : "text-[#334155]"
               }`}
             >
-              {t.label}
+              {t(`meal.${mt.value}`)}
             </button>
           ))}
         </div>
@@ -323,7 +325,7 @@ export default function ReviewForm({
           disabled={busy}
           className="flex-1 rounded-xl border px-4 py-2.5 font-semibold text-[#334155] disabled:opacity-50"
         >
-          ပြန်ပြင်မယ်
+          {t("review.back")}
         </button>
         <button
           type="button"
@@ -331,7 +333,7 @@ export default function ReviewForm({
           disabled={busy}
           className="flex-1 rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
         >
-          {busy ? "သိမ်းနေတယ်…" : "သိမ်းမယ် ✅"}
+          {busy ? t("common.saving") : t("review.save")}
         </button>
       </div>
     </section>

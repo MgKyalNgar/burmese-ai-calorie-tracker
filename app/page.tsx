@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { useCachedData } from "@/lib/useCachedData";
+import { FETCH_FALLBACK, useLang } from "@/lib/i18n";
 import {
   formatDateDMY,
   round1,
@@ -28,20 +29,13 @@ async function fetchToday(): Promise<TodayData> {
     const retryData = await retry.json();
     if (retry.status === 401) return { needsLogin: true } as TodayData;
     if (!retry.ok)
-      throw new Error(retryData?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
+      throw new Error(retryData?.error ?? FETCH_FALLBACK);
     return retryData as TodayData;
   }
   const data = await res.json();
-  if (!res.ok) throw new Error(data?.error ?? "ဒေတာ ဆွဲလို့ မရပါ။");
+  if (!res.ok) throw new Error(data?.error ?? FETCH_FALLBACK);
   return data as TodayData;
 }
-
-const MEAL_LABELS: Record<string, string> = {
-  breakfast: "မနက်စာ",
-  lunch: "နေ့လည်စာ",
-  dinner: "ညစာ",
-  snack: "အဆာပြေ",
-};
 
 // ကယ်လိုရီ Ring — စားပြီးသား / target။
 // compact=true ဆို အလယ်မှာ ဂဏန်းအစား 🔥 ပဲ ပြတယ် (Home hero က ဂဏန်းကို
@@ -57,6 +51,7 @@ function CalorieRing({
   size?: string;
   compact?: boolean;
 }) {
+  const { t } = useLang();
   const remaining = Math.max(0, target - eaten);
   const pct = target > 0 ? Math.min(1, eaten / target) : 0;
   const r = 56;
@@ -83,7 +78,7 @@ function CalorieRing({
           </span>
         ) : (
           <>
-            <p className="caption">ကျန်တာ</p>
+            <p className="caption">{t("home.remaining")}</p>
             <p className="hero-num text-[var(--theme-dark)]">{remaining.toLocaleString()}</p>
             <p className="caption">kcal</p>
           </>
@@ -95,6 +90,7 @@ function CalorieRing({
 
 export default function Home() {
   const router = useRouter();
+  const { t, lang } = useLang();
   const key = `today-${todayYangon()}`;
   const { data, loading, refreshing, error } = useCachedData<TodayData>(
     key,
@@ -114,7 +110,7 @@ export default function Home() {
           className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme)]"
           aria-hidden
         />
-        <p className="mt-4 text-[#52677f]">ခနစောင့်ပါ…</p>
+        <p className="mt-4 text-[#52677f]">{t("common.loading")}</p>
         <BottomNav />
       </main>
     );
@@ -123,13 +119,15 @@ export default function Home() {
   if (error) {
     return (
       <main className="mx-auto min-h-screen max-w-md px-5 pb-24 pt-8">
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-red-700">
+          {error === FETCH_FALLBACK ? t("common.loadError") : error}
+        </p>
         <button
           type="button"
           onClick={() => window.location.reload()}
           className="mt-4 rounded-xl bg-[var(--theme)] px-5 py-2.5 font-semibold text-white"
         >
-          ပြန်စမ်းမယ်
+          {t("common.retry")}
         </button>
         <BottomNav />
       </main>
@@ -151,26 +149,35 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-md min-h-screen px-5 pb-24 pt-5">
       <h1>
-        မင်္ဂလာပါ{data.displayName ? `၊ ${data.displayName}` : ""} 👋
+        {t("home.greeting", {
+          name: data.displayName
+            ? `${lang === "my" ? "၊ " : ", "}${data.displayName}`
+            : "",
+        })}
       </h1>
       <p className="caption mt-1">
-        ဒီနေ့ {formatDateDMY(data.date)} · 🔥 Streak {streak} ရက်
+        {t("home.todayStreak", {
+          date: formatDateDMY(data.date),
+          streak,
+        })}
       </p>
-      <p className="caption">Streak ဆိုတာ အစာမှတ်တဲ့ ရက် ဆက်တိုက်ပါ</p>
-      {refreshing && <p className="caption mt-1">အသစ်ဆွဲနေတယ်…</p>}
+      <p className="caption">{t("home.streakNote")}</p>
+      {refreshing && <p className="caption mt-1">{t("common.refreshing")}</p>}
 
       {/* Hero — ပုံ ၂ Home လို ဘေးတိုက်ပုံစံ: ဂဏန်း ဘယ်၊ ring ညာ။
           တစ်မျက်နှာထဲ ဝင်အောင် ring ကို သေးထားတယ်။ */}
       <section className="mt-3 flex items-center gap-4 rounded-3xl bg-[var(--theme-soft)] p-4 shadow-sm">
         <div className="flex-1 text-left">
-          <p className="caption">ကျန်တာ</p>
+          <p className="caption">{t("home.remaining")}</p>
           <p className="hero-num text-[var(--theme-dark)]">
             {Math.max(0, target - eaten).toLocaleString()}
             <span className="text-base"> kcal</span>
           </p>
           <p className="caption mt-1">
-            စားပြီး {eaten.toLocaleString()} · Target{" "}
-            {target.toLocaleString()}
+            {t("home.eatenTarget", {
+              eaten: eaten.toLocaleString(),
+              target: target.toLocaleString(),
+            })}
           </p>
         </div>
         <CalorieRing eaten={eaten} target={target} size="h-24 w-24" compact />
@@ -206,15 +213,15 @@ export default function Home() {
 
       <section className="mt-3 flex gap-3">
         <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
-          <p className="caption">💧 ရေ</p>
+          <p className="caption">{t("home.water")}</p>
           <p className="hero-num text-[var(--theme-dark)]">
             {cups}
             <span className="text-base text-[#52677f]">/{waterGoal}</span>
           </p>
-          <p className="caption">ခွက်</p>
+          <p className="caption">{t("home.cups")}</p>
         </div>
         <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
-          <p className="caption">⚖️ ဝိတ်</p>
+          <p className="caption">{t("home.weight")}</p>
           <p className="hero-num text-[var(--theme-dark)]">
             {latestWeightKg !== null ? latestWeightKg : "—"}
           </p>
@@ -223,15 +230,15 @@ export default function Home() {
       </section>
 
       <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-        <h2>ဒီနေ့ စားပြီးသား</h2>
+        <h2>{t("home.todayMeals")}</h2>
         {data.meals.length === 0 ? (
           <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-[#52677f]">ဒီနေ့ ဘာမှ မမှတ်ရသေးဘူး။</p>
+            <p className="text-[#52677f]">{t("home.emptyMeals")}</p>
             <Link
               href="/add"
               className="shrink-0 rounded-xl bg-[var(--theme)] px-4 py-2 font-semibold text-white"
             >
-              + ထည့်မယ်
+              {t("home.addFood")}
             </Link>
           </div>
         ) : (
@@ -243,10 +250,10 @@ export default function Home() {
               >
                 <div>
                   <p className="font-semibold">
-                    {m.name_mm ?? MEAL_LABELS[m.meal_type as string] ?? m.meal_type}
+                    {m.name_mm ?? t(`meal.${m.meal_type}`)}
                   </p>
                   <p className="caption">
-                    {MEAL_LABELS[m.meal_type as string] ?? m.meal_type}
+                    {t(`meal.${m.meal_type}`)}
                   </p>
                 </div>
                 <span className="font-semibold">

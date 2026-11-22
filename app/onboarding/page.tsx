@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { invalidateCache, invalidateCachePrefix } from "@/lib/useCachedData";
+import { useLang } from "@/lib/i18n";
 
 // Mifflin-St Jeor နဲ့ တစ်နေ့တာ ကယ်လိုရီ target တွက်တယ်။
 const ACTIVITY_FACTORS: Record<string, number> = {
@@ -35,6 +36,7 @@ function calcTarget(
 }
 
 export default function OnboardingPage() {
+  const { t } = useLang();
   const router = useRouter();
   const [gender, setGender] = useState("female");
   const [age, setAge] = useState("");
@@ -88,7 +90,7 @@ export default function OnboardingPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid || target == null) {
-      setError("အသက်၊ အရပ်၊ ဝိတ် မှန်မှန်ကန်ကန် ထည့်ပေးပါ။");
+      setError(t("onboarding.invalid"));
       return;
     }
     setError("");
@@ -115,7 +117,7 @@ export default function OnboardingPage() {
     });
     setBusy(false);
     if (error) {
-      setError("သိမ်းလို့ မရပါ — " + error.message);
+      setError(t("onboarding.saveFailed") + error.message);
       return;
     }
     // Profile ပြင်ပြီးပြီ — Profile/Home cache ကို ဖျက်တယ်
@@ -129,36 +131,36 @@ export default function OnboardingPage() {
   if (!loaded) {
     return (
       <main className="mx-auto max-w-md min-h-screen px-5 py-10">
-        <p>ဖွင့်နေပါတယ်…</p>
+        <p>{t("onboarding.loading")}</p>
       </main>
     );
   }
 
   return (
     <main className="mx-auto max-w-md min-h-screen px-5 py-10">
-      <h1>ကိုယ့်အကြောင်း ပြောပြပါ</h1>
+      <h1>{t("onboarding.title")}</h1>
       <p className="caption mt-1">
-        တစ်နေ့တာ ကယ်လိုရီ target ကို တွက်ပေးဖို့ လိုပါတယ်။
+        {t("onboarding.subtitle")}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <label className="block">
-          <span className="caption">နာမည် (မထည့်လဲ ရတယ်)</span>
+          <span className="caption">{t("onboarding.name")}</span>
           <input
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="ဥပမာ — ကိုကြယ်ငါး"
+            placeholder={t("onboarding.namePlaceholder")}
             className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
           />
         </label>
 
         <div>
-          <span className="caption">ကျား / မ</span>
+          <span className="caption">{t("onboarding.gender")}</span>
           <div className="mt-1 flex gap-2">
             {[
-              { value: "female", label: "မ" },
-              { value: "male", label: "ကျား" },
+              { value: "female", label: t("onboarding.female") },
+              { value: "male", label: t("onboarding.male") },
             ].map((opt) => (
               <button
                 key={opt.value}
@@ -178,7 +180,7 @@ export default function OnboardingPage() {
 
         <div className="flex gap-3">
           <label className="flex-1">
-            <span className="caption">အသက်</span>
+            <span className="caption">{t("onboarding.age")}</span>
             <input
               type="number"
               inputMode="numeric"
@@ -190,7 +192,7 @@ export default function OnboardingPage() {
             />
           </label>
           <label className="flex-1">
-            <span className="caption">အရပ် (cm)</span>
+            <span className="caption">{t("onboarding.height")}</span>
             <input
               type="number"
               inputMode="decimal"
@@ -202,7 +204,7 @@ export default function OnboardingPage() {
             />
           </label>
           <label className="flex-1">
-            <span className="caption">ဝိတ် (kg)</span>
+            <span className="caption">{t("onboarding.weight")}</span>
             <input
               type="number"
               inputMode="decimal"
@@ -216,12 +218,12 @@ export default function OnboardingPage() {
         </div>
 
         <div>
-          <span className="caption">ပန်းတိုင်</span>
+          <span className="caption">{t("onboarding.goal")}</span>
           <div className="mt-1 flex gap-2">
             {[
-              { value: "lose", label: "ဝိတ်ချမယ်" },
-              { value: "maintain", label: "ထိန်းမယ်" },
-              { value: "gain", label: "ဝိတ်တက်မယ်" },
+              { value: "lose", label: t("onboarding.goalLose") },
+              { value: "maintain", label: t("onboarding.goalMaintain") },
+              { value: "gain", label: t("onboarding.goalGain") },
             ].map((opt) => (
               <button
                 key={opt.value}
@@ -240,22 +242,22 @@ export default function OnboardingPage() {
         </div>
 
         <label className="block">
-          <span className="caption">တစ်နေ့တာ လှုပ်ရှားမှု</span>
+          <span className="caption">{t("onboarding.activity")}</span>
           <select
             value={activity}
             onChange={(e) => setActivity(e.target.value)}
             className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
           >
-            <option value="sedentary">ထိုင်များတယ် (လှုပ်ရှားမှု နည်းတယ်)</option>
-            <option value="light">ပေါ့ပေါ့ပါးပါး လှုပ်ရှားတယ်</option>
-            <option value="moderate">အလယ်အလတ် လှုပ်ရှားတယ်</option>
-            <option value="active">များများ လှုပ်ရှားတယ်</option>
+            <option value="sedentary">{t("onboarding.actSedentary")}</option>
+            <option value="light">{t("onboarding.actLight")}</option>
+            <option value="moderate">{t("onboarding.actModerate")}</option>
+            <option value="active">{t("onboarding.actActive")}</option>
           </select>
         </label>
 
         {target != null && (
           <div className="rounded-2xl bg-[var(--theme-soft)] p-5 text-center">
-            <p className="caption">တစ်နေ့တာ ကယ်လိုရီ target</p>
+            <p className="caption">{t("onboarding.targetLabel")}</p>
             <p className="hero-num text-[var(--theme-dark)]">
               {target.toLocaleString()} kcal
             </p>
@@ -271,7 +273,7 @@ export default function OnboardingPage() {
           disabled={busy}
           className="w-full rounded-xl bg-[var(--theme)] py-3 font-semibold text-white disabled:opacity-50"
         >
-          {busy ? "သိမ်းနေပါတယ်…" : "သိမ်းပြီး စမယ်"}
+          {busy ? t("onboarding.saving") : t("onboarding.save")}
         </button>
       </form>
     </main>

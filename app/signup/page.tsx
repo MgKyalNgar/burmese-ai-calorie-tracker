@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useLang } from "@/lib/i18n";
 
 export default function SignupPage() {
+  const { t } = useLang();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +20,7 @@ export default function SignupPage() {
     setError("");
     setDone("");
     if (password.length < 6) {
-      setError("စကားဝှက်က အနည်းဆုံး ၆ လုံး ရှိရမယ်။");
+      setError(t("auth.passwordShort"));
       return;
     }
     setBusy(true);
@@ -31,7 +33,7 @@ export default function SignupPage() {
     setBusy(false);
     if (error) {
       if (error.message.includes("already registered")) {
-        setError("ဒီအီးမေးလ်နဲ့ အကောင့် ရှိပြီးသားပါ — login ဝင်ကြည့်ပါ။");
+        setError(t("auth.alreadyRegistered"));
       } else {
         setError(error.message);
       }
@@ -43,21 +45,19 @@ export default function SignupPage() {
       router.refresh();
       return;
     }
-    setDone(
-      "အကောင့် ဖွင့်ပြီးပြီ ✅ အီးမေးလ်ထဲက အတည်ပြုလင့်ခ်ကို နှိပ်ပြီး login ဝင်ပေးပါ။",
-    );
+    setDone(t("auth.signupDone"));
   }
 
   return (
     <main className="mx-auto max-w-md min-h-screen px-5 py-10">
-      <h1>အကောင့် ဖွင့်မယ်</h1>
+      <h1>{t("auth.signupTitle")}</h1>
       <p className="caption mt-1">
-        အီးမေးလ်နဲ့ စကားဝှက် ထည့်ပြီး အကောင့် ဖွင့်ပါ။
+        {t("auth.signupSubtitle")}
       </p>
 
       <form onSubmit={handleSignup} className="mt-8 space-y-4">
         <label className="block">
-          <span className="caption">အီးမေးလ်</span>
+          <span className="caption">{t("auth.email")}</span>
           <input
             type="email"
             required
@@ -68,7 +68,7 @@ export default function SignupPage() {
           />
         </label>
         <label className="block">
-          <span className="caption">စကားဝှက် (အနည်းဆုံး ၆ လုံး)</span>
+          <span className="caption">{t("auth.passwordMin")}</span>
           <input
             type="password"
             required
@@ -91,14 +91,14 @@ export default function SignupPage() {
           disabled={busy}
           className="w-full rounded-xl bg-[var(--theme)] py-3 font-semibold text-white disabled:opacity-50"
         >
-          {busy ? "ဖွင့်နေပါတယ်…" : "အကောင့် ဖွင့်မယ်"}
+          {busy ? t("auth.creating") : t("auth.signupTitle")}
         </button>
       </form>
 
       <p className="mt-6 text-center">
-        အကောင့် ရှိပြီးသားလား?{" "}
+        {t("auth.hasAccount")}{" "}
         <Link href="/login" className="font-semibold text-[var(--theme-dark)] underline">
-          Login ဝင်မယ်
+          {t("auth.loginLink")}
         </Link>
       </p>
     </main>

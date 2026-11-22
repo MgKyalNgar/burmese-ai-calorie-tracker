@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import ReviewForm, { type ReviewInitial } from "@/components/ReviewForm";
 import { createClient } from "@/lib/supabase/client";
 import { scaleNutrients, type AnalyzedFood } from "@/lib/meal";
+import { useLang } from "@/lib/i18n";
 
 type Mode = "photo" | "text" | "search" | "manual";
 
@@ -23,6 +24,7 @@ type FoodRow = {
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 export default function AddPage() {
+  const { t } = useLang();
   const [mode, setMode] = useState<Mode>("photo");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -63,11 +65,11 @@ export default function AddPage() {
   function pickPhoto(file: File | undefined) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setMessage("ဓာတ်ပုံဖိုင် မဟုတ်ပါ — ပုံပဲ ရွေးပေးပါ။");
+      setMessage(t("add.notImage"));
       return;
     }
     if (file.size > MAX_PHOTO_BYTES) {
-      setMessage("ဓာတ်ပုံ အရမ်းကြီးနေတယ် — 5MB အောက် ပုံပဲ သုံးပေးပါ။");
+      setMessage(t("add.tooBig"));
       return;
     }
     setMessage("");
@@ -80,7 +82,7 @@ export default function AddPage() {
 
   async function analyzePhoto() {
     if (!photoFile) {
-      setMessage("ဓာတ်ပုံ အရင် ရွေးပေးပါ။");
+      setMessage(t("add.pickPhotoFirst"));
       return;
     }
     setBusy(true);
@@ -94,7 +96,7 @@ export default function AddPage() {
       const data = await res.json();
       if (!res.ok) {
         if (data?.code === "NO_API_KEY") setNoKeyError(true);
-        throw new Error(data?.error ?? "AI စစ်လို့ မရပါ။");
+        throw new Error(data?.error ?? t("add.analyzeError"));
       }
       setReview({
         food: data.result as AnalyzedFood,
@@ -103,7 +105,7 @@ export default function AddPage() {
         photoPreviewUrl: photoPreview,
       });
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "AI စစ်လို့ မရပါ။");
+      setMessage(err instanceof Error ? err.message : t("add.analyzeError"));
     } finally {
       setBusy(false);
     }
@@ -111,7 +113,7 @@ export default function AddPage() {
 
   async function analyzeText() {
     if (!textInput.trim()) {
-      setMessage("ဘာစားခဲ့လဲ ဆိုတာ အရင် ရိုက်ပေးပါ။");
+      setMessage(t("add.typeFirst"));
       return;
     }
     setBusy(true);
@@ -126,11 +128,11 @@ export default function AddPage() {
       const data = await res.json();
       if (!res.ok) {
         if (data?.code === "NO_API_KEY") setNoKeyError(true);
-        throw new Error(data?.error ?? "AI စစ်လို့ မရပါ။");
+        throw new Error(data?.error ?? t("add.analyzeError"));
       }
       setReview({ food: data.result as AnalyzedFood, source: "text" });
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "AI စစ်လို့ မရပါ။");
+      setMessage(err instanceof Error ? err.message : t("add.analyzeError"));
     } finally {
       setBusy(false);
     }
@@ -202,10 +204,10 @@ export default function AddPage() {
   }
 
   const tabs: { value: Mode; label: string }[] = [
-    { value: "photo", label: "📷 ဓာတ်ပုံ" },
-    { value: "text", label: "✍️ စာရိုက်" },
-    { value: "search", label: "🔍 ရှာဖွေ" },
-    { value: "manual", label: "📝 လက်နဲ့" },
+    { value: "photo", label: t("add.tabPhoto") },
+    { value: "text", label: t("add.tabText") },
+    { value: "search", label: t("add.tabSearch") },
+    { value: "manual", label: t("add.tabManual") },
   ];
 
   // လက်နဲ့ ဖြည့်တဲ့ အစာ — နာမည်/ဂရမ်/ကယ်လိုရီ/macro ကို ကိုယ်တိုင် ဖြည့်တယ်။
@@ -226,7 +228,7 @@ export default function AddPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-md px-5 pb-24 pt-8">
-      <h1>+ အစားအစာ ထည့်မယ်</h1>
+      <h1>{t("add.title")}</h1>
 
       {review ? (
         <ReviewForm initial={review} onCancel={resetReview} />
@@ -255,10 +257,7 @@ export default function AddPage() {
 
           {mode === "manual" && (
             <div className="mt-4">
-              <p className="caption">
-                AI မသုံးဘဲ ကိုယ်တိုင် ဖြည့်မယ် — နာမည်၊ ဂရမ်၊ ကယ်လိုရီနဲ့
-                macro ကို ရိုက်ထည့်ပြီး သိမ်းလို့ရတယ်။
-              </p>
+              <p className="caption">{t("add.manualNote")}</p>
               <ReviewForm
                 initial={manualInitial}
                 onCancel={() => setMode("photo")}
@@ -268,22 +267,20 @@ export default function AddPage() {
 
           {mode === "photo" && (
             <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
-              <h2>ဓာတ်ပုံနဲ့ ထည့်မယ်</h2>
-              <p className="caption mt-1">
-                ပုံရိုက်လိုက် — AI က အစားအစာကို ခွဲပြီး ကယ်လိုရီ ခန့်မှန်းပေးမယ်။
-              </p>
+              <h2>{t("add.photoTitle")}</h2>
+              <p className="caption mt-1">{t("add.photoNote")}</p>
               {photoPreview ? (
                 <div className="relative mt-3">
                   <img
                     src={photoPreview}
-                    alt="ရွေးထားတဲ့ ဓာတ်ပုံ"
+                    alt={t("add.photoAlt")}
                     className="h-56 w-full rounded-xl object-cover"
                   />
                   <button
                     type="button"
                     onClick={removePhoto}
                     disabled={busy}
-                    aria-label="ဓာတ်ပုံ ဖျက်မယ်"
+                    aria-label={t("add.photoRemove")}
                     className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-lg font-bold text-white disabled:opacity-50"
                   >
                     ✕
@@ -301,7 +298,7 @@ export default function AddPage() {
                   disabled={busy}
                   className="flex-1 rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
                 >
-                  📷 ကင်မရာ
+                  {t("add.camera")}
                 </button>
                 <button
                   type="button"
@@ -328,12 +325,12 @@ export default function AddPage() {
                 onChange={(e) => pickPhoto(e.target.files?.[0])}
               />
               <label className="mt-3 block">
-                <span className="caption">မှတ်ချက် (မဖြစ်မနေ မဟုတ်ပါ)</span>
+                <span className="caption">{t("add.hintLabel")}</span>
                 <input
                   type="text"
                   value={photoHint}
                   onChange={(e) => setPhotoHint(e.target.value)}
-                  placeholder="ဥပမာ: မုန့်ဟင်းခါး၊ ငါးနဲ့"
+                  placeholder={t("add.hintPlaceholder")}
                   disabled={busy}
                   className="mt-1 w-full rounded-xl border px-3 py-2.5"
                 />
@@ -344,22 +341,20 @@ export default function AddPage() {
                 disabled={busy || !photoFile}
                 className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
               >
-                {busy ? "AI စစ်နေတယ်…" : "🤖 AI နဲ့ စစ်မယ်"}
+                {busy ? t("add.analyzing") : t("add.analyze")}
               </button>
             </section>
           )}
 
           {mode === "text" && (
             <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
-              <h2>စာရိုက်ပြီး ထည့်မယ်</h2>
-              <p className="caption mt-1">
-                ဘာစားခဲ့လဲ ရိုက်ထည့်လိုက် — AI က ကယ်လိုရီ ခန့်မှန်းပေးမယ်။
-              </p>
+              <h2>{t("add.textTitle")}</h2>
+              <p className="caption mt-1">{t("add.textNote")}</p>
               <textarea
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
                 rows={4}
-                placeholder="ဥပမာ: မုန့်ဟင်းခါး တစ်ပွဲ၊ ကြက်ဥ တစ်လုံး"
+                placeholder={t("add.textPlaceholder")}
                 disabled={busy}
                 className="mt-3 w-full rounded-xl border px-3 py-2.5"
               />
@@ -369,17 +364,15 @@ export default function AddPage() {
                 disabled={busy || !textInput.trim()}
                 className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
               >
-                {busy ? "AI စစ်နေတယ်…" : "🤖 AI နဲ့ စစ်မယ်"}
+                {busy ? t("add.analyzing") : t("add.analyze")}
               </button>
             </section>
           )}
 
           {mode === "search" && (
             <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
-              <h2>ရှာဖွေပြီး ထည့်မယ်</h2>
-              <p className="caption mt-1">
-                သိမ်းထားတဲ့ အစားအစာ စာရင်းထဲက ရှာတယ် — AI မသုံးဘူး၊ မြန်တယ်။
-              </p>
+              <h2>{t("add.searchTitle")}</h2>
+              <p className="caption mt-1">{t("add.searchNote")}</p>
               <input
                 type="text"
                 value={query}
@@ -387,13 +380,13 @@ export default function AddPage() {
                   setQuery(e.target.value);
                   setPickedFood(null);
                 }}
-                placeholder="ဥပမာ: မုန့်ဟင်းခါး / rice"
+                placeholder={t("add.searchPlaceholder")}
                 className="mt-3 w-full rounded-xl border px-3 py-2.5"
               />
-              {searching && <p className="caption mt-2">ရှာနေတယ်…</p>}
+              {searching && <p className="caption mt-2">{t("add.searching")}</p>}
               {!searching && query.trim().length >= 2 && results.length === 0 && (
                 <p className="mt-3 text-[#52677f]">
-                  မတွေ့ပါ — ဓာတ်ပုံ (သို့) စာရိုက်ပြီး ထည့်ကြည့်ပါ။
+                  {t("add.notFound")}
                 </p>
               )}
               <ul className="mt-2 space-y-2">
@@ -424,7 +417,7 @@ export default function AddPage() {
                 <div className="mt-4 rounded-xl bg-slate-50 p-4">
                   <p className="font-semibold">{pickedFood.name_mm}</p>
                   <label className="mt-2 block">
-                    <span className="caption">ပမာဏ (ဂရမ်)</span>
+                    <span className="caption">{t("add.amount")}</span>
                     <input
                       type="number"
                       min={10}
@@ -458,7 +451,7 @@ export default function AddPage() {
                     onClick={confirmSearchFood}
                     className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white"
                   >
-                    စစ်ဆေးပြီး သိမ်းမယ် →
+                    {t("add.reviewSave")}
                   </button>
                 </div>
               )}
@@ -473,7 +466,7 @@ export default function AddPage() {
                   href="/profile"
                   className="mt-1 block font-semibold text-[var(--theme-dark)] underline"
                 >
-                  Profile မှာ Gemini key ထည့်မယ် →
+                  {t("add.noKeyLink")}
                 </Link>
               )}
             </p>

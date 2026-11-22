@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { formatDateTimeDMY } from "@/lib/meal";
+import { useLang, FETCH_FALLBACK, MARK_READ_FAILED } from "@/lib/i18n";
 
 // In-app noti ခေါင်းလောင်း 🔔 — စာမျက်နှာတိုင်းရဲ့ အပေါ် ညာဘက်မှာ ပေါ်တယ်
 // (login/signup/onboarding မှာ မပြဘူး)။ မဖတ်ရသေးတဲ့ noti အရေအတွက်ကို
@@ -20,6 +21,7 @@ type NotificationItem = {
 };
 
 export default function NotificationBell() {
+  const { t } = useLang();
   const pathname = usePathname();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unread, setUnread] = useState(0);
@@ -32,11 +34,11 @@ export default function NotificationBell() {
       // login မဝင်သေးရင် ခေါင်းလောင်း မပြဘူး။
       if (res.status === 401) return;
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "Noti ဆွဲလို့ မရပါ။");
+      if (!res.ok) throw new Error(data?.error ?? FETCH_FALLBACK);
       setItems(data.notifications ?? []);
       setUnread(data.unreadCount ?? 0);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Noti ဆွဲလို့ မရပါ။");
+      setError(e instanceof Error ? e.message : FETCH_FALLBACK);
     }
   }, []);
 
@@ -66,11 +68,11 @@ export default function NotificationBell() {
       try {
         const res = await fetch("/api/notifications", { method: "POST" });
         const data = await res.json();
-        if (!res.ok) throw new Error(data?.error ?? "ဖတ်ပြီးသား မှတ်လို့ မရပါ။");
+        if (!res.ok) throw new Error(data?.error ?? MARK_READ_FAILED);
         setUnread(0);
         setItems((prev) => prev.map((n) => ({ ...n, read: true })));
       } catch (e) {
-        setError(e instanceof Error ? e.message : "ဖတ်ပြီးသား မှတ်လို့ မရပါ။");
+        setError(e instanceof Error ? e.message : MARK_READ_FAILED);
       }
     }
   };
@@ -82,7 +84,7 @@ export default function NotificationBell() {
       {open && (
         <button
           type="button"
-          aria-label="ပိတ်မယ်"
+          aria-label={t("bell.close")}
           onClick={() => setOpen(false)}
           className="fixed inset-0 z-10 cursor-default bg-black/10"
         />
@@ -92,7 +94,7 @@ export default function NotificationBell() {
           <button
             type="button"
             onClick={toggleOpen}
-            aria-label="သတိပေးချက်များ"
+            aria-label={t("bell.title")}
             className="flex h-10 w-10 items-center justify-center rounded-full border bg-white text-xl shadow-md"
           >
             🔔
@@ -106,11 +108,11 @@ export default function NotificationBell() {
           {open && (
             <div className="absolute right-0 top-12 w-80 max-w-[calc(100vw-2.5rem)] rounded-2xl bg-white shadow-xl">
               <div className="flex items-center justify-between border-b px-4 py-3">
-                <p className="font-bold">သတိပေးချက်များ</p>
+                <p className="font-bold">{t("bell.title")}</p>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  aria-label="ပိတ်မယ်"
+                  aria-label={t("bell.close")}
                   className="rounded-full px-2 py-0.5 text-lg text-[#52677f]"
                 >
                   ✕
@@ -118,11 +120,11 @@ export default function NotificationBell() {
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {error && (
-                  <p className="px-4 py-3 text-red-700">{error}</p>
+                  <p className="px-4 py-3 text-red-700">{error === FETCH_FALLBACK ? t("bell.loadError") : error === MARK_READ_FAILED ? t("bell.readError") : error}</p>
                 )}
                 {!error && items.length === 0 && (
                   <p className="px-4 py-6 text-center text-[#52677f]">
-                    သတိပေးစာ မရှိသေးဘူး 🔔
+                    {t("bell.empty")}
                   </p>
                 )}
                 {items.map((n) => (

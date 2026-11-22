@@ -4,22 +4,24 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useLang, type TFn } from "@/lib/i18n";
 
 // Supabase error ကို မြန်မာလို ပြန်ပြောတယ်။
-function toMyanmarError(message: string): string {
+function toMyanmarError(message: string, t: TFn): string {
   if (message.includes("Invalid login credentials")) {
-    return "အီးမေးလ် (သို့) စကားဝှက် မှားနေပါတယ်။";
+    return t("auth.invalidCredentials");
   }
   if (message.includes("Email not confirmed")) {
-    return "အီးမေးလ်ကို အရင် အတည်ပြုပေးပါ — inbox ထဲက link ကို နှိပ်ပါ။";
+    return t("auth.emailNotConfirmed");
   }
   if (message.includes("Too many requests")) {
-    return "ခဏစောင့်ပြီး ပြန်ကြိုးစားပေးပါ။";
+    return t("auth.tooManyRequests");
   }
   return message;
 }
 
 export default function LoginPage() {
+  const { t } = useLang();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +36,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) {
-      setError(toMyanmarError(error.message));
+      setError(toMyanmarError(error.message, t));
       return;
     }
     router.push("/");
@@ -48,17 +50,17 @@ export default function LoginPage() {
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (error) setError(toMyanmarError(error.message));
+    if (error) setError(toMyanmarError(error.message, t));
   }
 
   return (
     <main className="mx-auto max-w-md min-h-screen px-5 py-10">
       <h1>Burmese AI Calorie Tracker</h1>
-      <p className="caption mt-1">မြန်မာအစားအစာ ပုံရိုက်လိုက်၊ ကယ်လိုရီသိလိုက်</p>
+      <p className="caption mt-1">{t("auth.tagline")}</p>
 
       <form onSubmit={handleLogin} className="mt-8 space-y-4">
         <label className="block">
-          <span className="caption">အီးမေးလ်</span>
+          <span className="caption">{t("auth.email")}</span>
           <input
             type="email"
             required
@@ -69,7 +71,7 @@ export default function LoginPage() {
           />
         </label>
         <label className="block">
-          <span className="caption">စကားဝှက်</span>
+          <span className="caption">{t("auth.password")}</span>
           <input
             type="password"
             required
@@ -89,7 +91,7 @@ export default function LoginPage() {
           disabled={busy}
           className="w-full rounded-xl bg-[var(--theme)] py-3 font-semibold text-white disabled:opacity-50"
         >
-          {busy ? "ဝင်နေပါတယ်…" : "ဝင်မယ်"}
+          {busy ? t("auth.signingIn") : t("auth.signIn")}
         </button>
       </form>
 
@@ -98,13 +100,13 @@ export default function LoginPage() {
         onClick={handleGoogle}
         className="mt-3 w-full rounded-xl border bg-white py-3 font-semibold"
       >
-        Google နဲ့ ဝင်မယ်
+        {t("auth.googleSignIn")}
       </button>
 
       <p className="mt-6 text-center">
-        အကောင့် မရှိသေးဘူးလား?{" "}
+        {t("auth.noAccount")}{" "}
         <Link href="/signup" className="font-semibold text-[var(--theme-dark)] underline">
-          အကောင့် ဖွင့်မယ်
+          {t("auth.createAccount")}
         </Link>
       </p>
     </main>

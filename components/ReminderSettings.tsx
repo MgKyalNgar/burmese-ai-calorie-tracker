@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLang } from "@/lib/i18n";
 
 // Reminder (Web Push) settings — Profile စာမျက်နှာမှာ ပြတယ်။
 // "ဖွင့်မယ်" နှိပ်ရင် browser notification ခွင့်တောင်းပြီး
@@ -34,6 +35,7 @@ const DEFAULTS: Settings = {
 };
 
 export default function ReminderSettings() {
+  const { t } = useLang();
   const [supported, setSupported] = useState(true);
   const [subscribed, setSubscribed] = useState(false);
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
@@ -74,27 +76,25 @@ export default function ReminderSettings() {
       body: JSON.stringify(next),
     });
     const d = await res.json();
-    if (!res.ok) throw new Error(d?.error ?? "သိမ်းလို့ မရပါ။");
+    if (!res.ok) throw new Error(d?.error ?? t("common.saveError"));
     setSettings({ ...DEFAULTS, ...d });
   }
 
   async function handleEnable() {
     if (!PUBLIC_KEY) {
-      setMessage("VAPID key မရှိသေးဘူး — Vercel env စစ်ပေးပါ။");
+      setMessage(t("reminder.noVapid"));
       return;
     }
     setBusy(true);
     setMessage("");
     try {
       if (Notification.permission === "denied") {
-        setMessage(
-          "Browser setting မှာ notification ပိတ်ထားတယ် — browser setting ကနေ ဖွင့်ပေးပါ။",
-        );
+        setMessage(t("reminder.denied"));
         return;
       }
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        setMessage("Notification ခွင့်မပေးလို့ Reminder ဖွင့်လို့ မရဘူး။");
+        setMessage(t("reminder.notGranted"));
         return;
       }
       const reg = await navigator.serviceWorker.ready;
@@ -108,13 +108,13 @@ export default function ReminderSettings() {
         body: JSON.stringify({ subscription: sub.toJSON() }),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d?.error ?? "Reminder သိမ်းလို့ မရပါ။");
+      if (!res.ok) throw new Error(d?.error ?? t("reminder.enableError"));
       await saveSettings({ ...settings, enabled: true });
       setSubscribed(true);
-      setMessage("Reminder ဖွင့်ပြီးပြီ ✅ ထမင်းချိန်ရောက်ရင် သတိပေးမယ်");
+      setMessage(t("reminder.enabled"));
     } catch (err) {
       setMessage(
-        err instanceof Error ? err.message : "Reminder ဖွင့်လို့ မရပါ။",
+        err instanceof Error ? err.message : t("reminder.enableError"),
       );
     } finally {
       setBusy(false);
@@ -137,10 +137,10 @@ export default function ReminderSettings() {
       }
       await saveSettings({ ...settings, enabled: false });
       setSubscribed(false);
-      setMessage("Reminder ပိတ်ပြီးပြီ");
+      setMessage(t("reminder.disabled"));
     } catch (err) {
       setMessage(
-        err instanceof Error ? err.message : "Reminder ပိတ်လို့ မရပါ။",
+        err instanceof Error ? err.message : t("reminder.disableError"),
       );
     } finally {
       setBusy(false);
@@ -155,10 +155,10 @@ export default function ReminderSettings() {
     setSettings(next);
     try {
       await saveSettings(next);
-      setMessage("သတိပေးချိန် သိမ်းပြီးပြီ ✅");
+      setMessage(t("reminder.timesSaved"));
     } catch (err) {
       setMessage(
-        err instanceof Error ? err.message : "သိမ်းလို့ မရပါ။",
+        err instanceof Error ? err.message : t("common.saveError"),
       );
     }
   }
@@ -168,7 +168,7 @@ export default function ReminderSettings() {
       <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
         <h2>🔔 Reminder</h2>
         <p className="caption mt-2">
-          ဒီ browser က push notification မထောက်ပံ့ဘူး။
+          {t("reminder.unsupported")}
         </p>
       </section>
     );
@@ -178,8 +178,7 @@ export default function ReminderSettings() {
     <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
       <h2>🔔 Reminder</h2>
       <p className="caption mt-1">
-        ထမင်းချိန်ရောက်ပြီး မမှတ်ရသေးရင် သတိပေးမယ် — ညနေ မမှတ်ရသေးရင်လည်း
-        သတိပေးတယ်။
+        {t("reminder.intro")}
       </p>
 
       {subscribed ? (
@@ -189,7 +188,7 @@ export default function ReminderSettings() {
           disabled={busy}
           className="mt-3 w-full rounded-xl border border-red-300 py-2.5 font-semibold text-red-600 disabled:opacity-50"
         >
-          {busy ? "ပိတ်နေတယ်…" : "Reminder ပိတ်မယ်"}
+          {busy ? t("reminder.disabling") : t("reminder.disable")}
         </button>
       ) : (
         <button
@@ -198,7 +197,7 @@ export default function ReminderSettings() {
           disabled={busy}
           className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
         >
-          {busy ? "ဖွင့်နေတယ်…" : "Reminder ဖွင့်မယ် 🔔"}
+          {busy ? t("reminder.enabling") : t("reminder.enable")}
         </button>
       )}
 
@@ -206,10 +205,10 @@ export default function ReminderSettings() {
         <div className="mt-4 space-y-3">
           {(
             [
-              ["breakfast", "မနက်စာ သတိပေးချိန်"],
-              ["lunch", "နေ့လည်စာ သတိပေးချိန်"],
-              ["dinner", "ညစာ သတိပေးချိန်"],
-              ["evening", "ညနေ သတိပေးချိန် (မမှတ်ရသေးရင်)"],
+              ["breakfast", t("reminder.breakfastTime")],
+              ["lunch", t("reminder.lunchTime")],
+              ["dinner", t("reminder.dinnerTime")],
+              ["evening", t("reminder.eveningTime")],
             ] as const
           ).map(([key, label]) => (
             <label key={key} className="flex items-center justify-between gap-2">
