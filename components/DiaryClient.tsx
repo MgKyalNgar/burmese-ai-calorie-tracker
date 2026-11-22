@@ -514,7 +514,7 @@ export default function DiaryClient() {
         </button>
       </div>
 
-      <section className="mt-4 rounded-2xl border p-5 text-center">
+      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5 text-center">
         <p className="caption">
           {isToday ? "ဒီနေ့ စုစုပေါင်း" : `${formatDateDMY(date)} စုစုပေါင်း`}
         </p>
@@ -532,7 +532,7 @@ export default function DiaryClient() {
       )}
 
       {meals.length === 0 ? (
-        <div className="mt-6 rounded-2xl border p-5 text-center">
+        <div className="mt-6 rounded-2xl border bg-white shadow-sm p-5 text-center">
           <p className="text-[#52677f]">
             {isToday
               ? "ဒီနေ့ ဘာမှ မမှတ်ရသေးဘူး။"
@@ -551,7 +551,7 @@ export default function DiaryClient() {
           if (group.length === 0) return null;
           const items = group.flatMap((m) => m.meal_items);
           return (
-            <section key={value} className="mt-4 rounded-2xl border p-5">
+            <section key={value} className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
               <div className="flex items-baseline justify-between">
                 <h2>{label}</h2>
                 <span className="caption">

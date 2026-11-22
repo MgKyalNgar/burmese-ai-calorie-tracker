@@ -39,7 +39,7 @@ export default function ProfilePage() {
 
   if (loading || !data || data.needsLogin) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center bg-white px-5 pb-24">
+      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-5 pb-24">
         <div
           className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme)]"
           aria-hidden
@@ -53,7 +53,7 @@ export default function ProfilePage() {
   const profile = data.profile;
 
   return (
-    <main className="mx-auto max-w-md min-h-screen bg-white px-5 pb-24 pt-8">
+    <main className="mx-auto max-w-md min-h-screen px-5 pb-24 pt-8">
       <h1>Profile</h1>
       <p className="caption mt-1">{data.email}</p>
 
@@ -61,7 +61,7 @@ export default function ProfilePage() {
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
       )}
 
-      <section className="mt-4 rounded-2xl border p-5">
+      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
         <h2>ကိုယ့်အချက်အလက်</h2>
         {profile ? (
           <dl className="mt-3 space-y-2">

@@ -165,7 +165,7 @@ export default function ReminderSettings() {
 
   if (!supported) {
     return (
-      <section className="mt-4 rounded-2xl border p-5">
+      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
         <h2>🔔 Reminder</h2>
         <p className="caption mt-2">
           ဒီ browser က push notification မထောက်ပံ့ဘူး။
@@ -175,7 +175,7 @@ export default function ReminderSettings() {
   }
 
   return (
-    <section className="mt-4 rounded-2xl border p-5">
+    <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
       <h2>🔔 Reminder</h2>
       <p className="caption mt-1">
         ထမင်းချိန်ရောက်ပြီး မမှတ်ရသေးရင် သတိပေးမယ် — ညနေ မမှတ်ရသေးရင်လည်း

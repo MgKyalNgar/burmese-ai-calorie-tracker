@@ -52,7 +52,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md min-h-screen bg-white px-5 py-10">
+    <main className="mx-auto max-w-md min-h-screen px-5 py-10">
       <h1>Burmese AI Calorie Tracker</h1>
       <p className="caption mt-1">မြန်မာအစားအစာ ပုံရိုက်လိုက်၊ ကယ်လိုရီသိလိုက်</p>
 
@@ -65,7 +65,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+            className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
           />
         </label>
         <label className="block">
@@ -76,7 +76,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+            className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
           />
         </label>
 
@@ -96,7 +96,7 @@ export default function LoginPage() {
       <button
         type="button"
         onClick={handleGoogle}
-        className="mt-3 w-full rounded-xl border py-3 font-semibold"
+        className="mt-3 w-full rounded-xl border bg-white py-3 font-semibold"
       >
         Google နဲ့ ဝင်မယ်
       </button>

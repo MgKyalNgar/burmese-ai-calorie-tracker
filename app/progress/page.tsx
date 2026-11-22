@@ -448,7 +448,7 @@ export default function ProgressPage() {
 
   if (loading || !data || data.needsLogin || data.needsOnboarding) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center bg-white px-5 pb-24">
+      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-5 pb-24">
         <div
           className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme)]"
           aria-hidden
@@ -461,7 +461,7 @@ export default function ProgressPage() {
 
   if (error) {
     return (
-      <main className="mx-auto min-h-screen max-w-md bg-white px-5 pb-24 pt-8">
+      <main className="mx-auto min-h-screen max-w-md px-5 pb-24 pt-8">
         <p className="rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
         <button
           type="button"
@@ -482,12 +482,12 @@ export default function ProgressPage() {
     data.waterWeek.find((d) => d.date === todayStr)?.cups ?? 0;
 
   return (
-    <main className="mx-auto max-w-md min-h-screen bg-white px-5 pb-24 pt-8">
+    <main className="mx-auto max-w-md min-h-screen px-5 pb-24 pt-8">
       <h1>Progress</h1>
       <p className="caption mt-1">ဒီအပတ် ဘယ်လို သွားလဲ ကြည့်မယ်</p>
 
       {/* ၇ ရက် ကယ်လိုရီ */}
-      <section className="mt-4 rounded-2xl border p-5">
+      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
         <h2>ဒီအပတ် ကယ်လိုရီ</h2>
         <div className="mt-3">
           <BarChart week={data.week} />
@@ -495,7 +495,7 @@ export default function ProgressPage() {
       </section>
 
       {/* ဝိတ် trend + ထည့်မယ် */}
-      <section className="mt-4 rounded-2xl border p-5">
+      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
         <h2>ဝိတ် trend</h2>
         <WeightChart weights={data.weights} />
         <div className="mt-4 flex gap-2">
@@ -641,13 +641,13 @@ export default function ProgressPage() {
       </section>
 
       {/* ပြက္ခဒိန် */}
-      <section className="mt-4 rounded-2xl border p-5">
+      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
         <h2>မှတ်တမ်း ပြက္ခဒိန်</h2>
         <MonthCalendar loggedDays={data.loggedDays} />
       </section>
 
       {/* ရေ */}
-      <section className="mt-4 rounded-2xl border p-5">
+      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
         <h2>💧 ရေ — ဒီအပတ်</h2>
         <div className="mt-3 flex items-stretch gap-2" style={{ height: 96 }}>
           {data.waterWeek.map((d) => {

@@ -45,7 +45,17 @@ body {
   font-size: var(--fs-body);
   line-height: 1.5;
   color: var(--ink);
-  background: #e9f1e9;
+  /* နောက်ခံ gradient — အပေါ် ခဲဖြူ → အောက် အစိမ်းနု (theme-aware:
+     purple/red ပြောင်းရင် gradient လည်း လိုက်ပြောင်းတယ်)။
+     စာမျက်နှာတွေက bg-white ဖြုတ်ထားလို့ gradient ပေါ်ပြီး၊
+     card/bar အဖြူတွေ gradient ပေါ်မှာ ပေါ်လွင်တယ်။ */
+  background: linear-gradient(
+    180deg,
+    #f8f9f8 0%,
+    #eef6ef 55%,
+    var(--theme-soft) 100%
+  );
+  background-attachment: fixed;
 }
 
 h1, h2, h3 {

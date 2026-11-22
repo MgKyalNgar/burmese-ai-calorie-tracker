@@ -225,7 +225,7 @@ export default function AddPage() {
   };
 
   return (
-    <main className="mx-auto min-h-screen max-w-md bg-white px-5 pb-24 pt-8">
+    <main className="mx-auto min-h-screen max-w-md px-5 pb-24 pt-8">
       <h1>+ အစားအစာ ထည့်မယ်</h1>
 
       {review ? (
@@ -267,7 +267,7 @@ export default function AddPage() {
           )}
 
           {mode === "photo" && (
-            <section className="mt-4 rounded-2xl border p-5">
+            <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
               <h2>ဓာတ်ပုံနဲ့ ထည့်မယ်</h2>
               <p className="caption mt-1">
                 ပုံရိုက်လိုက် — AI က အစားအစာကို ခွဲပြီး ကယ်လိုရီ ခန့်မှန်းပေးမယ်။
@@ -350,7 +350,7 @@ export default function AddPage() {
           )}
 
           {mode === "text" && (
-            <section className="mt-4 rounded-2xl border p-5">
+            <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
               <h2>စာရိုက်ပြီး ထည့်မယ်</h2>
               <p className="caption mt-1">
                 ဘာစားခဲ့လဲ ရိုက်ထည့်လိုက် — AI က ကယ်လိုရီ ခန့်မှန်းပေးမယ်။
@@ -375,7 +375,7 @@ export default function AddPage() {
           )}
 
           {mode === "search" && (
-            <section className="mt-4 rounded-2xl border p-5">
+            <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
               <h2>ရှာဖွေပြီး ထည့်မယ်</h2>
               <p className="caption mt-1">
                 သိမ်းထားတဲ့ အစားအစာ စာရင်းထဲက ရှာတယ် — AI မသုံးဘူး၊ မြန်တယ်။

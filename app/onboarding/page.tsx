@@ -128,14 +128,14 @@ export default function OnboardingPage() {
 
   if (!loaded) {
     return (
-      <main className="mx-auto max-w-md min-h-screen bg-white px-5 py-10">
+      <main className="mx-auto max-w-md min-h-screen px-5 py-10">
         <p>ဖွင့်နေပါတယ်…</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-md min-h-screen bg-white px-5 py-10">
+    <main className="mx-auto max-w-md min-h-screen px-5 py-10">
       <h1>ကိုယ့်အကြောင်း ပြောပြပါ</h1>
       <p className="caption mt-1">
         တစ်နေ့တာ ကယ်လိုရီ target ကို တွက်ပေးဖို့ လိုပါတယ်။
@@ -149,7 +149,7 @@ export default function OnboardingPage() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="ဥပမာ — ကိုကြယ်ငါး"
-            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+            className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
           />
         </label>
 
@@ -167,7 +167,7 @@ export default function OnboardingPage() {
                 className={`flex-1 rounded-xl border py-2.5 font-semibold ${
                   gender === opt.value
                     ? "border-[var(--theme)] bg-[var(--theme-soft)] text-[var(--theme-dark)]"
-                    : ""
+                    : "bg-white"
                 }`}
               >
                 {opt.label}
@@ -186,7 +186,7 @@ export default function OnboardingPage() {
               value={age}
               onChange={(e) => setAge(e.target.value)}
               placeholder="25"
-              className="mt-1 w-full rounded-xl border px-3 py-2.5"
+              className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
             />
           </label>
           <label className="flex-1">
@@ -198,7 +198,7 @@ export default function OnboardingPage() {
               value={height}
               onChange={(e) => setHeight(e.target.value)}
               placeholder="165"
-              className="mt-1 w-full rounded-xl border px-3 py-2.5"
+              className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
             />
           </label>
           <label className="flex-1">
@@ -210,7 +210,7 @@ export default function OnboardingPage() {
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               placeholder="60"
-              className="mt-1 w-full rounded-xl border px-3 py-2.5"
+              className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
             />
           </label>
         </div>
@@ -230,7 +230,7 @@ export default function OnboardingPage() {
                 className={`flex-1 rounded-xl border py-2.5 font-semibold ${
                   goal === opt.value
                     ? "border-[var(--theme)] bg-[var(--theme-soft)] text-[var(--theme-dark)]"
-                    : ""
+                    : "bg-white"
                 }`}
               >
                 {opt.label}

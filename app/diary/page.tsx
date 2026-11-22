@@ -9,7 +9,7 @@ import { formatDateDMY, todayYangon } from "@/lib/meal";
 // ရက်ရွေ့တဲ့ ခလုတ်တွေက DiaryClient ထဲမှာ ပါတယ်။
 export default function DiaryPage() {
   return (
-    <main className="mx-auto min-h-screen max-w-md bg-white px-5 pb-24 pt-8">
+    <main className="mx-auto min-h-screen max-w-md px-5 pb-24 pt-8">
       <h1>Diary</h1>
       <DiaryClient />
       <BottomNav />
