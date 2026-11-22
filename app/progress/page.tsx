@@ -63,7 +63,11 @@ function BarChart({ week }: { week: ProgressData["week"] }) {
             aria-hidden
           />
         )}
-        <div className="flex items-end gap-2" style={{ height: chartH }}>
+        {/* items-stretch (items-end မဟုတ်) — ကော်လံ အမြင့် တိတိကျကျ
+            ရှိမှ bar ရဲ့ % အမြင့် အလုပ်လုပ်တယ်။ items-end ဆို ကော်လံ
+            အမြင့်က content အတိုင်းပဲ ဖြစ်ပြီး bar % က auto ဖြစ်သွားလို့
+            bar ပျောက်သွားတယ် (22 Nov 2026 live test မှာ တွေ့တာ)။ */}
+        <div className="flex items-stretch gap-2" style={{ height: chartH }}>
           {week.map((d) => {
             const hPct = max > 0 ? (d.eaten / max) * 100 : 0;
             const over = d.eaten > target && target > 0;
@@ -645,7 +649,7 @@ export default function ProgressPage() {
       {/* ရေ */}
       <section className="mt-4 rounded-2xl border p-5">
         <h2>💧 ရေ — ဒီအပတ်</h2>
-        <div className="mt-3 flex items-end gap-2" style={{ height: 96 }}>
+        <div className="mt-3 flex items-stretch gap-2" style={{ height: 96 }}>
           {data.waterWeek.map((d) => {
             const maxCups = Math.max(...data.waterWeek.map((x) => x.cups), 1);
             return (
