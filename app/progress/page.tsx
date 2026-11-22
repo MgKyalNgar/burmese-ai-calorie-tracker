@@ -487,7 +487,7 @@ export default function ProgressPage() {
       <p className="caption mt-1">ဒီအပတ် ဘယ်လို သွားလဲ ကြည့်မယ်</p>
 
       {/* ၇ ရက် ကယ်လိုရီ */}
-      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
+      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
         <h2>ဒီအပတ် ကယ်လိုရီ</h2>
         <div className="mt-3">
           <BarChart week={data.week} />
@@ -495,7 +495,7 @@ export default function ProgressPage() {
       </section>
 
       {/* ဝိတ် trend + ထည့်မယ် */}
-      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
+      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
         <h2>ဝိတ် trend</h2>
         <WeightChart weights={data.weights} />
         <div className="mt-4 flex gap-2">
@@ -641,13 +641,13 @@ export default function ProgressPage() {
       </section>
 
       {/* ပြက္ခဒိန် */}
-      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
+      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
         <h2>မှတ်တမ်း ပြက္ခဒိန်</h2>
         <MonthCalendar loggedDays={data.loggedDays} />
       </section>
 
       {/* ရေ */}
-      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
+      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
         <h2>💧 ရေ — ဒီအပတ်</h2>
         <div className="mt-3 flex items-stretch gap-2" style={{ height: 96 }}>
           {data.waterWeek.map((d) => {

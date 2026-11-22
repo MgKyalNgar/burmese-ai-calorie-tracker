@@ -102,7 +102,7 @@ export default function ApiKeySettings() {
   }
 
   return (
-    <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
+    <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
       <h2>Gemini API Key</h2>
       <p className="caption mt-1">
         ကိုယ့် Gemini API key ကို ထည့်ပါ — server မှာပဲ encrypted သိမ်းတယ်၊

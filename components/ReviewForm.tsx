@@ -169,7 +169,7 @@ export default function ReviewForm({
   }
 
   return (
-    <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
+    <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
       <h2>စစ်ဆေးပြီး သိမ်းမယ်</h2>
       {initial.photoPreviewUrl && (
         <img

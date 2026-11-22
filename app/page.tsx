@@ -44,13 +44,25 @@ const MEAL_LABELS: Record<string, string> = {
 };
 
 // ကယ်လိုရီ Ring — စားပြီးသား / target။
-function CalorieRing({ eaten, target }: { eaten: number; target: number }) {
+// compact=true ဆို အလယ်မှာ ဂဏန်းအစား 🔥 ပဲ ပြတယ် (Home hero က ဂဏန်းကို
+// ဘယ်ဘက်မှာ ကြီးကြီးပြထားပြီးသားမို့ ring အလယ် ထပ်မပြဘူး)။
+function CalorieRing({
+  eaten,
+  target,
+  size = "h-36 w-36",
+  compact = false,
+}: {
+  eaten: number;
+  target: number;
+  size?: string;
+  compact?: boolean;
+}) {
   const remaining = Math.max(0, target - eaten);
   const pct = target > 0 ? Math.min(1, eaten / target) : 0;
   const r = 56;
   const circ = 2 * Math.PI * r;
   return (
-    <div className="relative mx-auto h-36 w-36">
+    <div className={`relative mx-auto ${size}`}>
       <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90">
         <circle cx="64" cy="64" r={r} fill="none" stroke="#e2e8f0" strokeWidth="10" />
         <circle
@@ -65,9 +77,17 @@ function CalorieRing({ eaten, target }: { eaten: number; target: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <p className="caption">ကျန်တာ</p>
-        <p className="hero-num text-[var(--theme-dark)]">{remaining.toLocaleString()}</p>
-        <p className="caption">kcal</p>
+        {compact ? (
+          <span className="text-2xl" aria-hidden>
+            🔥
+          </span>
+        ) : (
+          <>
+            <p className="caption">ကျန်တာ</p>
+            <p className="hero-num text-[var(--theme-dark)]">{remaining.toLocaleString()}</p>
+            <p className="caption">kcal</p>
+          </>
+        )}
       </div>
     </div>
   );
@@ -129,56 +149,63 @@ export default function Home() {
   };
 
   return (
-    <main className="mx-auto max-w-md min-h-screen px-5 pb-24 pt-8">
+    <main className="mx-auto max-w-md min-h-screen px-5 pb-24 pt-5">
       <h1>
         မင်္ဂလာပါ{data.displayName ? `၊ ${data.displayName}` : ""} 👋
       </h1>
       <p className="caption mt-1">
         ဒီနေ့ {formatDateDMY(data.date)} · 🔥 Streak {streak} ရက်
       </p>
-      <p className="caption mt-1">
-        Streak ဆိုတာ အစာမှတ်တဲ့ ရက် ဆက်တိုက်ပါ — ရေသောက်/ဝိတ်မှတ်တာ မပါဘူး။
-      </p>
+      <p className="caption">Streak ဆိုတာ အစာမှတ်တဲ့ ရက် ဆက်တိုက်ပါ</p>
       {refreshing && <p className="caption mt-1">အသစ်ဆွဲနေတယ်…</p>}
 
-      <section className="mt-6 rounded-3xl border border-[var(--theme-ring)] bg-[var(--theme-soft)] p-5 text-center">
-        <CalorieRing eaten={eaten} target={target} />
-        <p className="caption mt-2">
-          စားပြီး {eaten.toLocaleString()} kcal · Target{" "}
-          {target.toLocaleString()} kcal
-        </p>
+      {/* Hero — ပုံ ၂ Home လို ဘေးတိုက်ပုံစံ: ဂဏန်း ဘယ်၊ ring ညာ။
+          တစ်မျက်နှာထဲ ဝင်အောင် ring ကို သေးထားတယ်။ */}
+      <section className="mt-3 flex items-center gap-4 rounded-3xl bg-[var(--theme-soft)] p-4 shadow-sm">
+        <div className="flex-1 text-left">
+          <p className="caption">ကျန်တာ</p>
+          <p className="hero-num text-[var(--theme-dark)]">
+            {Math.max(0, target - eaten).toLocaleString()}
+            <span className="text-base"> kcal</span>
+          </p>
+          <p className="caption mt-1">
+            စားပြီး {eaten.toLocaleString()} · Target{" "}
+            {target.toLocaleString()}
+          </p>
+        </div>
+        <CalorieRing eaten={eaten} target={target} size="h-24 w-24" compact />
       </section>
 
-      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
-        <h2>Macro</h2>
-        {(
-          [
-            ["Protein", protein, macroTargets.protein, "g"],
-            ["Carbs", carbs, macroTargets.carbs, "g"],
-            ["Fat", fat, macroTargets.fat, "g"],
-          ] as const
-        ).map(([label, value, goal, unit]) => (
-          <div key={label} className="mt-3">
-            <div className="flex justify-between">
-              <span>{label}</span>
-              <span className="caption">
-                {round1(value)}
-                {unit} / {goal}
-                {unit}
-              </span>
+      {/* Macro — ကော်လံ ၃ ခု ဘေးတိုက် (ပုံ ၂ ရဲ့ Bread/Avacada/Chicken
+          ကော်လံတွေလို) — အရင် bar ၃ ခု အပြည့်ပုံစံထက် နေရာသက်သာတယ်။ */}
+      <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="flex gap-4">
+          {(
+            [
+              ["Protein", protein, macroTargets.protein],
+              ["Carbs", carbs, macroTargets.carbs],
+              ["Fat", fat, macroTargets.fat],
+            ] as const
+          ).map(([label, value, goal]) => (
+            <div key={label} className="flex-1">
+              <p className="caption">{label}</p>
+              <p className="font-semibold">
+                {round1(value)}g
+                <span className="caption"> / {goal}g</span>
+              </p>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className="h-full rounded-full bg-[var(--theme)]"
+                  style={{ width: `${goal > 0 ? Math.min(100, (value / goal) * 100) : 0}%` }}
+                />
+              </div>
             </div>
-            <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full rounded-full bg-[var(--theme)]"
-                style={{ width: `${goal > 0 ? Math.min(100, (value / goal) * 100) : 0}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </section>
 
-      <section className="mt-4 flex gap-3">
-        <div className="flex-1 rounded-2xl border bg-white shadow-sm p-4 text-center">
+      <section className="mt-3 flex gap-3">
+        <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
           <p className="caption">💧 ရေ</p>
           <p className="hero-num text-[var(--theme-dark)]">
             {cups}
@@ -186,7 +213,7 @@ export default function Home() {
           </p>
           <p className="caption">ခွက်</p>
         </div>
-        <div className="flex-1 rounded-2xl border bg-white shadow-sm p-4 text-center">
+        <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
           <p className="caption">⚖️ ဝိတ်</p>
           <p className="hero-num text-[var(--theme-dark)]">
             {latestWeightKg !== null ? latestWeightKg : "—"}
@@ -195,16 +222,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
+      <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
         <h2>ဒီနေ့ စားပြီးသား</h2>
         {data.meals.length === 0 ? (
-          <div className="mt-3 text-center">
+          <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-[#52677f]">ဒီနေ့ ဘာမှ မမှတ်ရသေးဘူး။</p>
             <Link
               href="/add"
-              className="mt-3 inline-block rounded-xl bg-[var(--theme)] px-5 py-2.5 font-semibold text-white"
+              className="shrink-0 rounded-xl bg-[var(--theme)] px-4 py-2 font-semibold text-white"
             >
-              + အစားအစာ ထည့်မယ်
+              + ထည့်မယ်
             </Link>
           </div>
         ) : (

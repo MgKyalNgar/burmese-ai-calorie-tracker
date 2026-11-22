@@ -61,7 +61,7 @@ export default function ProfilePage() {
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
       )}
 
-      <section className="mt-4 rounded-2xl border bg-white shadow-sm p-5">
+      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
         <h2>ကိုယ့်အချက်အလက်</h2>
         {profile ? (
           <dl className="mt-3 space-y-2">

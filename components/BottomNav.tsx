@@ -31,7 +31,7 @@ export default function BottomNav() {
   // ပုံ ၃ (Liquid Glass) ပုံစံနဲ့ ရေပေါ်မှန် pill — နောက်ခံကို မှုန်ပြပြီး
   // အပေါ်က စာတွေ မြင်ရတယ်။ အလယ် + Add ကတော့ theme အရောင် စက်ဝိုင်းခလုတ်။
   return (
-    <nav className="fixed bottom-4 left-1/2 z-10 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-3xl border border-white/60 bg-white/70 shadow-lg shadow-slate-900/10 backdrop-blur-xl">
+    <nav className="fixed bottom-4 left-1/2 z-10 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-3xl border-white/60 bg-white/70 shadow-lg shadow-slate-900/10 backdrop-blur-xl">
       <ul className="flex">
         {TABS.map((tab) => {
           const active =
