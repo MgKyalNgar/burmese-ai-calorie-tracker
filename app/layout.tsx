@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import NotificationBell from "@/components/NotificationBell";
 
 export const metadata: Metadata = {
   title: "Burmese AI Calorie Tracker",
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="my">
       <body>
         <ServiceWorkerRegister />
+        <NotificationBell />
         {children}
       </body>
     </html>

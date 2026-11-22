@@ -172,11 +172,33 @@ export async function POST(req: Request) {
     }
 
     // တစ်နေ့တည်း ထပ်မပို့အောင် အရင် မှတ်တယ် — ရှိနေရင် ကျော်တယ်။
-    const { error: logError } = await admin.from("reminder_logs").insert({
-      user_id: userId,
-      kind,
-      logged_date: today,
-    });
+    // title/body ကိုလည်း တစ်ခါတည်း သိမ်းထားတယ် — app ထဲက ခေါင်းလောင်းမှာ
+    // ပို့ပြီးသား စာသားအတိုင်း ပြန်ပြလို့ရအောင်။
+    let logError = (
+      await admin.from("reminder_logs").insert({
+        user_id: userId,
+        kind,
+        logged_date: today,
+        title: payload.title,
+        body: payload.body,
+      })
+    ).error;
+    if (
+      logError &&
+      /title|body/.test(String(logError.message ?? "")) &&
+      String(logError.code ?? "") !== "23505"
+    ) {
+      // title/body ကော်လံ မရှိသေးရင် (notifications SQL မရ run ရသေး) —
+      // ကော်လံ အဟောင်းတွေနဲ့ပဲ မှတ်ပြီး ဆက်ပို့တယ် (ခေါင်းလောင်းက kind ကနေ
+      // စာသား ပြန်ထုတ်တယ်)။ ပို့တာကို ဘယ်တော့မှ မရပ်စေနဲ့။
+      logError = (
+        await admin.from("reminder_logs").insert({
+          user_id: userId,
+          kind,
+          logged_date: today,
+        })
+      ).error;
+    }
     if (logError) {
       // 23505 = unique violation → ဒီနေ့ ပို့ပြီးသား။
       skipped += 1;
