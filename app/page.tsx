@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
-import { useCachedData } from "@/lib/useCachedData";
+import { invalidateCache, useCachedData } from "@/lib/useCachedData";
 import { FETCH_FALLBACK, useLang } from "@/lib/i18n";
 import {
   formatDateDMY,
@@ -101,6 +101,36 @@ export default function Home() {
     if (data?.needsLogin) router.push("/login");
     else if (data?.needsOnboarding) router.push("/onboarding");
   }, [data, router]);
+
+  // Home ရေ ကဒ်က +1 ခလုတ် — နှိပ်တာနဲ့ ဂဏန်း ချက်ချင်း တက်တယ်
+  // (optimistic)၊ ပြီးမှ server ကို POST /api/water { cups: 1 } ပို့တယ်။
+  // server ဒေတာ အသစ်ရောက်လာရင် optimistic +1 ကို ပြန်ဖျက်တယ် —
+  // မဟုတ်ရင် ဆွဲထားတဲ့ ဂဏန်းနဲ့ ထပ်ပေါင်းပြီး ၂ ခါ ရေတွက်မိမယ်။
+  const [waterAdded, setWaterAdded] = useState(0);
+  const [waterBusy, setWaterBusy] = useState(false);
+  useEffect(() => {
+    setWaterAdded(0);
+  }, [data?.cups]);
+
+  async function addWater() {
+    if (waterBusy) return;
+    setWaterBusy(true);
+    setWaterAdded((v) => v + 1);
+    try {
+      const res = await fetch("/api/water", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cups: 1 }),
+      });
+      if (!res.ok) throw new Error("water");
+      // နောက်တစ်ခါ ပြန်ဆွဲတဲ့အခါ အသစ်ရအောင် cache ကို ဖျက်တယ်။
+      invalidateCache(key);
+    } catch {
+      setWaterAdded((v) => Math.max(0, v - 1));
+    } finally {
+      setWaterBusy(false);
+    }
+  }
 
   // ပထမအကြိမ် ဒေတာ မရသေးရင် စောင့်နေတဲ့ ပုံစံ ပြတယ်။
   if (loading || !data || data.needsLogin || data.needsOnboarding) {
@@ -215,10 +245,18 @@ export default function Home() {
         <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
           <p className="caption">{t("home.water")}</p>
           <p className="hero-num text-[var(--theme-dark)]">
-            {cups}
+            {cups + waterAdded}
             <span className="text-base text-[#52677f]">/{waterGoal}</span>
           </p>
           <p className="caption">{t("home.cups")}</p>
+          <button
+            type="button"
+            onClick={addWater}
+            disabled={waterBusy}
+            className="mt-2 rounded-full bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-700 disabled:opacity-50"
+          >
+            +1 💧
+          </button>
         </div>
         <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
           <p className="caption">{t("home.weight")}</p>

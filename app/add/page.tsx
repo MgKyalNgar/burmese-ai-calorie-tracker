@@ -139,25 +139,26 @@ export default function AddPage() {
   }
 
   // Search — မြန်မာ/အင်္ဂလိပ် နာမည်နဲ့ foods table ကို ရှာတယ် (AI မသုံးဘူး)။
+  // ဘာမှ မရိုက်သေးရင် ရှိတဲ့ အစားအစာ ၂၀ ကို ရွေးစရာ list အဖြစ် ပြတယ် —
+  // tab ဖွင့်ဖွင့်ချင်း ဗလာကြီး မဖြစ်တော့ဘူး။
   useEffect(() => {
     const q = query.trim();
-    if (q.length < 2) {
-      setResults([]);
-      return;
-    }
     setSearching(true);
     const t = setTimeout(async () => {
       try {
         const supabase = createClient();
-        const safe = q.replace(/[%_]/g, "");
-        const { data, error } = await supabase
+        let req = supabase
           .from("foods")
           .select(
             "id, name_mm, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, serving_desc",
           )
-          .or(`name_mm.ilike.%${safe}%,name_en.ilike.%${safe}%`)
           .order("name_mm")
           .limit(20);
+        if (q.length >= 2) {
+          const safe = q.replace(/[%_]/g, "");
+          req = req.or(`name_mm.ilike.%${safe}%,name_en.ilike.%${safe}%`);
+        }
+        const { data, error } = await req;
         if (!error) setResults((data ?? []) as FoodRow[]);
       } finally {
         setSearching(false);
@@ -387,6 +388,11 @@ export default function AddPage() {
               {!searching && query.trim().length >= 2 && results.length === 0 && (
                 <p className="mt-3 text-[#52677f]">
                   {t("add.notFound")}
+                </p>
+              )}
+              {query.trim().length < 2 && results.length > 0 && (
+                <p className="caption mt-3 font-semibold">
+                  {t("add.browseTitle")}
                 </p>
               )}
               <ul className="mt-2 space-y-2">
