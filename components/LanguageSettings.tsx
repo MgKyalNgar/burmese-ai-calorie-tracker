@@ -10,12 +10,16 @@ const LANGS: { value: Lang; label: string }[] = [
   { value: "en", label: "English" },
 ];
 
-export default function LanguageSettings() {
+export default function LanguageSettings({ bare = false }: { bare?: boolean }) {
   const { lang, setLang, t } = useLang();
 
-  return (
-    <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-      <h2>{t("lang.title")}</h2>
+  const content = (
+    <>
+      {bare ? (
+        <p className="caption">{t("lang.title")}</p>
+      ) : (
+        <h2>{t("lang.title")}</h2>
+      )}
       <div className="mt-2 flex gap-2">
         {LANGS.map((l) => (
           <button
@@ -32,6 +36,14 @@ export default function LanguageSettings() {
           </button>
         ))}
       </div>
+    </>
+  );
+
+  if (bare) return content;
+
+  return (
+    <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
+      {content}
     </section>
   );
 }

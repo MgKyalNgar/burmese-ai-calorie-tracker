@@ -190,17 +190,17 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     "profile.goalGain": "ဝိတ်တက်မယ်",
     "profile.dailyTarget": "တစ်နေ့တာ target",
     "profile.noProfile": "Profile မရှိသေးဘူး — Onboarding ဖြည့်ပေးပါ။",
-    "profile.editTarget": "Target ပြင်မယ်",
+    "profile.edit": "ပြင်မယ်",
+    "profile.saved": "✅ သိမ်းပြီးပါပြီ။",
+    "profile.other": "အခြား",
     "profile.targetRange": "၈၀၀ မှ ၆,၀၀၀ kcal အထိ ထားလို့ ရပါတယ်။",
-    "profile.targetSaved": "✅ Target သိမ်းပြီးပါပြီ။",
-    "profile.targetNote": "Onboarding ပြန်ဖြည့်ရင် target အသစ် auto တွက်ပေးမယ်။",
-    "profile.editProfile": "Profile ပြင်မယ်",
     "profile.targetPlaceholder": "ဥပမာ 2000",
 
     "theme.title": "App အရောင်",
     "theme.green": "အစိမ်း",
     "theme.purple": "ခရမ်း",
     "theme.red": "အနီ",
+    "appSettings.title": "App အပြင်အဆင်",
 
     "lang.title": "ဘာသာစကား",
 
@@ -267,6 +267,7 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     "apiKey.intro":
       "ကိုယ့် Gemini API key ကို ထည့်ပါ — server မှာပဲ encrypted သိမ်းတယ်၊ ဘယ်သူမှ မြင်လို့ မရဘူး။",
     "apiKey.configured": "Key ရှိပြီးသား: {hint}",
+    "apiKey.configuredShort": "Key ရှိပြီးသား ✅",
     "apiKey.lastTested": "နောက်ဆုံး စမ်းတာ:",
     "apiKey.notConfigured": "API key မထည့်ရသေးဘူး။",
     "apiKey.newKey": "API key အသစ်",
@@ -282,6 +283,8 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     "reminder.enabled": "Reminder ဖွင့်ပြီးပြီ ✅ ထမင်းချိန်ရောက်ရင် သတိပေးမယ်",
     "reminder.enableError": "Reminder ဖွင့်လို့ မရပါ။",
     "reminder.disabled": "Reminder ပိတ်ပြီးပြီ",
+    "reminder.onShort": "ဖွင့်ထားတယ် ✅",
+    "reminder.offShort": "ပိတ်ထားတယ်",
     "reminder.disableError": "Reminder ပိတ်လို့ မရပါ။",
     "reminder.timesSaved": "သတိပေးချိန် သိမ်းပြီးပြီ ✅",
     "reminder.intro":
@@ -478,18 +481,17 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     "profile.goalGain": "Gain weight",
     "profile.dailyTarget": "Daily target",
     "profile.noProfile": "No profile yet — please fill in Onboarding.",
-    "profile.editTarget": "Edit target",
+    "profile.edit": "Edit",
+    "profile.saved": "✅ Saved.",
+    "profile.other": "Other",
     "profile.targetRange": "You can set 800 to 6,000 kcal.",
-    "profile.targetSaved": "✅ Target saved.",
-    "profile.targetNote":
-      "Filling in Onboarding again will auto-calculate a new target.",
-    "profile.editProfile": "Edit profile",
     "profile.targetPlaceholder": "e.g. 2000",
 
     "theme.title": "App color",
     "theme.green": "Green",
     "theme.purple": "Purple",
     "theme.red": "Red",
+    "appSettings.title": "App appearance",
 
     "lang.title": "Language",
 
@@ -555,6 +557,7 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     "apiKey.intro":
       "Enter your Gemini API key — it's stored encrypted on the server, nobody else can see it.",
     "apiKey.configured": "Key saved: {hint}",
+    "apiKey.configuredShort": "Key saved ✅",
     "apiKey.lastTested": "Last tested:",
     "apiKey.notConfigured": "No API key added yet.",
     "apiKey.newKey": "New API key",
@@ -570,6 +573,8 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     "reminder.enabled": "Reminder is on ✅ We'll remind you at meal times",
     "reminder.enableError": "Couldn't turn the reminder on.",
     "reminder.disabled": "Reminder is off",
+    "reminder.onShort": "On ✅",
+    "reminder.offShort": "Off",
     "reminder.disableError": "Couldn't turn the reminder off.",
     "reminder.timesSaved": "Reminder times saved ✅",
     "reminder.intro":

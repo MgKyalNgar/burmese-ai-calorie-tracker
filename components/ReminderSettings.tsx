@@ -41,6 +41,10 @@ export default function ReminderSettings() {
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  // ပုံမှန် ပိတ်ထား — ခေါင်းစဉ်ကိုနှိပ်မှ ဖွင့်တယ်။
+  const [open, setOpen] = useState(false);
+  // subscription စစ်ပြီးပြီလား — hint မှားမပြစေဖို့။
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     const ok =
@@ -66,7 +70,7 @@ export default function ReminderSettings() {
       } catch {
         // setting ဆွဲမရရင် default အတိုင်း ထားတယ်။
       }
-    })();
+    })().finally(() => setChecked(true));
   }, []);
 
   async function saveSettings(next: Settings) {
@@ -176,55 +180,74 @@ export default function ReminderSettings() {
 
   return (
     <section className="mt-3 rounded-2xl bg-white shadow-sm p-4">
-      <h2>🔔 Reminder</h2>
-      <p className="caption mt-1">
-        {t("reminder.intro")}
-      </p>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
+        <span className="text-[18px] font-bold leading-[1.3]">🔔 Reminder</span>
+        <span className="caption shrink-0">
+          {checked
+            ? subscribed
+              ? t("reminder.onShort")
+              : t("reminder.offShort")
+            : ""}
+          {open ? " ▴" : " ▾"}
+        </span>
+      </button>
 
-      {subscribed ? (
-        <button
-          type="button"
-          onClick={handleDisable}
-          disabled={busy}
-          className="mt-3 w-full rounded-xl border border-red-300 py-2.5 font-semibold text-red-600 disabled:opacity-50"
-        >
-          {busy ? t("reminder.disabling") : t("reminder.disable")}
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={handleEnable}
-          disabled={busy}
-          className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
-        >
-          {busy ? t("reminder.enabling") : t("reminder.enable")}
-        </button>
+      {open && (
+        <>
+          <p className="caption mt-1">
+            {t("reminder.intro")}
+          </p>
+
+          {subscribed ? (
+            <button
+              type="button"
+              onClick={handleDisable}
+              disabled={busy}
+              className="mt-3 w-full rounded-xl border border-red-300 py-2.5 font-semibold text-red-600 disabled:opacity-50"
+            >
+              {busy ? t("reminder.disabling") : t("reminder.disable")}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleEnable}
+              disabled={busy}
+              className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
+            >
+              {busy ? t("reminder.enabling") : t("reminder.enable")}
+            </button>
+          )}
+
+          {subscribed && (
+            <div className="mt-3 space-y-2">
+              {(
+                [
+                  ["breakfast", t("reminder.breakfastTime")],
+                  ["lunch", t("reminder.lunchTime")],
+                  ["dinner", t("reminder.dinnerTime")],
+                  ["evening", t("reminder.eveningTime")],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key} className="flex items-center justify-between gap-2">
+                  <span>{label}</span>
+                  <input
+                    type="time"
+                    value={settings[key]}
+                    onChange={(e) => handleTimeChange(key, e.target.value)}
+                    className="rounded-xl border bg-white px-3 py-2"
+                  />
+                </label>
+              ))}
+            </div>
+          )}
+
+          {message && <p className="caption mt-2">{message}</p>}
+        </>
       )}
-
-      {subscribed && (
-        <div className="mt-3 space-y-2">
-          {(
-            [
-              ["breakfast", t("reminder.breakfastTime")],
-              ["lunch", t("reminder.lunchTime")],
-              ["dinner", t("reminder.dinnerTime")],
-              ["evening", t("reminder.eveningTime")],
-            ] as const
-          ).map(([key, label]) => (
-            <label key={key} className="flex items-center justify-between gap-2">
-              <span>{label}</span>
-              <input
-                type="time"
-                value={settings[key]}
-                onChange={(e) => handleTimeChange(key, e.target.value)}
-                className="rounded-xl border bg-white px-3 py-2"
-              />
-            </label>
-          ))}
-        </div>
-      )}
-
-      {message && <p className="caption mt-2">{message}</p>}
     </section>
   );
 }

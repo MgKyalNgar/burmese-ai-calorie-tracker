@@ -15,7 +15,7 @@ const THEMES = [
   { value: "red", key: "theme.red", dot: "#dc2626" },
 ] as const;
 
-export default function ThemeSettings() {
+export default function ThemeSettings({ bare = false }: { bare?: boolean }) {
   const { t } = useLang();
   const [theme, setTheme] = useState<string>("green");
 
@@ -41,9 +41,13 @@ export default function ThemeSettings() {
     }
   };
 
-  return (
-    <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-      <h2>{t("theme.title")}</h2>
+  const content = (
+    <>
+      {bare ? (
+        <p className="caption">{t("theme.title")}</p>
+      ) : (
+        <h2>{t("theme.title")}</h2>
+      )}
       <div className="mt-2 flex gap-2">
         {THEMES.map((th) => (
           <button
@@ -65,6 +69,14 @@ export default function ThemeSettings() {
           </button>
         ))}
       </div>
+    </>
+  );
+
+  if (bare) return content;
+
+  return (
+    <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
+      {content}
     </section>
   );
 }
