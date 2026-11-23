@@ -243,25 +243,32 @@ export default function Home() {
 
       <section className="mt-3 flex gap-3">
         <div className="flex flex-1 flex-col justify-center rounded-2xl bg-white p-3 text-center shadow-sm">
-          {/* title "💧 ရေ" ပြန်ပါပြီ။ ဂဏန်း + ခွက် တစ်ကြောင်းတည်း၊
-              ဘေးမှာ +1 ခလုတ် အဝိုင်းလေး — ရေစက်တစ်မျိုးတည်း ဘာမှန်းမသိလို့
-              "+" ထည့်ထားတယ် (နှိပ်ရင် ရေ ၁ ခွက် တိုးတယ်)။ */}
+          {/* title "💧 ရေ"၊ အောက်မှာ 0/8 နဲ့ ခွက် အပေါ်အောက်၊
+              ဘေးမှာ ရေစက် အဝိုင်းခလုတ် — အဝိုင်းအပေါ် ညာဘက်ထောင့်မှာ "+" badge
+              (ပုံအတိုင်း)။ အဝိုင်းကို နှိပ်ရင် ရေ ၁ ခွက် တိုးတယ်။ */}
           <p className="caption">{t("home.water")}</p>
           <div className="mt-1 flex items-center justify-center gap-3">
-            <p className="hero-num text-[var(--theme-dark)]">
-              {cups + waterAdded}
-              <span className="text-base text-[#52677f]">
-                /{waterGoal} {t("home.cups")}
-              </span>
-            </p>
+            <div>
+              <p className="hero-num text-[var(--theme-dark)]">
+                {cups + waterAdded}
+                <span className="text-base text-[#52677f]">/{waterGoal}</span>
+              </p>
+              <p className="caption">{t("home.cups")}</p>
+            </div>
             <button
               type="button"
               onClick={addWater}
               disabled={waterBusy}
               aria-label="ရေ ၁ ခွက် ထည့်မယ်"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-500 text-2xl font-bold text-white shadow-sm disabled:opacity-50"
+              className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-2xl shadow-sm disabled:opacity-50"
             >
-              +
+              💧
+              <span
+                aria-hidden
+                className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sky-500 bg-white text-sm font-bold leading-none text-sky-600"
+              >
+                +
+              </span>
             </button>
           </div>
         </div>
