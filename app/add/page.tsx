@@ -371,7 +371,7 @@ export default function AddPage() {
           )}
 
           {mode === "search" && (
-            <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
+            <section className="mt-4">
               <h2>{t("add.searchTitle")}</h2>
               <p className="caption mt-1">{t("add.searchNote")}</p>
               <input
@@ -382,7 +382,7 @@ export default function AddPage() {
                   setPickedFood(null);
                 }}
                 placeholder={t("add.searchPlaceholder")}
-                className="mt-3 w-full rounded-xl border px-3 py-2.5"
+                className="mt-3 w-full rounded-xl border bg-white px-3 py-2.5"
               />
               {searching && <p className="caption mt-2">{t("add.searching")}</p>}
               {!searching && query.trim().length >= 2 && results.length === 0 && (
@@ -390,39 +390,21 @@ export default function AddPage() {
                   {t("add.notFound")}
                 </p>
               )}
-              {query.trim().length < 2 && results.length > 0 && (
-                <p className="caption mt-3 font-semibold">
-                  {t("add.browseTitle")}
-                </p>
-              )}
-              {/* နာမည် list ကျစ်ကျစ်လေး — အကွက်ကြီးတွေ မဟုတ်ဘူး၊
-                  နာမည် ဘယ် + kcal ညာ တစ်ကြောင်းတည်း။ */}
-              <ul className="mt-1 divide-y divide-slate-100">
-                {results.map((f) => (
-                  <li key={f.id}>
+              {/* ရွေးထားတဲ့ အစာ — search box အောက်၊ list အပေါ်မှာ ချက်ချင်းပေါ်တယ်
+                  (အရင် list အောက်ဆုံးမှာ ပေါ်နေလို့ ပြင်ထားတာ)။ */}
+              {pickedFood && (
+                <div className="mt-3 rounded-xl bg-[var(--theme-soft)] p-4 ring-1 ring-[var(--theme-ring)]">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold">{pickedFood.name_mm}</p>
                     <button
                       type="button"
-                      onClick={() => pickSearchFood(f)}
-                      className={`flex w-full items-center justify-between gap-3 py-2 text-left ${
-                        pickedFood?.id === f.id
-                          ? "font-semibold text-[var(--theme-dark)]"
-                          : ""
-                      }`}
+                      onClick={() => setPickedFood(null)}
+                      aria-label={t("add.photoRemove")}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-base font-bold text-[#52677f] shadow-sm"
                     >
-                      <span className="font-semibold">
-                        {f.name_mm}
-                        {pickedFood?.id === f.id && " ✓"}
-                      </span>
-                      <span className="caption shrink-0">
-                        {Math.round(f.calories_per_100g ?? 0)} kcal / 100g
-                      </span>
+                      ✕
                     </button>
-                  </li>
-                ))}
-              </ul>
-              {pickedFood && (
-                <div className="mt-4 rounded-xl bg-slate-50 p-4">
-                  <p className="font-semibold">{pickedFood.name_mm}</p>
+                  </div>
                   <label className="mt-2 block">
                     <span className="caption">{t("add.amount")}</span>
                     <input
@@ -462,6 +444,37 @@ export default function AddPage() {
                   </button>
                 </div>
               )}
+              {query.trim().length < 2 && results.length > 0 && (
+                <p className="caption mt-3 font-semibold">
+                  {t("add.browseTitle")}
+                </p>
+              )}
+              {/* list ကို ကဒ် သပ်သပ် ခွဲထားတယ် — တစ်ခုချင်း အဖြူကဒ်လေး၊
+                  အကြားမှာ နေရာခြားထားတယ်။ အကြောင်းအရာက ကျစ်ကျစ်လေးပဲ
+                  (နာမည် ဘယ် + kcal ညာ) — အကွက်ကြီးတွေ မဟုတ်ဘူး။ */}
+              <ul className="mt-2 space-y-2">
+                {results.map((f) => (
+                  <li key={f.id}>
+                    <button
+                      type="button"
+                      onClick={() => pickSearchFood(f)}
+                      className={`flex w-full items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 text-left shadow-sm ${
+                        pickedFood?.id === f.id
+                          ? "font-semibold text-[var(--theme-dark)] ring-1 ring-[var(--theme)]"
+                          : ""
+                      }`}
+                    >
+                      <span className="font-semibold">
+                        {f.name_mm}
+                        {pickedFood?.id === f.id && " ✓"}
+                      </span>
+                      <span className="caption shrink-0">
+                        {Math.round(f.calories_per_100g ?? 0)} kcal / 100g
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
 
