@@ -243,9 +243,11 @@ export default function Home() {
 
       <section className="mt-3 flex gap-3">
         <div className="flex flex-1 flex-col justify-center rounded-2xl bg-white p-3 text-center shadow-sm">
-          {/* ဂဏန်း + ခွက် တစ်ကြောင်းတည်း၊ ဘေးမှာ +1 ခလုတ် အဝိုင်းလေး (💧) ကပ်ထားတယ် —
-              အဝိုင်းလေးကိုယ်တိုင်က ခလုတ် — နှိပ်ရင် ရေ ၁ ခွက် တိုးတယ်။ */}
-          <div className="flex items-center justify-center gap-3">
+          {/* title "💧 ရေ" ပြန်ပါပြီ။ ဂဏန်း + ခွက် တစ်ကြောင်းတည်း၊
+              ဘေးမှာ +1 ခလုတ် အဝိုင်းလေး — ရေစက်တစ်မျိုးတည်း ဘာမှန်းမသိလို့
+              "+" ထည့်ထားတယ် (နှိပ်ရင် ရေ ၁ ခွက် တိုးတယ်)။ */}
+          <p className="caption">{t("home.water")}</p>
+          <div className="mt-1 flex items-center justify-center gap-3">
             <p className="hero-num text-[var(--theme-dark)]">
               {cups + waterAdded}
               <span className="text-base text-[#52677f]">
@@ -257,9 +259,9 @@ export default function Home() {
               onClick={addWater}
               disabled={waterBusy}
               aria-label="ရေ ၁ ခွက် ထည့်မယ်"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xl shadow-sm ring-1 ring-sky-200 disabled:opacity-50"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-500 text-2xl font-bold text-white shadow-sm disabled:opacity-50"
             >
-              💧
+              +
             </button>
           </div>
         </div>
