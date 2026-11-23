@@ -242,30 +242,26 @@ export default function Home() {
       </section>
 
       <section className="mt-3 flex gap-3">
-        <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
-          {/* ရေစက် အဝိုင်းလေး ဘေးမှာ၊ ဂဏန်း + ခွက် ဘေးကပ်ပြီး တစ်ကြောင်းတည်း။ */}
-          <div className="flex items-center justify-center gap-2">
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-lg"
-              aria-hidden
-            >
-              💧
-            </span>
+        <div className="flex flex-1 flex-col justify-center rounded-2xl bg-white p-3 text-center shadow-sm">
+          {/* ဂဏန်း + ခွက် တစ်ကြောင်းတည်း၊ ဘေးမှာ +1 ခလုတ် အဝိုင်းလေး (💧) ကပ်ထားတယ် —
+              အဝိုင်းလေးကိုယ်တိုင်က ခလုတ် — နှိပ်ရင် ရေ ၁ ခွက် တိုးတယ်။ */}
+          <div className="flex items-center justify-center gap-3">
             <p className="hero-num text-[var(--theme-dark)]">
               {cups + waterAdded}
               <span className="text-base text-[#52677f]">
                 /{waterGoal} {t("home.cups")}
               </span>
             </p>
+            <button
+              type="button"
+              onClick={addWater}
+              disabled={waterBusy}
+              aria-label="ရေ ၁ ခွက် ထည့်မယ်"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xl shadow-sm ring-1 ring-sky-200 disabled:opacity-50"
+            >
+              💧
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={addWater}
-            disabled={waterBusy}
-            className="mt-2 rounded-full bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-700 disabled:opacity-50"
-          >
-            +1 💧
-          </button>
         </div>
         <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
           <p className="caption">{t("home.weight")}</p>
