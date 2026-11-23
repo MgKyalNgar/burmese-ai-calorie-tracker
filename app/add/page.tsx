@@ -399,7 +399,7 @@ export default function AddPage() {
                     <button
                       type="button"
                       onClick={() => setPickedFood(null)}
-                      aria-label={t("add.photoRemove")}
+                      aria-label={t("common.close")}
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-base font-bold text-[#52677f] shadow-sm"
                     >
                       ✕
