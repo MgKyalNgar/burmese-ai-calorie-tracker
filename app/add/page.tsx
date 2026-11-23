@@ -395,25 +395,26 @@ export default function AddPage() {
                   {t("add.browseTitle")}
                 </p>
               )}
-              <ul className="mt-2 space-y-2">
+              {/* နာမည် list ကျစ်ကျစ်လေး — အကွက်ကြီးတွေ မဟုတ်ဘူး၊
+                  နာမည် ဘယ် + kcal ညာ တစ်ကြောင်းတည်း။ */}
+              <ul className="mt-1 divide-y divide-slate-100">
                 {results.map((f) => (
                   <li key={f.id}>
                     <button
                       type="button"
                       onClick={() => pickSearchFood(f)}
-                      className={`w-full rounded-xl border px-3 py-2.5 text-left ${
+                      className={`flex w-full items-center justify-between gap-3 py-2 text-left ${
                         pickedFood?.id === f.id
-                          ? "border-[var(--theme)] bg-[var(--theme-soft)]"
+                          ? "font-semibold text-[var(--theme-dark)]"
                           : ""
                       }`}
                     >
-                      <span className="font-semibold">{f.name_mm}</span>
-                      {f.name_en && (
-                        <span className="caption block">{f.name_en}</span>
-                      )}
-                      <span className="caption block">
+                      <span className="font-semibold">
+                        {f.name_mm}
+                        {pickedFood?.id === f.id && " ✓"}
+                      </span>
+                      <span className="caption shrink-0">
                         {Math.round(f.calories_per_100g ?? 0)} kcal / 100g
-                        {f.serving_desc ? ` · ${f.serving_desc}` : ""}
                       </span>
                     </button>
                   </li>

@@ -243,12 +243,21 @@ export default function Home() {
 
       <section className="mt-3 flex gap-3">
         <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
-          <p className="caption">{t("home.water")}</p>
-          <p className="hero-num text-[var(--theme-dark)]">
-            {cups + waterAdded}
-            <span className="text-base text-[#52677f]">/{waterGoal}</span>
-          </p>
-          <p className="caption">{t("home.cups")}</p>
+          {/* ရေစက် အဝိုင်းလေး ဘေးမှာ၊ ဂဏန်း + ခွက် ဘေးကပ်ပြီး တစ်ကြောင်းတည်း။ */}
+          <div className="flex items-center justify-center gap-2">
+            <span
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-lg"
+              aria-hidden
+            >
+              💧
+            </span>
+            <p className="hero-num text-[var(--theme-dark)]">
+              {cups + waterAdded}
+              <span className="text-base text-[#52677f]">
+                /{waterGoal} {t("home.cups")}
+              </span>
+            </p>
+          </div>
           <button
             type="button"
             onClick={addWater}
