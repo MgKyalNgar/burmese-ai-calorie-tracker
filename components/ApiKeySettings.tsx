@@ -104,14 +104,14 @@ export default function ApiKeySettings() {
   }
 
   return (
-    <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
+    <section className="mt-3 rounded-2xl bg-white shadow-sm p-4">
       <h2>Gemini API Key</h2>
       <p className="caption mt-1">
         {t("apiKey.intro")}
       </p>
 
       {status?.configured ? (
-        <p className="mt-3 rounded-lg bg-[var(--theme-soft)] px-3 py-2 text-[var(--theme-dark)]">
+        <p className="mt-2 rounded-lg bg-[var(--theme-soft)] px-3 py-2 text-[var(--theme-dark)]">
           {t("apiKey.configured", { hint: status.key_hint ?? "" })}
           {status.last_tested_at && (
             <span className="caption block">
@@ -122,10 +122,10 @@ export default function ApiKeySettings() {
           )}
         </p>
       ) : (
-        <p className="caption mt-3">{t("apiKey.notConfigured")}</p>
+        <p className="caption mt-2">{t("apiKey.notConfigured")}</p>
       )}
 
-      <label className="mt-4 block">
+      <label className="mt-3 block">
         <span className="caption">{t("apiKey.newKey")}</span>
         <input
           type="password"
@@ -133,16 +133,16 @@ export default function ApiKeySettings() {
           onChange={(e) => setKey(e.target.value)}
           placeholder="AIza..."
           autoComplete="off"
-          className="mt-1 w-full rounded-xl border px-3 py-2.5"
+          className="mt-1 w-full rounded-xl border px-3 py-2"
         />
       </label>
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-2 flex gap-2">
         <button
           type="button"
           onClick={handleSave}
           disabled={busy}
-          className="flex-1 rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
+          className="flex-1 rounded-xl bg-[var(--theme)] py-2 font-semibold text-white disabled:opacity-50"
         >
           {t("common.save")}
         </button>
@@ -153,7 +153,7 @@ export default function ApiKeySettings() {
             type="button"
             onClick={handleTest}
             disabled={busy}
-            className="flex-1 rounded-xl border border-[var(--theme)] py-2.5 font-semibold text-[var(--theme-dark)] disabled:opacity-50"
+            className="flex-1 rounded-xl border border-[var(--theme)] py-2 font-semibold text-[var(--theme-dark)] disabled:opacity-50"
           >
             {t("apiKey.test")}
           </button>
@@ -163,14 +163,14 @@ export default function ApiKeySettings() {
             type="button"
             onClick={handleDelete}
             disabled={busy}
-            className="rounded-xl border border-red-300 px-4 py-2.5 font-semibold text-red-600 disabled:opacity-50"
+            className="rounded-xl border border-red-300 px-4 py-2 font-semibold text-red-600 disabled:opacity-50"
           >
             {t("common.delete")}
           </button>
         )}
       </div>
 
-      <p className="caption mt-3">
+      <p className="caption mt-2">
         {t("apiKey.getKeyPrefix")}{" "}
         <a
           href="https://aistudio.google.com/apikey"
@@ -183,7 +183,7 @@ export default function ApiKeySettings() {
         {t("apiKey.getKeySuffix")}
       </p>
 
-      {message && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2">{message}</p>}
+      {message && <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2">{message}</p>}
     </section>
   );
 }

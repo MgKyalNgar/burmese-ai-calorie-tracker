@@ -96,7 +96,7 @@ export default function ProfilePage() {
   const profile = data.profile;
 
   return (
-    <main className="mx-auto max-w-md min-h-screen px-5 pb-24 pt-8">
+    <main className="mx-auto max-w-md min-h-screen px-5 pb-24 pt-5">
       <h1>Profile</h1>
       <p className="caption mt-1">{data.email}</p>
 
@@ -106,10 +106,10 @@ export default function ProfilePage() {
         </p>
       )}
 
-      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
+      <section className="mt-3 rounded-2xl bg-white shadow-sm p-4">
         <h2>{t("profile.myInfo")}</h2>
         {profile ? (
-          <dl className="mt-3 space-y-2">
+          <dl className="mt-2 space-y-1.5">
             <div className="flex justify-between">
               <dt>{t("profile.name")}</dt>
               <dd className="font-semibold">{profile.display_name ?? "—"}</dd>
@@ -152,7 +152,7 @@ export default function ProfilePage() {
         )}
         {profile &&
           (editingTarget ? (
-            <div className="mt-4">
+            <div className="mt-3">
               <div className="flex gap-2">
                 <input
                   type="number"
@@ -192,7 +192,7 @@ export default function ProfilePage() {
                 setTargetMsg("");
                 setEditingTarget(true);
               }}
-              className="mt-4 w-full rounded-xl bg-slate-100 py-2.5 font-semibold"
+              className="mt-3 w-full rounded-xl bg-slate-100 py-2.5 font-semibold"
             >
               {t("profile.editTarget")}
             </button>
@@ -205,7 +205,7 @@ export default function ProfilePage() {
         )}
         <Link
           href="/onboarding"
-          className="mt-4 block rounded-xl bg-[var(--theme)] py-2.5 text-center font-semibold text-white"
+          className="mt-3 block rounded-xl bg-[var(--theme)] py-2.5 text-center font-semibold text-white"
         >
           {t("profile.editProfile")}
         </Link>
@@ -219,7 +219,7 @@ export default function ProfilePage() {
 
       <ReminderSettings />
 
-      <div className="mt-4">
+      <div className="mt-3">
         <LogoutButton />
       </div>
 

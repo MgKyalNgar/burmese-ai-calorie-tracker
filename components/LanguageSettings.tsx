@@ -14,15 +14,15 @@ export default function LanguageSettings() {
   const { lang, setLang, t } = useLang();
 
   return (
-    <section className="mt-4 rounded-2xl bg-white p-5 shadow-sm">
+    <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
       <h2>{t("lang.title")}</h2>
-      <div className="mt-3 flex gap-3">
+      <div className="mt-2 flex gap-2">
         {LANGS.map((l) => (
           <button
             key={l.value}
             type="button"
             onClick={() => setLang(l.value)}
-            className={`flex-1 rounded-xl py-3 font-semibold ${
+            className={`flex-1 rounded-xl py-2.5 font-semibold ${
               lang === l.value
                 ? "bg-[var(--theme-soft)] ring-2 ring-[var(--theme)]"
                 : "bg-slate-50"

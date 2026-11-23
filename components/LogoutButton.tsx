@@ -34,7 +34,7 @@ export default function LogoutButton() {
       type="button"
       onClick={handleLogout}
       disabled={busy}
-      className="w-full rounded-xl border border-red-300 py-3 font-semibold text-red-600 disabled:opacity-50"
+      className="w-full rounded-xl border border-red-300 py-2.5 font-semibold text-red-600 disabled:opacity-50"
     >
       {busy ? t("logout.signingOut") : t("logout.signOut")}
     </button>

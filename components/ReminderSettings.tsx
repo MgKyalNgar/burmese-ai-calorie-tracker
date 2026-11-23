@@ -165,7 +165,7 @@ export default function ReminderSettings() {
 
   if (!supported) {
     return (
-      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
+      <section className="mt-3 rounded-2xl bg-white shadow-sm p-4">
         <h2>🔔 Reminder</h2>
         <p className="caption mt-2">
           {t("reminder.unsupported")}
@@ -175,7 +175,7 @@ export default function ReminderSettings() {
   }
 
   return (
-    <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
+    <section className="mt-3 rounded-2xl bg-white shadow-sm p-4">
       <h2>🔔 Reminder</h2>
       <p className="caption mt-1">
         {t("reminder.intro")}
@@ -202,7 +202,7 @@ export default function ReminderSettings() {
       )}
 
       {subscribed && (
-        <div className="mt-4 space-y-3">
+        <div className="mt-3 space-y-2">
           {(
             [
               ["breakfast", t("reminder.breakfastTime")],
@@ -224,7 +224,7 @@ export default function ReminderSettings() {
         </div>
       )}
 
-      {message && <p className="caption mt-3">{message}</p>}
+      {message && <p className="caption mt-2">{message}</p>}
     </section>
   );
 }
