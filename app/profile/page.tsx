@@ -333,11 +333,10 @@ export default function ProfilePage() {
 
       <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
         <h2>{t("appSettings.title")}</h2>
-        <div className="mt-3">
+        <div className="mt-3 flex items-center gap-2">
           <ThemeSettings bare />
+          <LanguageSettings bare />
         </div>
-        <div className="my-3 border-t border-slate-100" />
-        <LanguageSettings bare />
       </section>
 
       <ApiKeySettings />

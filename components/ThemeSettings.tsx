@@ -18,6 +18,8 @@ const THEMES = [
 export default function ThemeSettings({ bare = false }: { bare?: boolean }) {
   const { t } = useLang();
   const [theme, setTheme] = useState<string>("green");
+  // App ကဒ်ထဲမှာ accordion — ခေါင်းစဉ်ကိုနှိပ်မှ အရောင်တွေ ပွင့်တယ်။
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -29,6 +31,7 @@ export default function ThemeSettings({ bare = false }: { bare?: boolean }) {
 
   const pick = (value: string) => {
     setTheme(value);
+    setOpen(false);
     try {
       if (value === "green") {
         document.documentElement.removeAttribute("data-theme");
@@ -41,42 +44,61 @@ export default function ThemeSettings({ bare = false }: { bare?: boolean }) {
     }
   };
 
-  const content = (
-    <>
-      {bare ? (
-        <p className="caption">{t("theme.title")}</p>
-      ) : (
-        <h2>{t("theme.title")}</h2>
-      )}
-      <div className="mt-2 flex gap-2">
-        {THEMES.map((th) => (
-          <button
-            key={th.value}
-            type="button"
-            onClick={() => pick(th.value)}
-            className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 font-semibold ${
-              theme === th.value
-                ? "bg-[var(--theme-soft)] ring-2 ring-[var(--theme)]"
-                : "bg-slate-50"
-            }`}
-          >
-            <span
-              className="h-6 w-6 rounded-full"
-              style={{ background: th.dot }}
-              aria-hidden
-            />
-            {t(th.key)}
-          </button>
-        ))}
-      </div>
-    </>
+  const current = THEMES.find((th) => th.value === theme) ?? THEMES[0];
+
+  const picker = (
+    <div className="mt-2 flex gap-2">
+      {THEMES.map((th) => (
+        <button
+          key={th.value}
+          type="button"
+          onClick={() => pick(th.value)}
+          className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 font-semibold ${
+            theme === th.value
+              ? "bg-[var(--theme-soft)] ring-2 ring-[var(--theme)]"
+              : "bg-slate-50"
+          }`}
+        >
+          <span
+            className="h-6 w-6 rounded-full"
+            style={{ background: th.dot }}
+            aria-hidden
+          />
+          {t(th.key)}
+        </button>
+      ))}
+    </div>
   );
 
-  if (bare) return content;
+  if (bare) {
+    return (
+      <div className="min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="flex w-full items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <span
+              className="h-5 w-5 shrink-0 rounded-full"
+              style={{ background: current.dot }}
+              aria-hidden
+            />
+            <span className="truncate font-semibold">{t("theme.title")}</span>
+          </span>
+          <span className="caption shrink-0">
+            {t(current.key)} {open ? "▴" : "▾"}
+          </span>
+        </button>
+        {open && picker}
+      </div>
+    );
+  }
 
   return (
     <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-      {content}
+      <h2>{t("theme.title")}</h2>
+      {picker}
     </section>
   );
 }

@@ -13,13 +13,31 @@ const LANGS: { value: Lang; label: string }[] = [
 export default function LanguageSettings({ bare = false }: { bare?: boolean }) {
   const { lang, setLang, t } = useLang();
 
-  const content = (
-    <>
-      {bare ? (
-        <p className="caption">{t("lang.title")}</p>
-      ) : (
-        <h2>{t("lang.title")}</h2>
-      )}
+  // App ကဒ်ထဲမှာ theme ဘေးကပ်တဲ့ switch ခလုတ်လေး — မြန်မာ / EN။
+  if (bare) {
+    return (
+      <div className="flex shrink-0 rounded-full bg-slate-100 p-0.5">
+        {LANGS.map((l) => (
+          <button
+            key={l.value}
+            type="button"
+            onClick={() => setLang(l.value)}
+            className={`rounded-full px-2.5 py-1 text-[13px] font-semibold ${
+              lang === l.value
+                ? "bg-white text-[var(--theme-dark)] shadow-sm"
+                : "text-[#52677f]"
+            }`}
+          >
+            {l.value === "my" ? "မြန်မာ" : "EN"}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
+      <h2>{t("lang.title")}</h2>
       <div className="mt-2 flex gap-2">
         {LANGS.map((l) => (
           <button
@@ -36,14 +54,6 @@ export default function LanguageSettings({ bare = false }: { bare?: boolean }) {
           </button>
         ))}
       </div>
-    </>
-  );
-
-  if (bare) return content;
-
-  return (
-    <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-      {content}
     </section>
   );
 }
