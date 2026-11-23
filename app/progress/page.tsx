@@ -188,7 +188,7 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
         )}
       </svg>
       <p className="caption mt-1 text-[#52677f]">
-        {t("progress.weightCount", {
+        {t(weights.length === 1 ? "progress.weightCountOne" : "progress.weightCount", {
           count: weights.length,
           from: formatDateDMY(weights[0].date),
           to: formatDateDMY(weights[weights.length - 1].date),
