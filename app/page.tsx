@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { invalidateCache, useCachedData } from "@/lib/useCachedData";
+import { warmOtherTabs } from "@/lib/warmup";
 import { FETCH_FALLBACK, useLang } from "@/lib/i18n";
 import {
   formatDateDMY,
@@ -100,6 +101,7 @@ export default function Home() {
   useEffect(() => {
     if (data?.needsLogin) router.push("/login");
     else if (data?.needsOnboarding) router.push("/onboarding");
+    else if (data) warmOtherTabs();
   }, [data, router]);
 
   // Home ရေ ကဒ်က +1 ခလုတ် — နှိပ်တာနဲ့ ဂဏန်း ချက်ချင်း တက်တယ်
