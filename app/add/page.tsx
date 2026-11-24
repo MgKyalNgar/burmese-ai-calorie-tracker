@@ -168,7 +168,10 @@ export default function AddPage() {
             "id, name_mm, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, serving_desc",
           )
           .order("name_mm")
-          .limit(q.length >= 2 ? 20 : 60);
+          // Browse mode: အကုန် ဆွဲမှ popular-first sort အလုပ်လုပ်တယ်
+          // (60 ဆိုရင် မုန့်ဟင်းခါးတို့ အက္ခရာစဉ်နောက်မှာ ကျန်နေလို့ မပါဘူး —
+          // 88 မျိုး ဖြစ်သွားတော့ 60 မလုံလောက်တော့ဘူး)။
+          .limit(q.length >= 2 ? 20 : 200);
         if (q.length >= 2) {
           const safe = q.replace(/[%_]/g, "");
           req = req.or(`name_mm.ilike.%${safe}%,name_en.ilike.%${safe}%`);
@@ -204,6 +207,8 @@ export default function AddPage() {
 
   function confirmSearchFood() {
     if (!pickedFood) return;
+    // သိမ်းခါနီးမှ 10–2000 ထဲ ညှိတယ် (ရိုက်နေတုန်း clamp မလုပ်ဘူး)။
+    const g = Math.min(2000, Math.max(10, searchGrams || 100));
     const scaled = scaleNutrients(
       {
         grams: 100,
@@ -212,13 +217,13 @@ export default function AddPage() {
         carbs: pickedFood.carbs_per_100g ?? 0,
         fat: pickedFood.fat_per_100g ?? 0,
       },
-      searchGrams,
+      g,
     );
     setReview({
       food: {
         name_mm: pickedFood.name_mm,
         name_en: pickedFood.name_en ?? pickedFood.name_mm,
-        grams: searchGrams,
+        grams: g,
         ...scaled,
         note: pickedFood.serving_desc ?? "",
       },
@@ -445,10 +450,12 @@ export default function AddPage() {
                       min={10}
                       max={2000}
                       value={searchGrams}
-                      onChange={(e) =>
-                        setSearchGrams(
-                          Math.min(2000, Math.max(10, Number(e.target.value) || 100)),
-                        )
+                      // စာရိုက်နေတုန်း clamp မလုပ်ဘူး — 700 ရိုက်ချင်ရင် 7 ကနေ
+                      // စရိုက်လို့ရအောင် (အရင် Math.max(10, …) က ရိုက်လိုက်တိုင်း
+                      // 10 ဖြစ်သွားလို့ 700 ရိုက်မရဘူး)။ blur ကျမှ 10–2000 ထဲ ပြန်ညှိတယ်။
+                      onChange={(e) => setSearchGrams(Number(e.target.value) || 0)}
+                      onBlur={() =>
+                        setSearchGrams((g) => Math.min(2000, Math.max(10, g || 100)))
                       }
                       className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
                     />

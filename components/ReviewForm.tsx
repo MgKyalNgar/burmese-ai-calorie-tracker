@@ -64,6 +64,18 @@ export default function ReviewForm({
     setEdited(true);
   }
 
+  // Grams စာရိုက်နေတုန်း clamp မလုပ်ဘူး (700 ရိုက်ချင်ရင် 7 ကနေ စရိုက်လို့ရအောင်) —
+  // blur ကျမှ 10–2000 ထဲ ပြန်ညှိတယ်။ Stepper −/+ ခလုတ်တွေက changeGrams (clamp ပါ) ကို ဆက်သုံးတယ်။
+  function typeGrams(next: number) {
+    const g = Math.round(next) || 0;
+    setGrams(g);
+    setCalories(Math.round(rates.cal * g));
+    setProtein(round1(rates.pro * g));
+    setCarbs(round1(rates.carb * g));
+    setFat(round1(rates.fat * g));
+    setEdited(true);
+  }
+
   // အာဟာရတစ်ခုကို လက်နဲ့ ပြင်ရင် အဲဒီအမျိုးအစားရဲ့ rate ကို ပြန်သတ်တယ်။
   function editNutrient(
     key: "cal" | "pro" | "carb" | "fat",
@@ -226,7 +238,10 @@ export default function ReviewForm({
             min={10}
             max={2000}
             value={grams}
-            onChange={(e) => changeGrams(Number(e.target.value))}
+            onChange={(e) => typeGrams(Number(e.target.value))}
+            onBlur={() => {
+              if (grams < 10 || grams > 2000) changeGrams(grams);
+            }}
             disabled={busy}
             className="h-10 flex-1 rounded-xl border px-3 text-center"
           />
