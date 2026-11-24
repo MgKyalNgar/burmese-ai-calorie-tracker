@@ -23,6 +23,10 @@ type FoodRow = {
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
+// Hick's Law — ဘာမှ မရိုက်သေးရင် အကြိုက်ဆုံး အစားအစာ ၁၀ မျိုး အရင်ပြတယ်
+// (အက္ခရာစဉ်အတိုင်းဆို မုန့်ဟင်းခါးတို့ ပထမ စာမျက်နှာမှာ မပါဘူး)။
+const POPULAR_FOOD_ORDER = ["မုန့်ဟင်းခါး", "ရှမ်းခေါက်ဆွဲ", "ထမင်း", "ကြက်ဆီထမင်း", "အုန်းနို့ခေါက်ဆွဲ", "နန်းကြီးသုပ်", "လက်ဖက်ရည်", "ကြက်သားဟင်း", "ပလာတာ", "စမူဆာ"];
+
 export default function AddPage() {
   const { t } = useLang();
   const [mode, setMode] = useState<Mode>("photo");
@@ -153,13 +157,27 @@ export default function AddPage() {
             "id, name_mm, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, serving_desc",
           )
           .order("name_mm")
-          .limit(20);
+          .limit(q.length >= 2 ? 20 : 60);
         if (q.length >= 2) {
           const safe = q.replace(/[%_]/g, "");
           req = req.or(`name_mm.ilike.%${safe}%,name_en.ilike.%${safe}%`);
         }
         const { data, error } = await req;
-        if (!error) setResults((data ?? []) as FoodRow[]);
+        if (!error) {
+          const rows = (data ?? []) as FoodRow[];
+          if (q.length < 2) {
+            // အကြိုက်ဆုံးအရင်၊ ကျန် အက္ခရာစဉ်အတိုင်း — ၂၀ လုံးပဲ ပြတယ်။
+            const rank = new Map(POPULAR_FOOD_ORDER.map((n, i) => [n, i]));
+            rows.sort(
+              (a, b) =>
+                (rank.get(a.name_mm) ?? 999) - (rank.get(b.name_mm) ?? 999) ||
+                a.name_mm.localeCompare(b.name_mm),
+            );
+            setResults(rows.slice(0, 20));
+          } else {
+            setResults(rows);
+          }
+        }
       } finally {
         setSearching(false);
       }
@@ -245,7 +263,7 @@ export default function AddPage() {
                   setMessage("");
                   setNoKeyError(false);
                 }}
-                className={`rounded-xl border px-2 py-2.5 text-sm ${
+                className={`btn-press rounded-xl border px-2 py-2.5 text-sm ${
                   mode === t.value
                     ? "border-[var(--theme)] bg-[var(--theme)] font-semibold text-white"
                     : "text-[#334155]"
@@ -282,9 +300,11 @@ export default function AddPage() {
                     onClick={removePhoto}
                     disabled={busy}
                     aria-label={t("add.photoRemove")}
-                    className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-lg font-bold text-white disabled:opacity-50"
+                    className="absolute right-0.5 top-0.5 flex h-11 w-11 items-center justify-center rounded-full disabled:opacity-50"
                   >
-                    ✕
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-lg font-bold text-white">
+                      ✕
+                    </span>
                   </button>
                 </div>
               ) : (
@@ -393,16 +413,18 @@ export default function AddPage() {
               {/* ရွေးထားတဲ့ အစာ — search box အောက်၊ list အပေါ်မှာ ချက်ချင်းပေါ်တယ်
                   (အရင် list အောက်ဆုံးမှာ ပေါ်နေလို့ ပြင်ထားတာ)။ */}
               {pickedFood && (
-                <div className="mt-3 rounded-xl bg-[var(--theme-soft)] p-4 ring-1 ring-[var(--theme-ring)]">
+                <div className="anim-in mt-3 rounded-xl bg-[var(--theme-soft)] p-4 ring-1 ring-[var(--theme-ring)]">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-semibold">{pickedFood.name_mm}</p>
                     <button
                       type="button"
                       onClick={() => setPickedFood(null)}
                       aria-label={t("common.close")}
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-base font-bold text-[#52677f] shadow-sm"
+                      className="flex h-11 w-11 shrink-0 -m-2 items-center justify-center rounded-full"
                     >
-                      ✕
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-base font-bold text-[#52677f] shadow-sm">
+                        ✕
+                      </span>
                     </button>
                   </div>
                   <label className="mt-2 block">
@@ -438,7 +460,7 @@ export default function AddPage() {
                   <button
                     type="button"
                     onClick={confirmSearchFood}
-                    className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white"
+                    className="btn-press mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white"
                   >
                     {t("add.reviewSave")}
                   </button>
@@ -453,8 +475,8 @@ export default function AddPage() {
                   အကြားမှာ နေရာခြားထားတယ်။ အကြောင်းအရာက ကျစ်ကျစ်လေးပဲ
                   (နာမည် ဘယ် + kcal ညာ) — အကွက်ကြီးတွေ မဟုတ်ဘူး။ */}
               <ul className="mt-2 space-y-2">
-                {results.map((f) => (
-                  <li key={f.id}>
+                {results.map((f, i) => (
+                  <li key={f.id} style={{ animationDelay: `${Math.min(i, 9) * 30}ms` }} className="anim-in">
                     <button
                       type="button"
                       onClick={() => pickSearchFood(f)}

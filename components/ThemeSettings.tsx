@@ -90,7 +90,7 @@ export default function ThemeSettings({ bare = false }: { bare?: boolean }) {
             {t(current.key)} {open ? "▴" : "▾"}
           </span>
         </button>
-        {open && picker}
+        {open && <div className="anim-in">{picker}</div>}
       </div>
     );
   }

@@ -197,7 +197,7 @@ export default function ReminderSettings() {
       </button>
 
       {open && (
-        <>
+        <div className="anim-in">
           <p className="caption mt-1">
             {t("reminder.intro")}
           </p>
@@ -246,7 +246,7 @@ export default function ReminderSettings() {
           )}
 
           {message && <p className="caption mt-2">{message}</p>}
-        </>
+        </div>
       )}
     </section>
   );

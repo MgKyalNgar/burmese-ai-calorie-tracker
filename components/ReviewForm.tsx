@@ -216,7 +216,7 @@ export default function ReviewForm({
             type="button"
             onClick={() => changeGrams(grams - 10)}
             disabled={busy}
-            className="h-10 w-10 rounded-xl border text-lg font-bold disabled:opacity-50"
+            className="btn-press h-10 w-10 rounded-xl border text-lg font-bold disabled:opacity-50"
             aria-label={t("common.decrease")}
           >
             −
@@ -234,7 +234,7 @@ export default function ReviewForm({
             type="button"
             onClick={() => changeGrams(grams + 10)}
             disabled={busy}
-            className="h-10 w-10 rounded-xl border text-lg font-bold disabled:opacity-50"
+            className="btn-press h-10 w-10 rounded-xl border text-lg font-bold disabled:opacity-50"
             aria-label={t("common.increase")}
           >
             +
@@ -331,7 +331,7 @@ export default function ReviewForm({
           type="button"
           onClick={handleSave}
           disabled={busy}
-          className="flex-1 rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
+          className="btn-press flex-1 rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
         >
           {busy ? t("common.saving") : t("review.save")}
         </button>

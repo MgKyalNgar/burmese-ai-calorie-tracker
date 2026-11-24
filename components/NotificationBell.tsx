@@ -95,9 +95,11 @@ export default function NotificationBell() {
             type="button"
             onClick={toggleOpen}
             aria-label={t("bell.title")}
-            className="flex h-10 w-10 items-center justify-center rounded-full border bg-white text-xl shadow-md"
+            className="flex h-11 w-11 -m-0.5 items-center justify-center rounded-full"
           >
-            🔔
+            <span className="flex h-10 w-10 items-center justify-center rounded-full border bg-white text-xl shadow-md">
+              🔔
+            </span>
             {unread > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold text-white">
                 {unread > 99 ? "99+" : unread}
@@ -127,10 +129,11 @@ export default function NotificationBell() {
                     {t("bell.empty")}
                   </p>
                 )}
-                {items.map((n) => (
+                {items.map((n, i) => (
                   <div
                     key={n.id}
-                    className={`border-b px-4 py-3 last:border-b-0 ${
+                    style={{ animationDelay: `${Math.min(i, 9) * 30}ms` }}
+                    className={`anim-in border-b px-4 py-3 last:border-b-0 ${
                       n.read ? "" : "bg-[var(--theme-soft)]"
                     }`}
                   >

@@ -80,3 +80,24 @@ h1, h2, h3 {
   line-height: 1.4;
   color: var(--ink-3);
 }
+
+/* Animation — Charles Liu Reel က ၈ နိယာမ (24 Nov 2026)။
+   Pose to Pose: keyframes နဲ့ key pose တွေ သတ်မှတ်ပြီး ဆောက်တယ်။
+   Duration အားလုံး 300ms အောက် (Snappy Timing)၊ easing အားလုံး
+   ease-in-out (Slow In & Slow Out) — linear မသုံးဘူး။ */
+@keyframes ct-fade-slide-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ct-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+@keyframes ct-drop-bounce { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@keyframes ct-check-pop { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+.btn-press { transition: transform 150ms cubic-bezier(0.42, 0, 0.58, 1); }
+.btn-press:active { transform: scale(0.95); }
+.anim-in { animation: ct-fade-slide-in 200ms cubic-bezier(0.42, 0, 0.58, 1) both; }
+.anim-shake { animation: ct-shake 300ms cubic-bezier(0.42, 0, 0.58, 1); }
+.anim-drop-bounce { animation: ct-drop-bounce 250ms cubic-bezier(0.42, 0, 0.58, 1); }
+.anim-check-pop { animation: ct-check-pop 200ms cubic-bezier(0.42, 0, 0.58, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .btn-press, .anim-in, .anim-shake, .anim-drop-bounce, .anim-check-pop {
+    animation: none !important;
+    transition: none !important;
+  }
+}

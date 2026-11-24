@@ -536,7 +536,7 @@ export default function ProgressPage() {
           type="button"
           onClick={handleAddWeight}
           disabled={weightBusy}
-          className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
+          className="btn-press mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
         >
           {weightBusy ? t("common.saving") : t("progress.saveWeight")}
         </button>
@@ -601,14 +601,14 @@ export default function ProgressPage() {
                             setEditWeightKg(String(w.kg));
                             setDeletingWeightId(null);
                           }}
-                          className="rounded-lg border bg-white px-3 py-1.5"
+                          className="relative after:absolute after:-inset-y-2 after:-inset-x-1 after:content-[''] rounded-lg border bg-white px-3 py-1.5"
                         >
                           {t("progress.editWeight")}
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeletingWeightId(w.id)}
-                          className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-red-600"
+                          className="relative after:absolute after:-inset-y-2 after:-inset-x-1 after:content-[''] rounded-lg border border-red-300 bg-white px-3 py-1.5 text-red-600"
                         >
                           {t("progress.deleteWeight")}
                         </button>
@@ -699,7 +699,7 @@ export default function ProgressPage() {
               onClick={() => handleChangeGoal(-1)}
               disabled={goalBusy || waterGoal <= 1}
               aria-label={t("progress.goalDecrease")}
-              className="h-9 w-9 rounded-xl border bg-white font-bold disabled:opacity-30"
+              className="btn-press h-9 w-9 rounded-xl border bg-white font-bold disabled:opacity-30"
             >
               −
             </button>
@@ -709,7 +709,7 @@ export default function ProgressPage() {
               onClick={() => handleChangeGoal(1)}
               disabled={goalBusy || waterGoal >= 20}
               aria-label={t("progress.goalIncrease")}
-              className="h-9 w-9 rounded-xl border bg-white font-bold disabled:opacity-30"
+              className="btn-press h-9 w-9 rounded-xl border bg-white font-bold disabled:opacity-30"
             >
               +
             </button>
@@ -738,7 +738,7 @@ export default function ProgressPage() {
             type="button"
             onClick={handleAddWater}
             disabled={waterBusy}
-            className="flex-1 rounded-xl border border-sky-500 py-2.5 font-semibold text-sky-600 disabled:opacity-50"
+            className="btn-press flex-1 rounded-xl border border-sky-500 py-2.5 font-semibold text-sky-600 disabled:opacity-50"
           >
             {waterBusy ? t("progress.loggingWater") : t("progress.addCup")}
           </button>
@@ -746,7 +746,7 @@ export default function ProgressPage() {
             type="button"
             onClick={handleUndoWater}
             disabled={waterBusy}
-            className="flex-1 rounded-xl border py-2.5 font-semibold text-[#334155] disabled:opacity-50"
+            className="btn-press flex-1 rounded-xl border py-2.5 font-semibold text-[#334155] disabled:opacity-50"
           >
             {waterBusy ? t("common.deleting") : t("progress.undoCup")}
           </button>

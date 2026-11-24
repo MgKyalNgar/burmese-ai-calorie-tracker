@@ -41,7 +41,7 @@ export default function BottomNav() {
             <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
-                className={`flex flex-col items-center gap-0.5 py-2 ${
+                className={`btn-press flex flex-col items-center gap-0.5 py-2 ${
                   active ? "font-bold text-[var(--theme-dark)]" : "text-[#52677f]"
                 }`}
               >

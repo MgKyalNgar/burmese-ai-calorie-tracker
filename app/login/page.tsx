@@ -83,7 +83,7 @@ export default function LoginPage() {
         </label>
 
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-red-600">{error}</p>
+          <p key={error} className="anim-shake rounded-lg bg-red-50 px-3 py-2 text-red-600">{error}</p>
         )}
 
         <button

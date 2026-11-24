@@ -260,9 +260,11 @@ export default function Home() {
               onClick={addWater}
               disabled={waterBusy}
               aria-label="ရေ ၁ ခွက် ထည့်မယ်"
-              className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-2xl shadow-sm disabled:opacity-50"
+              className="btn-press relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-2xl shadow-sm disabled:opacity-50"
             >
-              💧
+              <span key={cups + waterAdded} aria-hidden className="anim-drop-bounce inline-block">
+                💧
+              </span>
               <span
                 aria-hidden
                 className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sky-500 bg-white text-sm font-bold leading-none text-sky-600"
@@ -295,10 +297,11 @@ export default function Home() {
           </div>
         ) : (
           <ul className="mt-3 space-y-2">
-            {data.meals.map((m) => (
+            {data.meals.map((m, i) => (
               <li
                 key={m.id}
-                className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5"
+                style={{ animationDelay: `${Math.min(i, 9) * 30}ms` }}
+                className="anim-in flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5"
               >
                 <div>
                   <p className="font-semibold">

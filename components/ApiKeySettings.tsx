@@ -126,7 +126,7 @@ export default function ApiKeySettings() {
       </button>
 
       {open && (
-        <>
+        <div className="anim-in">
           <p className="caption mt-1">
             {t("apiKey.intro")}
           </p>
@@ -207,7 +207,7 @@ export default function ApiKeySettings() {
           {message && (
             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2">{message}</p>
           )}
-        </>
+        </div>
       )}
     </section>
   );

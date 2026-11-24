@@ -170,7 +170,7 @@ function EditItemForm({
         <button
           type="button"
           onClick={() => changeGrams(grams - 10)}
-          className="h-9 w-9 rounded-xl border bg-white font-bold"
+          className="btn-press h-9 w-9 rounded-xl border bg-white font-bold"
           aria-label={t("common.decrease")}
         >
           −
@@ -186,7 +186,7 @@ function EditItemForm({
         <button
           type="button"
           onClick={() => changeGrams(grams + 10)}
-          className="h-9 w-9 rounded-xl border bg-white font-bold"
+          className="btn-press h-9 w-9 rounded-xl border bg-white font-bold"
           aria-label={t("common.increase")}
         >
           +
@@ -231,7 +231,7 @@ function EditItemForm({
           type="button"
           onClick={handleSave}
           disabled={busy}
-          className="flex-1 rounded-xl bg-[var(--theme)] py-2 font-semibold text-white disabled:opacity-50"
+          className="btn-press flex-1 rounded-xl bg-[var(--theme)] py-2 font-semibold text-white disabled:opacity-50"
         >
           {busy ? t("common.saving") : t("common.save")}
         </button>
@@ -263,6 +263,8 @@ export default function DiaryClient() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  // ထပ်ထည့်ထားတဲ့ item အသစ် — ✓ လေး ပေါ်ပြဖို့ (၂.၅ စက္ကန့်နေရင် ပျောက်တယ်)။
+  const [justAddedId, setJustAddedId] = useState<string | null>(null);
 
   // ရက်ပြောင်းရင် အရင်ရက်ရဲ့ စာရင်း မပြနေအောင် ရှင်းတယ် —
   // အသစ်ဆွဲပြီးမှ အဲဒီနေ့ရဲ့ စာရင်း ပေါ်မယ်။
@@ -271,6 +273,7 @@ export default function DiaryClient() {
     setEditingId(null);
     setDeletingId(null);
     setMessage("");
+    setJustAddedId(null);
   }, [date]);
 
   // ဆွဲလို့ရတဲ့ ဒေတာကို local state ထဲ ထည့်တယ်။
@@ -425,6 +428,10 @@ export default function DiaryClient() {
         await supabase.from("meals").delete().eq("id", newMeal.id);
         throw new Error(t("common.repeatError"));
       }
+      setJustAddedId(newItem.id);
+      setTimeout(() => {
+        setJustAddedId((cur) => (cur === newItem.id ? null : cur));
+      }, 2500);
       // ဒီနေ့ Diary + Home cache ကို ဖျက်တယ် — နောက်တစ်ခါ ဖွင့်ရင် အသစ် ပြမယ်။
       invalidateCachePrefix("diary-");
       invalidateCachePrefix("today-");
@@ -484,9 +491,11 @@ export default function DiaryClient() {
           type="button"
           onClick={() => setDate(addDaysIso(date, -1))}
           aria-label={t("diary.prevDay")}
-          className="h-10 w-10 rounded-xl border text-xl font-bold text-[#334155]"
+          className="flex h-11 w-11 -m-0.5 items-center justify-center"
         >
-          ‹
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl border text-xl font-bold text-[#334155]">
+            ‹
+          </span>
         </button>
         <div className="text-center">
           <p className="font-semibold">
@@ -512,9 +521,11 @@ export default function DiaryClient() {
           onClick={() => setDate(addDaysIso(date, 1))}
           disabled={isToday}
           aria-label={t("diary.nextDay")}
-          className="h-10 w-10 rounded-xl border text-xl font-bold text-[#334155] disabled:opacity-30"
+          className="flex h-11 w-11 -m-0.5 items-center justify-center disabled:opacity-30"
         >
-          ›
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl border text-xl font-bold text-[#334155]">
+            ›
+          </span>
         </button>
       </div>
 
@@ -567,11 +578,15 @@ export default function DiaryClient() {
                 </span>
               </div>
               <ul className="mt-3 space-y-3">
-                {group.map((meal) =>
-                  meal.meal_items.map((item) => (
+                {group
+                  .flatMap((meal) =>
+                    meal.meal_items.map((item) => ({ meal, item })),
+                  )
+                  .map(({ meal, item }, i) => (
                     <li
                       key={item.id}
-                      className="rounded-xl bg-slate-50 px-3 py-2.5"
+                      style={{ animationDelay: `${Math.min(i, 9) * 30}ms` }}
+                      className="anim-in rounded-xl bg-slate-50 px-3 py-2.5"
                     >
                       <div className="flex items-start gap-3">
                         {meal.photo_url && (
@@ -582,6 +597,11 @@ export default function DiaryClient() {
                             {item.food_name_mm ??
                               item.food_name_en ??
                               t("diary.unnamedFood")}
+                            {justAddedId === item.id && (
+                              <span className="anim-check-pop ml-1 inline-block text-[var(--theme-dark)]" aria-hidden>
+                                ✓
+                              </span>
+                            )}
                           </p>
                           {item.food_name_en && item.food_name_mm && (
                             <p className="caption">{item.food_name_en}</p>
@@ -653,8 +673,7 @@ export default function DiaryClient() {
                         </div>
                       )}
                     </li>
-                  )),
-                )}
+                  ))}
               </ul>
             </section>
           );
