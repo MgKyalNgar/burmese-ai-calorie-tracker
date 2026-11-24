@@ -25,6 +25,17 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 // Hick's Law — ဘာမှ မရိုက်သေးရင် အကြိုက်ဆုံး အစားအစာ ၁၀ မျိုး အရင်ပြတယ်
 // (အက္ခရာစဉ်အတိုင်းဆို မုန့်ဟင်းခါးတို့ ပထမ စာမျက်နှာမှာ မပါဘူး)။
+// serving_desc "၁ ပွဲ (~500g)" / "၁ ခွက် (~200ml)" ကနေ { label, grams } ခွဲထုတ်တယ် —
+// ၁ ပွဲ / တစ်ဝက် ခလုတ်တွေအတွက်။ ml ကို g နဲ့ အတူတူ ယူတယ် (အချိုရည်က 100ml အခြေခံ)။
+// ပုံစံမကိုက်ရင် null (ခလုတ်မပြဘူး)။
+function parseServing(desc: string | null): { label: string; grams: number } | null {
+  if (!desc) return null;
+  const m = desc.match(/^(.+?)\s*\(~?(\d+)\s*(g|ml)\)/);
+  if (!m) return null;
+  const grams = Number(m[2]);
+  return grams > 0 ? { label: m[1].trim(), grams } : null;
+}
+
 const POPULAR_FOOD_ORDER = ["မုန့်ဟင်းခါး", "ရှမ်းခေါက်ဆွဲ", "ထမင်း", "ကြက်ဆီထမင်း", "အုန်းနို့ခေါက်ဆွဲ", "နန်းကြီးသုပ်", "လက်ဖက်ရည်", "ကြက်သားဟင်း", "ပလာတာ", "စမူဆာ"];
 
 export default function AddPage() {
@@ -442,6 +453,37 @@ export default function AddPage() {
                       className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
                     />
                   </label>
+                  {/* ၁ ပွဲ / တစ်ဝက် — serving_desc က gram အတိုင်း တစ်ချက်နှိပ်ရုံနဲ့
+                      gram ဖြည့်ပြီးသား ဖြစ်တယ် (100g ကနေ လက်နဲ့ ပြောင်းစရာ မလိုဘူး)။ */}
+                  {(() => {
+                    const serving = parseServing(pickedFood.serving_desc);
+                    if (!serving) return null;
+                    const half = Math.round(serving.grams / 2);
+                    const chip = (active: boolean) =>
+                      `btn-press rounded-full px-3 py-1.5 text-sm font-semibold ${
+                        active
+                          ? "bg-[var(--theme)] text-white"
+                          : "bg-white text-[var(--theme-dark)] shadow-sm ring-1 ring-[var(--theme-ring)]"
+                      }`;
+                    return (
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSearchGrams(serving.grams)}
+                          className={chip(searchGrams === serving.grams)}
+                        >
+                          {serving.label} · {serving.grams}g
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSearchGrams(half)}
+                          className={chip(searchGrams === half)}
+                        >
+                          {t("add.servingHalf")} · {half}g
+                        </button>
+                      </div>
+                    );
+                  })()}
                   <p className="caption mt-2">
                     {(() => {
                       const s = scaleNutrients(
