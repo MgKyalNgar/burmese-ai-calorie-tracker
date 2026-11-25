@@ -38,39 +38,63 @@ async function fetchToday(): Promise<TodayData> {
   return data as TodayData;
 }
 
-// ကယ်လိုရီ Ring — စားပြီးသား / target။
+// ကယ်လိုရီ Ring — အစာအမျိုးအစားအလိုက် အရောင်ခွဲ (မနက်စာ လိမ္မော်၊
+// နေ့လည်စာ အစိမ်း၊ ညစာ အပြာ၊ အစာပြေ ပန်းရောင်)။
 // compact=true ဆို အလယ်မှာ ဂဏန်းအစား 🔥 ပဲ ပြတယ် (Home hero က ဂဏန်းကို
 // ဘယ်ဘက်မှာ ကြီးကြီးပြထားပြီးသားမို့ ring အလယ် ထပ်မပြဘူး)။
+const MEAL_RING_COLORS: Record<string, string> = {
+  breakfast: "#f59e0b",
+  lunch: "#16a34a",
+  dinner: "#3b82f6",
+  snack: "#ec4899",
+};
+
 function CalorieRing({
   eaten,
   target,
+  segments = [],
   size = "h-36 w-36",
   compact = false,
 }: {
   eaten: number;
   target: number;
+  segments?: { type: string; kcal: number }[];
   size?: string;
   compact?: boolean;
 }) {
   const { t } = useLang();
   const remaining = Math.max(0, target - eaten);
-  const pct = target > 0 ? Math.min(1, eaten / target) : 0;
   const r = 56;
   const circ = 2 * Math.PI * r;
+  // target ကျော်စားရင်လည်း အပိုင်းတွေ အချိုးကျ ပေါ်အောင်
+  // စားပြီးသား စုစုပေါင်းနဲ့ ခွဲတယ်။
+  const denom = Math.max(target, eaten);
+  let acc = 0;
+  const arcs = segments
+    .filter((s) => s.kcal > 0 && denom > 0)
+    .map((s) => {
+      const len = (s.kcal / denom) * circ;
+      const arc = { ...s, len, start: acc };
+      acc += len;
+      return arc;
+    });
   return (
     <div className={`relative mx-auto ${size}`}>
       <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90">
         <circle cx="64" cy="64" r={r} fill="none" stroke="#e2e8f0" strokeWidth="10" />
-        <circle
-          cx="64"
-          cy="64"
-          r={r}
-          fill="none"
-          style={{ stroke: "var(--theme)" }}
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={`${pct * circ} ${circ}`}
-        />
+        {arcs.map((a) => (
+          <circle
+            key={a.type}
+            cx="64"
+            cy="64"
+            r={r}
+            fill="none"
+            stroke={MEAL_RING_COLORS[a.type] ?? "var(--theme)"}
+            strokeWidth="10"
+            strokeDasharray={`${a.len} ${circ - a.len}`}
+            strokeDashoffset={-a.start}
+          />
+        ))}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         {compact ? (
@@ -171,6 +195,20 @@ export default function Home() {
   // ရေ ပန်းတိုင် — cache အဟောင်းမှာ မပါရင် default 8။
   const waterGoal = data.waterGoal ?? 8;
 
+  // Ring အပိုင်းတွေ — အစာအမျိုးအစားအလိုက် kcal စုစုပေါင်း။
+  const mealOrder = ["breakfast", "lunch", "dinner", "snack"] as const;
+  const mealKcal = mealOrder.map((type) => ({
+    type,
+    kcal: data.meals
+      .filter((m) => m.meal_type === type)
+      .reduce((sum, m) => sum + Number(m.total_calories ?? 0), 0),
+  }));
+  // ရေ card ဖြည့်နှုန်း — optimistic +1 လည်း ပါတယ်။
+  const waterPct =
+    waterGoal > 0
+      ? Math.min(100, ((cups + waterAdded) / waterGoal) * 100)
+      : 0;
+
   // Macro target (ခန့်မှန်း) — protein 20%, carbs 50%, fat 30%။
   const macroTargets = {
     protein: Math.round((target * 0.2) / 4),
@@ -198,21 +236,42 @@ export default function Home() {
 
       {/* Hero — ပုံ ၂ Home လို ဘေးတိုက်ပုံစံ: ဂဏန်း ဘယ်၊ ring ညာ။
           တစ်မျက်နှာထဲ ဝင်အောင် ring ကို သေးထားတယ်။ */}
-      <section className="mt-3 flex items-center gap-4 rounded-3xl bg-[var(--theme-soft)] p-4 shadow-sm">
-        <div className="flex-1 text-left">
-          <p className="caption">{t("home.remaining")}</p>
-          <p className="hero-num text-[var(--theme-dark)]">
-            {Math.max(0, target - eaten).toLocaleString()}
-            <span className="text-base"> kcal</span>
-          </p>
-          <p className="caption mt-1">
-            {t("home.eatenTarget", {
-              eaten: eaten.toLocaleString(),
-              target: target.toLocaleString(),
-            })}
-          </p>
+      <section className="mt-3 rounded-3xl bg-[var(--theme-soft)] p-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="flex-1 text-left">
+            <p className="caption">{t("home.remaining")}</p>
+            <p className="hero-num text-[var(--theme-dark)]">
+              {Math.max(0, target - eaten).toLocaleString()}
+              <span className="text-base"> kcal</span>
+            </p>
+            <p className="caption mt-1">
+              {t("home.eatenTarget", {
+                eaten: eaten.toLocaleString(),
+                target: target.toLocaleString(),
+              })}
+            </p>
+          </div>
+          <CalorieRing
+            eaten={eaten}
+            target={target}
+            segments={mealKcal}
+            size="h-24 w-24"
+            compact
+          />
         </div>
-        <CalorieRing eaten={eaten} target={target} size="h-24 w-24" compact />
+        {/* Ring အပိုင်းတွေရဲ့ အရောင် ရှင်းလင်းချက် */}
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-black/5 pt-2">
+          {mealKcal.map((s) => (
+            <span key={s.type} className="caption flex items-center gap-1">
+              <span
+                aria-hidden
+                className="inline-block h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: MEAL_RING_COLORS[s.type] }}
+              />
+              {t(`meal.${s.type}`)} {Math.round(s.kcal)} kcal
+            </span>
+          ))}
+        </div>
       </section>
 
       {/* Macro — ကော်လံ ၃ ခု ဘေးတိုက် (ပုံ ၂ ရဲ့ Bread/Avacada/Chicken
@@ -244,7 +303,17 @@ export default function Home() {
       </section>
 
       <section className="mt-3 flex gap-3">
-        <div className="flex flex-1 flex-col justify-center rounded-2xl bg-white p-3 text-center shadow-sm">
+        <div className="relative flex flex-1 flex-col justify-center overflow-hidden rounded-2xl bg-white p-3 text-center shadow-sm">
+          {/* ရေ card တစ်ခုလုံး အောက်ကနေ အပြာရောင် တက်လာတယ် —
+              သောက်ပြီးတဲ့ ရာခိုင်နှုန်းအလိုက်။ စာနဲ့ ခလုတ်က အပေါ်မှာ ရှိနေတယ်။ */}
+          <div
+            aria-hidden
+            className={`absolute inset-x-0 bottom-0 bg-sky-200 transition-[height] duration-300 ease-in-out ${
+              waterPct > 0 ? "border-t-2 border-sky-300" : ""
+            }`}
+            style={{ height: `${waterPct}%` }}
+          />
+          <div className="relative">
           {/* title "💧 ရေ"၊ အောက်မှာ 0/8 နဲ့ ခွက် အပေါ်အောက်၊
               ဘေးမှာ ရေစက် အဝိုင်းခလုတ် — အဝိုင်းအပေါ် ညာဘက်ထောင့်မှာ "+" badge
               (ပုံအတိုင်း)။ အဝိုင်းကို နှိပ်ရင် ရေ ၁ ခွက် တိုးတယ်။ */}
@@ -274,6 +343,7 @@ export default function Home() {
                 +
               </span>
             </button>
+          </div>
           </div>
         </div>
         <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
