@@ -149,7 +149,7 @@ export default function ReviewForm({
         food_name_mm: nameMm.trim(),
         food_name_en: nameEn.trim(),
         amount: grams,
-        unit: "g",
+        unit: initial.food.unit ?? "g",
         calories: Math.round(calories),
         protein: round1(protein),
         carbs: round1(carbs),
@@ -254,7 +254,7 @@ export default function ReviewForm({
           >
             +
           </button>
-          <span className="caption">g</span>
+          <span className="caption">{initial.food.unit ?? "g"}</span>
         </div>
       </div>
 

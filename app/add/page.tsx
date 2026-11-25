@@ -28,12 +28,20 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 // serving_desc "၁ ပွဲ (~500g)" / "၁ ခွက် (~200ml)" ကနေ { label, grams } ခွဲထုတ်တယ် —
 // ၁ ပွဲ / တစ်ဝက် ခလုတ်တွေအတွက်။ ml ကို g နဲ့ အတူတူ ယူတယ် (အချိုရည်က 100ml အခြေခံ)။
 // ပုံစံမကိုက်ရင် null (ခလုတ်မပြဘူး)။
-function parseServing(desc: string | null): { label: string; grams: number } | null {
+function parseServing(desc: string | null): {
+  label: string;
+  grams: number;
+  unit: "g" | "ml";
+} | null {
   if (!desc) return null;
   const m = desc.match(/^(.+?)\s*\(~?(\d+)\s*(g|ml)\)/);
   if (!m) return null;
   const grams = Number(m[2]);
-  return grams > 0 ? { label: m[1].trim(), grams } : null;
+  // unit ကို ဆက်ထိန်းထားတယ် — အရည်ဆို chip မှာ "200g" လို့ မှားမပြဘဲ
+  // "200ml" လို့ ပြဖို့ (လက်ဖက်ရည်၊ ကော်ဖီ… ၇ မျိုး)။
+  return grams > 0
+    ? { label: m[1].trim(), grams, unit: m[3] as "g" | "ml" }
+    : null;
 }
 
 const POPULAR_FOOD_ORDER = ["မုန့်ဟင်းခါး", "ရှမ်းခေါက်ဆွဲ", "ထမင်း", "ကြက်ဆီထမင်း", "အုန်းနို့ခေါက်ဆွဲ", "နန်းကြီးသုပ်", "လက်ဖက်ရည်", "ကြက်သားဟင်း", "ပလာတာ", "စမူဆာ"];
@@ -62,6 +70,11 @@ export default function AddPage() {
   const [searching, setSearching] = useState(false);
   const [pickedFood, setPickedFood] = useState<FoodRow | null>(null);
   const [searchGrams, setSearchGrams] = useState(100);
+  // ဘယ် chip ကို နှိပ်ခဲ့လဲ — gram တူရုံနဲ့ chip ကို အလိုအလျောက်
+  // ရွေးပြလို့ မရဘူး (ဥပမာ လက်ဖက်ရည် 200ml ရဲ့ တစ်ဝက် 100ml က
+  // default 100 နဲ့ တိုက်ဆိုင်နေလို့ ဖွင့်တာနဲ့ "တစ်ဝက်" စိမ်းနေတာ)။
+  // နှိပ်မှသာ စိမ်းမယ်; လက်နဲ့ ရိုက်ရင် ပြန်ဖြူမယ်။
+  const [pickedChip, setPickedChip] = useState<"full" | "half" | null>(null);
 
   // Review အဆင့် — AI စစ်ပြီးသား (သို့) Search က ရွေးထားတဲ့ အစားအစာ။
   const [review, setReview] = useState<ReviewInitial | null>(null);
@@ -202,6 +215,7 @@ export default function AddPage() {
   function pickSearchFood(food: FoodRow) {
     setPickedFood(food);
     setSearchGrams(100);
+    setPickedChip(null);
     setMessage("");
   }
 
@@ -226,6 +240,7 @@ export default function AddPage() {
         grams: g,
         ...scaled,
         note: pickedFood.serving_desc ?? "",
+        unit: parseServing(pickedFood.serving_desc)?.unit ?? "g",
       },
       source: "search",
       foodId: pickedFood.id,
@@ -453,7 +468,11 @@ export default function AddPage() {
                       // စာရိုက်နေတုန်း clamp မလုပ်ဘူး — 700 ရိုက်ချင်ရင် 7 ကနေ
                       // စရိုက်လို့ရအောင် (အရင် Math.max(10, …) က ရိုက်လိုက်တိုင်း
                       // 10 ဖြစ်သွားလို့ 700 ရိုက်မရဘူး)။ blur ကျမှ 10–2000 ထဲ ပြန်ညှိတယ်။
-                      onChange={(e) => setSearchGrams(Number(e.target.value) || 0)}
+                      // လက်နဲ့ ရိုက်ရင် chip ရွေးထားတာ ပြန်ဖြူတယ်။
+                      onChange={(e) => {
+                        setSearchGrams(Number(e.target.value) || 0);
+                        setPickedChip(null);
+                      }}
                       onBlur={() =>
                         setSearchGrams((g) => Math.min(2000, Math.max(10, g || 100)))
                       }
@@ -476,17 +495,25 @@ export default function AddPage() {
                       <div className="mt-2 flex gap-2">
                         <button
                           type="button"
-                          onClick={() => setSearchGrams(serving.grams)}
-                          className={chip(searchGrams === serving.grams)}
+                          onClick={() => {
+                            setSearchGrams(serving.grams);
+                            setPickedChip("full");
+                          }}
+                          className={chip(pickedChip === "full")}
                         >
-                          {serving.label} · {serving.grams}g
+                          {serving.label} · {serving.grams}
+                          {serving.unit}
                         </button>
                         <button
                           type="button"
-                          onClick={() => setSearchGrams(half)}
-                          className={chip(searchGrams === half)}
+                          onClick={() => {
+                            setSearchGrams(half);
+                            setPickedChip("half");
+                          }}
+                          className={chip(pickedChip === "half")}
                         >
-                          {t("add.servingHalf")} · {half}g
+                          {t("add.servingHalf")} · {half}
+                          {serving.unit}
                         </button>
                       </div>
                     );
@@ -503,7 +530,7 @@ export default function AddPage() {
                         },
                         searchGrams,
                       );
-                      return `${searchGrams}g ≈ ${s.calories} kcal · Protein ${s.protein}g · Carbs ${s.carbs}g · Fat ${s.fat}g`;
+                      return `${searchGrams}${parseServing(pickedFood.serving_desc)?.unit ?? "g"} ≈ ${s.calories} kcal · Protein ${s.protein}g · Carbs ${s.carbs}g · Fat ${s.fat}g`;
                     })()}
                   </p>
                   <button
@@ -540,7 +567,8 @@ export default function AddPage() {
                         {pickedFood?.id === f.id && " ✓"}
                       </span>
                       <span className="caption shrink-0">
-                        {Math.round(f.calories_per_100g ?? 0)} kcal / 100g
+                        {Math.round(f.calories_per_100g ?? 0)} kcal / 100
+                        {parseServing(f.serving_desc)?.unit ?? "g"}
                       </span>
                     </button>
                   </li>

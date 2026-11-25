@@ -129,7 +129,7 @@ function EditItemForm({
           food_name_mm: updated.food_name_mm,
           food_name_en: updated.food_name_en,
           amount: grams,
-          unit: "g",
+          unit: item.unit ?? "g",
           calories: updated.calories,
           protein: updated.protein,
           carbs: updated.carbs,
@@ -191,7 +191,7 @@ function EditItemForm({
         >
           +
         </button>
-        <span className="caption">g</span>
+        <span className="caption">{item.unit ?? "g"}</span>
       </div>
       <div className="mt-2 grid grid-cols-4 gap-2">
         {(
@@ -607,7 +607,10 @@ export default function DiaryClient() {
                             <p className="caption">{item.food_name_en}</p>
                           )}
                           <p className="caption">
-                            {item.amount ? `${Number(item.amount)}g` : ""} ·{" "}
+                            {item.amount
+                              ? `${Number(item.amount)}${item.unit ?? "g"}`
+                              : ""}{" "}
+                            ·{" "}
                             {Math.round(Number(item.calories ?? 0))} kcal · P{" "}
                             {round1(Number(item.protein ?? 0))}g · C{" "}
                             {round1(Number(item.carbs ?? 0))}g · F{" "}

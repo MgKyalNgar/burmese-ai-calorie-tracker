@@ -27,6 +27,9 @@ export interface AnalyzedFood {
   carbs: number;
   fat: number;
   note: string;
+  // ပမာဏ unit — အရည် (လက်ဖက်ရည်၊ ကော်ဖီ…) ဆို "ml", ကျန်တာ "g" (default)။
+  // Search က serving_desc ကနေ ယူတယ်; AI / လက်နဲ့ ထည့်တာက "g"။
+  unit?: string;
 }
 
 // Supabase က ပြန်လာတဲ့ meals + meal_items row ပုံစံ။
