@@ -214,8 +214,12 @@ export default function AddPage() {
 
   function pickSearchFood(food: FoodRow) {
     setPickedFood(food);
-    setSearchGrams(100);
-    setPickedChip(null);
+    // ရွေးတာနဲ့ ၁ ပွဲ / ၁ ခွက် ပမာဏကို အော်တို ဖြည့်ထားတယ် (100g ကနေ
+    // စမထားဘူး) — အများစုက တစ်ပွဲလုံး စားတာမို့ နှိပ်ပြီး တန်းသိမ်းရုံပဲ။
+    // နည်းချင်ရင် တစ်ဝက် chip နှိပ်တာ (သို့) လက်နဲ့ ရိုက်တာ လုပ်လို့ရတယ်။
+    const serving = parseServing(food.serving_desc);
+    setSearchGrams(serving?.grams ?? 100);
+    setPickedChip(serving ? "full" : null);
     setMessage("");
   }
 
@@ -459,7 +463,11 @@ export default function AddPage() {
                     </button>
                   </div>
                   <label className="mt-2 block">
-                    <span className="caption">{t("add.amount")}</span>
+                    <span className="caption">
+                      {parseServing(pickedFood.serving_desc)?.unit === "ml"
+                        ? t("add.amountMl")
+                        : t("add.amount")}
+                    </span>
                     <input
                       type="number"
                       min={10}
@@ -479,8 +487,8 @@ export default function AddPage() {
                       className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
                     />
                   </label>
-                  {/* ၁ ပွဲ / တစ်ဝက် — serving_desc က gram အတိုင်း တစ်ချက်နှိပ်ရုံနဲ့
-                      gram ဖြည့်ပြီးသား ဖြစ်တယ် (100g ကနေ လက်နဲ့ ပြောင်းစရာ မလိုဘူး)။ */}
+                  {/* ၁ ပွဲ / တစ်ဝက် — ရွေးတာနဲ့ ၁ ပွဲ ပမာဏ အော်တို ဖြည့်ထားပြီးသား
+                      (pickSearchFood) — chip နှိပ်ရင် တစ်ဝက် ပြောင်းတယ်။ */}
                   {(() => {
                     const serving = parseServing(pickedFood.serving_desc);
                     if (!serving) return null;

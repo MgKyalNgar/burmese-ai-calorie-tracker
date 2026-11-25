@@ -222,7 +222,11 @@ export default function ReviewForm({
       </label>
 
       <div className="mt-4">
-        <span className="caption">{t("review.amount")}</span>
+        <span className="caption">
+          {initial.food.unit === "ml"
+            ? t("review.amountMl")
+            : t("review.amount")}
+        </span>
         <div className="mt-1 flex items-center gap-2">
           <button
             type="button"
