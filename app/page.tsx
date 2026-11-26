@@ -237,7 +237,7 @@ export default function Home() {
 
       {/* Hero — ပုံ ၂ Home လို ဘေးတိုက်ပုံစံ: ဂဏန်း ဘယ်၊ ring ညာ။
           တစ်မျက်နှာထဲ ဝင်အောင် ring ကို သေးထားတယ်။ */}
-      <section className="mt-3 rounded-3xl bg-[var(--theme-soft)] p-4 shadow-sm">
+      <section className="mt-3 rounded-3xl bg-[var(--theme-card)] p-4 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="flex-1 text-left">
             <p className="caption">{t("home.remaining")}</p>

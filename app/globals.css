@@ -15,6 +15,9 @@
   --theme-dark: #15803d;
   --theme-soft: #f0fdf4;
   --theme-ring: #bbf7d0;
+  /* Cal card — theme အရောင် နုနု (soft)၊ theme-soft (#f0fdf4) က
+     အဖြူနဲ့ တူနေလို့ card က အဖြူဖြစ်နေတယ် (26 Nov 2026) */
+  --theme-card: #d0eddb;
   /* gradient အောက်ခြေ အစိမ်းရင့်လေး — အဖြူ card တွေ ပိုပေါ်လွင်အောင် */
   --theme-bg: #d9f0e0;
   --green: #16a34a;
@@ -29,6 +32,7 @@
   --theme-dark: #7e22ce;
   --theme-soft: #faf5ff;
   --theme-ring: #e9d5ff;
+  --theme-card: #e9d6fb;
   --theme-bg: #e7d9f7;
   --green: #9333ea;
   --green-dark: #7e22ce;
@@ -39,6 +43,7 @@
   --theme-dark: #b91c1c;
   --theme-soft: #fef2f2;
   --theme-ring: #fecaca;
+  --theme-card: #f8d4d4;
   --theme-bg: #fbdcd5;
   --green: #dc2626;
   --green-dark: #b91c1c;
