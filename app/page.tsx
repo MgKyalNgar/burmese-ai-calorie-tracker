@@ -91,6 +91,7 @@ function CalorieRing({
             fill="none"
             stroke={MEAL_RING_COLORS[a.type] ?? "var(--theme)"}
             strokeWidth="10"
+            strokeLinecap="round"
             strokeDasharray={`${a.len} ${circ - a.len}`}
             strokeDashoffset={-a.start}
           />
