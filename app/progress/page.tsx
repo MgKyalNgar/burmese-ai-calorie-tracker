@@ -270,7 +270,7 @@ export default function ProgressPage() {
   const [tick, setTick] = useState(0);
   function bumpTick() {
     if (data) setCacheData(`progress-${tick + 1}`, data);
-    bumpTick();
+    setTick((t) => t + 1);
   }
   const { data, loading, error } = useCachedData<ProgressData>(
     `progress-${tick}`,
