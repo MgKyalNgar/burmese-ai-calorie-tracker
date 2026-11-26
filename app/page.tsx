@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { invalidateCache, useCachedData } from "@/lib/useCachedData";
 import { warmOtherTabs } from "@/lib/warmup";
 import { FETCH_FALLBACK, useLang } from "@/lib/i18n";
+import { formatWeight, useWeightUnit } from "@/lib/units";
 import {
   formatDateDMY,
   round1,
@@ -121,6 +122,7 @@ function CalorieRing({
 export default function Home() {
   const router = useRouter();
   const { t, lang } = useLang();
+  const { unit } = useWeightUnit();
   const key = `today-${todayYangon()}`;
   const { data, loading, refreshing, error } = useCachedData<TodayData>(
     key,
@@ -354,9 +356,9 @@ export default function Home() {
         <div className="flex-1 rounded-2xl bg-white p-3 text-center shadow-sm">
           <p className="caption">{t("home.weight")}</p>
           <p className="hero-num text-[var(--theme-dark)]">
-            {latestWeightKg !== null ? latestWeightKg : "—"}
+            {latestWeightKg !== null ? formatWeight(latestWeightKg, unit) : "—"}
           </p>
-          <p className="caption">kg</p>
+          <p className="caption">{unit}</p>
         </div>
       </section>
 

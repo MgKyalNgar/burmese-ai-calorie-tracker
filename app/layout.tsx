@@ -3,6 +3,7 @@ import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import NotificationBell from "@/components/NotificationBell";
 import { LangProvider } from "@/lib/i18n";
+import { UnitProvider } from "@/lib/units";
 
 export const metadata: Metadata = {
   title: "Burmese AI Calorie Tracker",
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <LangProvider>
           <ServiceWorkerRegister />
           <NotificationBell />
-          {children}
+          <UnitProvider>{children}</UnitProvider>
         </LangProvider>
       </body>
     </html>

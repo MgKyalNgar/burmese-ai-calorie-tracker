@@ -8,12 +8,14 @@ import ApiKeySettings from "@/components/ApiKeySettings";
 import ReminderSettings from "@/components/ReminderSettings";
 import ThemeSettings from "@/components/ThemeSettings";
 import LanguageSettings from "@/components/LanguageSettings";
+import UnitSettings from "@/components/UnitSettings";
 import {
   invalidateCache,
   invalidateCachePrefix,
   useCachedData,
 } from "@/lib/useCachedData";
 import { FETCH_FALLBACK, useLang } from "@/lib/i18n";
+import { formatWeight, lbToKg, useWeightUnit } from "@/lib/units";
 import type { ProfileData } from "@/lib/meal";
 
 // Profile ကို client component အဖြစ် ပြောင်းထားတယ် —
@@ -29,6 +31,7 @@ async function fetchProfile(): Promise<ProfileData> {
 export default function ProfilePage() {
   const router = useRouter();
   const { t } = useLang();
+  const { unit } = useWeightUnit();
   const { data, loading, error } = useCachedData<ProfileData>(
     "profile",
     fetchProfile,
@@ -65,7 +68,7 @@ export default function ProfilePage() {
       gender: p.gender ?? "male",
       age: p.age != null ? String(p.age) : "",
       height: p.height_cm != null ? String(p.height_cm) : "",
-      weight: p.weight_kg != null ? String(p.weight_kg) : "",
+      weight: p.weight_kg != null ? String(formatWeight(p.weight_kg, unit)) : "",
       goal: p.goal ?? "maintain",
       target:
         p.daily_calorie_target != null
@@ -79,6 +82,22 @@ export default function ProfilePage() {
   const saveEdit = async (p: NonNullable<ProfileData["profile"]>) => {
     setEditMsg("");
     setSavingEdit(true);
+    // ဝိတ်ကို ပြနေတဲ့ unit အတိုင်း အရင် စစ်တယ် — kg 20–300၊ lb 44–661။
+    // မကိုက်ရင် မသိမ်းဘဲ ပြန်ထွက်တယ်။
+    if (form.weight.trim()) {
+      const typed = Number(form.weight);
+      const min = unit === "lb" ? 44 : 20;
+      const max = unit === "lb" ? 661 : 300;
+      if (!Number.isFinite(typed) || typed < min || typed > max) {
+        setEditMsg(
+          unit === "lb"
+            ? t("progress.weightRangeLb")
+            : t("progress.weightRange"),
+        );
+        setSavingEdit(false);
+        return;
+      }
+    }
     try {
       // အကွက်လွတ်နေရင် အဟောင်းအတိုင်း ထားတယ် (နာမည်ကလွဲရင် —
       // နာမည် ဖျက်ရင် null ဖြစ်သွားတယ်)။ အဟောင်းလည်း မရှိရင်
@@ -94,7 +113,13 @@ export default function ProfilePage() {
       if (age != null) body.age = age;
       const height = numOrOld(form.height, p.height_cm);
       if (height != null) body.height_cm = height;
-      const weight = numOrOld(form.weight, p.weight_kg);
+      // ရိုက်ထားတဲ့ ဝိတ်ကို kg ပြန်ပြောင်းပြီး သိမ်းတယ် (DB က kg ပဲ) —
+      // အကွက်လွတ်နေရင် အဟောင်းအတိုင်း ထားတယ်။
+      const weight = form.weight.trim()
+        ? unit === "lb"
+          ? lbToKg(Number(form.weight))
+          : Math.round(Number(form.weight) * 10) / 10
+        : p.weight_kg;
       if (weight != null) body.weight_kg = weight;
       const target = numOrOld(form.target, p.daily_calorie_target);
       if (target != null) body.daily_calorie_target = target;
@@ -209,12 +234,12 @@ export default function ProfilePage() {
                 />
               </label>
               <label className="flex items-center justify-between gap-2">
-                <span>{t("profile.weight")}</span>
+                <span>{t("profile.weight")} ({unit})</span>
                 <input
                   type="number"
                   inputMode="decimal"
-                  min={20}
-                  max={300}
+                  min={unit === "lb" ? 44 : 20}
+                  max={unit === "lb" ? 661 : 300}
                   step="0.1"
                   value={form.weight}
                   onChange={(e) =>
@@ -299,7 +324,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex justify-between">
                   <dt>{t("profile.weight")}</dt>
-                  <dd className="font-semibold">{profile.weight_kg ?? "—"} kg</dd>
+                  <dd className="font-semibold">{profile.weight_kg != null ? formatWeight(profile.weight_kg, unit) : "—"} {unit}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt>{t("profile.goal")}</dt>
@@ -338,6 +363,8 @@ export default function ProfilePage() {
           <LanguageSettings bare />
         </div>
       </section>
+
+      <UnitSettings />
 
       <ApiKeySettings />
 

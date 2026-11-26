@@ -310,7 +310,7 @@ export default function AddPage() {
           </div>
 
           {mode === "manual" && (
-            <div className="mt-4">
+            <div className="mt-3">
               <p className="caption">{t("add.manualNote")}</p>
               <ReviewForm
                 initial={manualInitial}

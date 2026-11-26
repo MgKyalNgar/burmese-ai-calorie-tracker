@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { invalidateCache, invalidateCachePrefix } from "@/lib/useCachedData";
 import { useLang } from "@/lib/i18n";
+import { formatWeight, getStoredWeightUnit, lbToKg, useWeightUnit } from "@/lib/units";
 
 // Mifflin-St Jeor နဲ့ တစ်နေ့တာ ကယ်လိုရီ target တွက်တယ်။
 const ACTIVITY_FACTORS: Record<string, number> = {
@@ -37,6 +38,7 @@ function calcTarget(
 
 export default function OnboardingPage() {
   const { t } = useLang();
+  const { unit } = useWeightUnit();
   const router = useRouter();
   const [gender, setGender] = useState("female");
   const [age, setAge] = useState("");
@@ -69,7 +71,11 @@ export default function OnboardingPage() {
         setGender(data.gender ?? "female");
         setAge(data.age != null ? String(data.age) : "");
         setHeight(data.height_cm != null ? String(data.height_cm) : "");
-        setWeight(data.weight_kg != null ? String(data.weight_kg) : "");
+        setWeight(
+          data.weight_kg != null
+            ? String(formatWeight(data.weight_kg, getStoredWeightUnit()))
+            : "",
+        );
         setGoal(data.goal ?? "maintain");
         setActivity(data.activity_level ?? "light");
         setDisplayName(data.display_name ?? "");
@@ -81,10 +87,12 @@ export default function OnboardingPage() {
   const ageNum = Number(age);
   const heightNum = Number(height);
   const weightNum = Number(weight);
+  // ရိုက်ထားတဲ့ ဝိတ်ကို kg ပြန်ပြောင်းမှ target တွက်ပြီး သိမ်းတယ်။
+  const weightKg = unit === "lb" ? lbToKg(weightNum) : weightNum;
   const valid =
     ageNum > 0 && heightNum > 0 && weightNum > 0 && ageNum < 120;
   const target = valid
-    ? calcTarget(gender, ageNum, heightNum, weightNum, activity, goal)
+    ? calcTarget(gender, ageNum, heightNum, weightKg, activity, goal)
     : null;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -109,7 +117,7 @@ export default function OnboardingPage() {
       gender,
       age: ageNum,
       height_cm: heightNum,
-      weight_kg: weightNum,
+      weight_kg: weightKg,
       goal,
       activity_level: activity,
       daily_calorie_target: target,
@@ -204,14 +212,14 @@ export default function OnboardingPage() {
             />
           </label>
           <label className="flex-1">
-            <span className="caption">{t("onboarding.weight")}</span>
+            <span className="caption">{t("profile.weight")} ({unit})</span>
             <input
               type="number"
               inputMode="decimal"
               required
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              placeholder="60"
+              placeholder={unit === "lb" ? "132" : "60"}
               className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
             />
           </label>

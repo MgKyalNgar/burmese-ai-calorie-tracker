@@ -159,10 +159,11 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     "progress.weightUpdated": "ဝိတ် ပြင်ပြီးပြီ ✅",
     "progress.weightDeleted": "ဝိတ် ဖျက်ပြီးပြီ ✅",
     "progress.weightRange": "ဝိတ် ၂၀ မှ ၃၀၀ kg အတွင်း ထည့်ပေးပါ။",
+    "progress.weightRangeLb": "ဝိတ် ၄၄ မှ ၆၆၁ lb အတွင်း ထည့်ပေးပါ။",
     "progress.weightHistory": "ဝိတ် မှတ်တမ်း",
     "progress.editWeight": "✏️ ပြင်မယ်",
     "progress.deleteWeight": "🗑️ ဖျက်မယ်",
-    "progress.deleteWeightConfirm": "{date} ရဲ့ {kg} kg မှတ်တမ်းကို ဖျက်မှာလား?",
+    "progress.deleteWeightConfirm": "{date} ရဲ့ {kg} မှတ်တမ်းကို ဖျက်မှာလား?",
     "progress.calendar": "မှတ်တမ်း ပြက္ခဒိန်",
     "progress.todayLegend": "ဒီနေ့",
     "progress.loggedDayLegend": "မှတ်ထားတဲ့ ရက်",
@@ -208,6 +209,10 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     "appSettings.title": "App အပြင်အဆင်",
 
     "lang.title": "ဘာသာစကား",
+
+    "unit.title": "Unit Control",
+    "unit.weight": "ဝိတ်ယူနစ်",
+    "unit.note": "သိမ်းတာ kg နဲ့ပဲ — ပြတာပဲ ပြောင်းတယ်",
 
     "auth.tagline": "မြန်မာအစားအစာ ပုံရိုက်လိုက်၊ ကယ်လိုရီသိလိုက်",
     "auth.email": "အီးမေးလ်",
@@ -456,10 +461,11 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     "progress.weightUpdated": "Weight updated ✅",
     "progress.weightDeleted": "Weight deleted ✅",
     "progress.weightRange": "Please enter a weight between 20 and 300 kg.",
+    "progress.weightRangeLb": "Please enter a weight between 44 and 661 lb.",
     "progress.weightHistory": "Weight history",
     "progress.editWeight": "✏️ Edit",
     "progress.deleteWeight": "🗑️ Delete",
-    "progress.deleteWeightConfirm": "Delete the {kg} kg entry from {date}?",
+    "progress.deleteWeightConfirm": "Delete the {kg} entry from {date}?",
     "progress.calendar": "Log calendar",
     "progress.todayLegend": "Today",
     "progress.loggedDayLegend": "Logged day",
@@ -504,6 +510,10 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     "appSettings.title": "App appearance",
 
     "lang.title": "Language",
+
+    "unit.title": "Unit Control",
+    "unit.weight": "Weight unit",
+    "unit.note": "Stored in kg — only the display changes",
 
     "auth.tagline": "Snap your food, know the calories",
     "auth.email": "Email",

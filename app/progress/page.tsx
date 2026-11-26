@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { invalidateCachePrefix, setCacheData, useCachedData } from "@/lib/useCachedData";
 import { FETCH_FALLBACK, useLang, type TFn } from "@/lib/i18n";
+import { formatWeight, lbToKg, useWeightUnit } from "@/lib/units";
 import {
   formatDateDMY,
   formatDayMonth,
@@ -44,7 +45,7 @@ function BarChart({ week }: { week: ProgressData["week"] }) {
   const maxEaten = Math.max(...week.map((d) => d.eaten), 0);
   const target = week[0]?.target ?? 0;
   const max = Math.max(maxEaten, target, 100);
-  const chartH = 144; // px — bar အမြင့် အများဆုံး
+  const chartH = 120; // px — bar အမြင့် အများဆုံး
   const targetPct = target > 0 ? (target / max) * 100 : 0;
   const allZero = maxEaten === 0;
 
@@ -110,6 +111,7 @@ function BarChart({ week }: { week: ProgressData["week"] }) {
 // ဝိတ် trend — SVG line chart။
 function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
   const { t } = useLang();
+  const { unit } = useWeightUnit();
   if (weights.length === 0) {
     return (
       <p className="mt-3 text-[#52677f]">
@@ -118,16 +120,17 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
     );
   }
   const W = 320;
-  const H = 170;
+  const H = 140;
   const padL = 36;
   const padR = 10;
   const padT = 16;
   const padB = 24;
-  const kgs = weights.map((w) => w.kg);
-  let min = Math.floor(Math.min(...kgs) - 1);
-  let max = Math.ceil(Math.max(...kgs) + 1);
+  // ပြမယ့် unit အတိုင်း ပြောင်းပြီးမှ min/max တွက်တယ်။
+  const displayWeights = weights.map((w) => formatWeight(w.kg, unit));
+  let min = Math.floor(Math.min(...displayWeights) - 1);
+  let max = Math.ceil(Math.max(...displayWeights) + 1);
   // အကွာအဝေး သေးလွန်းရင် (ဥပမာ 70kg တစ်ခုတည်း → 69–71) y-axis က
-  // ထူးဆန်းနေလို့ အနည်းဆုံး 5kg အကွာ ဖြစ်အောင် ချဲ့တယ်။
+  // ထူးဆန်းနေလို့ အနည်းဆုံး 5 အကွာ ဖြစ်အောင် ချဲ့တယ်။
   if (max - min < 5) {
     const mid = (min + max) / 2;
     min = Math.floor(mid - 2.5);
@@ -137,9 +140,11 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
     weights.length === 1
       ? W / 2
       : padL + (i * (W - padL - padR)) / (weights.length - 1);
-  const y = (kg: number) =>
-    padT + (1 - (kg - min) / (max - min)) * (H - padT - padB);
-  const points = weights.map((w, i) => `${x(i)},${y(w.kg)}`).join(" ");
+  const y = (display: number) =>
+    padT + (1 - (display - min) / (max - min)) * (H - padT - padB);
+  const points = weights
+    .map((w, i) => `${x(i)},${y(formatWeight(w.kg, unit))}`)
+    .join(" ");
 
   return (
     <div className="mt-3">
@@ -158,15 +163,15 @@ function WeightChart({ weights }: { weights: ProgressData["weights"] }) {
         )}
         {weights.map((w, i) => (
           <g key={w.id ?? `${w.date}-${i}`}>
-            <circle cx={x(i)} cy={y(w.kg)} r="4" style={{ fill: "var(--theme)" }} />
+            <circle cx={x(i)} cy={y(formatWeight(w.kg, unit))} r="4" style={{ fill: "var(--theme)" }} />
             <text
               x={x(i)}
-              y={y(w.kg) - 8}
+              y={y(formatWeight(w.kg, unit)) - 8}
               fontSize="11"
               style={{ fill: "var(--theme-dark)" }}
               textAnchor="middle"
             >
-              {w.kg}
+              {formatWeight(w.kg, unit)}
             </text>
           </g>
         ))}
@@ -262,6 +267,7 @@ function MonthCalendar({ loggedDays }: { loggedDays: string[] }) {
 
 export default function ProgressPage() {
   const { t } = useLang();
+  const { unit } = useWeightUnit();
   const router = useRouter();
   // POST ပြီးတိုင်း tick ပြောင်းပြီး cache key အသစ်နဲ့ ပြန်ဆွဲတယ်။
   // key အသစ်မှာ data အဟောင်း ရှိအောင် အရင် ကူးထည့်ရတယ် — မကူးရင်
@@ -305,11 +311,17 @@ export default function ProgressPage() {
   }, [data, router]);
 
   async function handleAddWeight() {
-    const kg = Number(weightKg);
-    if (!Number.isFinite(kg) || kg < 20 || kg > 300) {
-      setWeightMsg(t("progress.weightRange"));
+    // ရိုက်ထားတဲ့ တန်ဖိုးကို ပြမယ့် unit အတိုင်း စစ်ပြီး kg ပြန်ပြောင်းမှ သိမ်းတယ်။
+    const typed = Number(weightKg);
+    const min = unit === "lb" ? 44 : 20;
+    const max = unit === "lb" ? 661 : 300;
+    if (!Number.isFinite(typed) || typed < min || typed > max) {
+      setWeightMsg(
+        unit === "lb" ? t("progress.weightRangeLb") : t("progress.weightRange"),
+      );
       return;
     }
+    const kg = unit === "lb" ? lbToKg(typed) : typed;
     setWeightBusy(true);
     setWeightMsg("");
     try {
@@ -333,11 +345,16 @@ export default function ProgressPage() {
 
   // မှတ်ထားတဲ့ ဝိတ် ပြင်တယ် — PATCH /api/weight။
   async function handleEditWeight(id: string) {
-    const kg = Number(editWeightKg);
-    if (!Number.isFinite(kg) || kg < 20 || kg > 300) {
-      setWeightMsg(t("progress.weightRange"));
+    const typed = Number(editWeightKg);
+    const min = unit === "lb" ? 44 : 20;
+    const max = unit === "lb" ? 661 : 300;
+    if (!Number.isFinite(typed) || typed < min || typed > max) {
+      setWeightMsg(
+        unit === "lb" ? t("progress.weightRangeLb") : t("progress.weightRange"),
+      );
       return;
     }
+    const kg = unit === "lb" ? lbToKg(typed) : typed;
     setWeightEditBusy(true);
     setWeightMsg("");
     try {
@@ -496,12 +513,12 @@ export default function ProgressPage() {
     data.waterWeek.find((d) => d.date === todayStr)?.cups ?? 0;
 
   return (
-    <main className="mx-auto max-w-md min-h-screen px-5 pb-24 pt-8">
+    <main className="mx-auto max-w-md min-h-screen px-5 pb-24 pt-5">
       <h1>Progress</h1>
       <p className="caption mt-1">{t("progress.subtitle")}</p>
 
       {/* ၇ ရက် ကယ်လိုရီ */}
-      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
+      <section className="mt-3 rounded-2xl bg-white shadow-sm p-4">
         <h2>{t("progress.weekCalories")}</h2>
         <div className="mt-3">
           <BarChart week={data.week} />
@@ -509,22 +526,22 @@ export default function ProgressPage() {
       </section>
 
       {/* ဝိတ် trend + ထည့်မယ် */}
-      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
+      <section className="mt-3 rounded-2xl bg-white shadow-sm p-4">
         <h2>{t("progress.weightTrend")}</h2>
         <WeightChart weights={data.weights} />
-        <div className="mt-4 flex gap-2">
+        <div className="mt-3 flex gap-2">
           <label className="flex-1">
-            <span className="caption">{t("progress.weightLabel")}</span>
+            <span className="caption">{t("profile.weight")} ({unit})</span>
             <input
               type="number"
               inputMode="decimal"
-              min={20}
-              max={300}
+              min={unit === "lb" ? 44 : 20}
+              max={unit === "lb" ? 661 : 300}
               step="0.1"
               value={weightKg}
               onChange={(e) => setWeightKg(e.target.value)}
-              placeholder="60"
-              className="mt-1 w-full rounded-xl border px-3 py-2.5"
+              placeholder={unit === "lb" ? "132" : "60"}
+              className="mt-1 w-full rounded-xl border px-3 py-2"
             />
           </label>
           <label className="flex-1">
@@ -534,7 +551,7 @@ export default function ProgressPage() {
               value={weightDate}
               max={todayYangon()}
               onChange={(e) => setWeightDate(e.target.value)}
-              className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
+              className="mt-1 w-full rounded-xl border bg-white px-3 py-2"
             />
           </label>
         </div>
@@ -550,7 +567,7 @@ export default function ProgressPage() {
 
         {/* ဝိတ် မှတ်တမ်း — အသစ်ဆုံး အရင်၊ ပြင်/ဖျက် လို့ရတယ် */}
         {data.weights.length > 0 && (
-          <div className="mt-5">
+          <div className="mt-3">
             <h3 className="font-semibold">{t("progress.weightHistory")}</h3>
             <ul className="mt-2 space-y-2">
               {[...data.weights].reverse().map((w) => (
@@ -565,14 +582,14 @@ export default function ProgressPage() {
                         <input
                           type="number"
                           inputMode="decimal"
-                          min={20}
-                          max={300}
+                          min={unit === "lb" ? 44 : 20}
+                          max={unit === "lb" ? 661 : 300}
                           step="0.1"
                           value={editWeightKg}
                           onChange={(e) => setEditWeightKg(e.target.value)}
                           className="h-9 flex-1 rounded-xl border bg-white px-3 text-center"
                         />
-                        <span className="caption">kg</span>
+                        <span className="caption">{unit}</span>
                       </div>
                       <div className="mt-2 flex gap-2">
                         <button
@@ -596,7 +613,7 @@ export default function ProgressPage() {
                   ) : (
                     <div className="flex items-center justify-between gap-2">
                       <div>
-                        <p className="font-semibold">{w.kg} kg</p>
+                        <p className="font-semibold">{formatWeight(w.kg, unit)} {unit}</p>
                         <p className="caption">{formatDateDMY(w.date)}</p>
                       </div>
                       <div className="flex gap-2">
@@ -604,7 +621,7 @@ export default function ProgressPage() {
                           type="button"
                           onClick={() => {
                             setEditingWeightId(w.id);
-                            setEditWeightKg(String(w.kg));
+                            setEditWeightKg(String(formatWeight(w.kg, unit)));
                             setDeletingWeightId(null);
                           }}
                           className="relative after:absolute after:-inset-y-2 after:-inset-x-1 after:content-[''] rounded-lg border bg-white px-3 py-1.5"
@@ -627,7 +644,7 @@ export default function ProgressPage() {
                       <p>
                         {t("progress.deleteWeightConfirm", {
                           date: formatDateDMY(w.date),
-                          kg: w.kg,
+                          kg: `${formatWeight(w.kg, unit)} ${unit}`,
                         })}
                       </p>
                       <div className="mt-2 flex gap-2">
@@ -657,15 +674,15 @@ export default function ProgressPage() {
       </section>
 
       {/* ပြက္ခဒိန် */}
-      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
+      <section className="mt-3 rounded-2xl bg-white shadow-sm p-4">
         <h2>{t("progress.calendar")}</h2>
         <MonthCalendar loggedDays={data.loggedDays} />
       </section>
 
       {/* ရေ */}
-      <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
+      <section className="mt-3 rounded-2xl bg-white shadow-sm p-4">
         <h2>{t("progress.waterTitle")}</h2>
-        <div className="mt-3 flex items-stretch gap-2" style={{ height: 96 }}>
+        <div className="mt-3 flex items-stretch gap-2" style={{ height: 80 }}>
           {data.waterWeek.map((d) => {
             const maxCups = Math.max(...data.waterWeek.map((x) => x.cups), 1);
             return (
@@ -694,7 +711,7 @@ export default function ProgressPage() {
         </div>
 
         {/* ပန်းတိုင် + ဒီနေ့ အခြေအနေ */}
-        <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="mt-3 flex items-center justify-between gap-2">
           <p>
             {t("progress.todayCups", { cups: todayCups, goal: waterGoal })}
           </p>
@@ -729,14 +746,14 @@ export default function ProgressPage() {
         </div>
 
         {/* ရက်ရွေး + မှတ်/ဖျက် */}
-        <label className="mt-4 block">
+        <label className="mt-3 block">
           <span className="caption">{t("progress.waterDateLabel")}</span>
           <input
             type="date"
             value={waterDate}
             max={todayYangon()}
             onChange={(e) => setWaterDate(e.target.value || todayYangon())}
-            className="mt-1 w-full rounded-xl border bg-white px-3 py-2.5"
+            className="mt-1 w-full rounded-xl border bg-white px-3 py-2"
           />
         </label>
         <div className="mt-3 flex gap-2">

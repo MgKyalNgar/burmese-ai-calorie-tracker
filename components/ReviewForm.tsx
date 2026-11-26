@@ -183,7 +183,7 @@ export default function ReviewForm({
   }
 
   return (
-    <section className="mt-4 rounded-2xl bg-white shadow-sm p-5">
+    <section className="mt-3 rounded-2xl bg-white shadow-sm p-4">
       <h2>{t("review.title")}</h2>
       {initial.photoPreviewUrl && (
         <img
@@ -196,7 +196,7 @@ export default function ReviewForm({
         <p className="caption mt-3">🤖 AI: {initial.food.note}</p>
       )}
 
-      <label className="mt-4 block">
+      <label className="mt-3 block">
         <span className="caption">{t("review.foodNameMy")}</span>
         <input
           type="text"
@@ -205,7 +205,7 @@ export default function ReviewForm({
             setNameMm(e.target.value);
             setEdited(true);
           }}
-          className="mt-1 w-full rounded-xl border px-3 py-2.5"
+          className="mt-1 w-full rounded-xl border px-3 py-2"
         />
       </label>
       <label className="mt-3 block">
@@ -217,11 +217,11 @@ export default function ReviewForm({
             setNameEn(e.target.value);
             setEdited(true);
           }}
-          className="mt-1 w-full rounded-xl border px-3 py-2.5"
+          className="mt-1 w-full rounded-xl border px-3 py-2"
         />
       </label>
 
-      <div className="mt-4">
+      <div className="mt-3">
         <span className="caption">
           {initial.food.unit === "ml"
             ? t("review.amountMl")
@@ -262,7 +262,7 @@ export default function ReviewForm({
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-3 grid grid-cols-2 gap-3">
         <label className="block">
           <span className="caption">{t("review.calories")}</span>
           <input
@@ -271,7 +271,7 @@ export default function ReviewForm({
             value={calories}
             onChange={(e) => editNutrient("cal", Number(e.target.value))}
             disabled={busy}
-            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+            className="mt-1 w-full rounded-xl border px-3 py-2"
           />
         </label>
         <label className="block">
@@ -283,7 +283,7 @@ export default function ReviewForm({
             value={protein}
             onChange={(e) => editNutrient("pro", Number(e.target.value))}
             disabled={busy}
-            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+            className="mt-1 w-full rounded-xl border px-3 py-2"
           />
         </label>
         <label className="block">
@@ -295,7 +295,7 @@ export default function ReviewForm({
             value={carbs}
             onChange={(e) => editNutrient("carb", Number(e.target.value))}
             disabled={busy}
-            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+            className="mt-1 w-full rounded-xl border px-3 py-2"
           />
         </label>
         <label className="block">
@@ -307,12 +307,12 @@ export default function ReviewForm({
             value={fat}
             onChange={(e) => editNutrient("fat", Number(e.target.value))}
             disabled={busy}
-            className="mt-1 w-full rounded-xl border px-3 py-2.5"
+            className="mt-1 w-full rounded-xl border px-3 py-2"
           />
         </label>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
         <span className="caption">{t("review.whichMeal")}</span>
         <div className="mt-1 grid grid-cols-4 gap-2">
           {MEAL_TYPES.map((mt) => (
@@ -321,7 +321,7 @@ export default function ReviewForm({
               type="button"
               onClick={() => setMealType(mt.value)}
               disabled={busy}
-              className={`rounded-xl border px-2 py-2.5 ${
+              className={`rounded-xl border px-2 py-2 ${
                 mealType === mt.value
                   ? "border-[var(--theme)] bg-[var(--theme)] font-semibold text-white"
                   : "text-[#334155]"
@@ -337,12 +337,12 @@ export default function ReviewForm({
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{message}</p>
       )}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-3 flex gap-2">
         <button
           type="button"
           onClick={onCancel}
           disabled={busy}
-          className="flex-1 rounded-xl border px-4 py-2.5 font-semibold text-[#334155] disabled:opacity-50"
+          className="flex-1 rounded-xl border px-4 py-2 font-semibold text-[#334155] disabled:opacity-50"
         >
           {t("review.back")}
         </button>
@@ -350,7 +350,7 @@ export default function ReviewForm({
           type="button"
           onClick={handleSave}
           disabled={busy}
-          className="btn-press flex-1 rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
+          className="btn-press flex-1 rounded-xl bg-[var(--theme)] py-2 font-semibold text-white disabled:opacity-50"
         >
           {busy ? t("common.saving") : t("review.save")}
         </button>
