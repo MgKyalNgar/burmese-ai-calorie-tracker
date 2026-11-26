@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { invalidateCachePrefix, setCacheData, useCachedData } from "@/lib/useCachedData";
 import { FETCH_FALLBACK, useLang, type TFn } from "@/lib/i18n";
+import { useOnlineStatus } from "@/lib/useOnline";
 import { formatWeight, lbToKg, useWeightUnit } from "@/lib/units";
 import {
   formatDateDMY,
@@ -268,6 +269,7 @@ function MonthCalendar({ loggedDays }: { loggedDays: string[] }) {
 export default function ProgressPage() {
   const { t } = useLang();
   const { unit } = useWeightUnit();
+  const online = useOnlineStatus();
   const router = useRouter();
   // POST ပြီးတိုင်း tick ပြောင်းပြီး cache key အသစ်နဲ့ ပြန်ဆွဲတယ်။
   // key အသစ်မှာ data အဟောင်း ရှိအောင် အရင် ကူးထည့်ရတယ် — မကူးရင်
@@ -400,6 +402,12 @@ export default function ProgressPage() {
   }
 
   async function handleAddWater() {
+    // လိုင်းမရှိရင် POST က ဟန်းနေပြီး ခလုတ် busy ပဲ ကြာနေမယ် —
+    // အဲဒီအစား စာပြပြီး ဘာမှ မသိမ်းဘူး။
+    if (!online) {
+      setWaterMsg(t("offline.noInternet"));
+      return;
+    }
     setWaterBusy(true);
     setWaterMsg("");
     try {
@@ -426,6 +434,10 @@ export default function ProgressPage() {
 
   // မှားနှိပ်တာ ပြန်ဖျက်တယ် — ရွေးထားတဲ့ ရက်ရဲ့ နောက်ဆုံး မှတ်တမ်းကနေ ၁ ခွက် လျှော့တယ်။
   async function handleUndoWater() {
+    if (!online) {
+      setWaterMsg(t("offline.noInternet"));
+      return;
+    }
     setWaterBusy(true);
     setWaterMsg("");
     try {

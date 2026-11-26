@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { invalidateCache, useCachedData } from "@/lib/useCachedData";
 import { warmOtherTabs } from "@/lib/warmup";
 import { FETCH_FALLBACK, useLang } from "@/lib/i18n";
+import { useOnlineStatus } from "@/lib/useOnline";
 import { formatWeight, useWeightUnit } from "@/lib/units";
 import {
   formatDateDMY,
@@ -123,6 +124,7 @@ export default function Home() {
   const router = useRouter();
   const { t, lang } = useLang();
   const { unit } = useWeightUnit();
+  const online = useOnlineStatus();
   const key = `today-${todayYangon()}`;
   const { data, loading, refreshing, error } = useCachedData<TodayData>(
     key,
@@ -141,12 +143,24 @@ export default function Home() {
   // မဟုတ်ရင် ဆွဲထားတဲ့ ဂဏန်းနဲ့ ထပ်ပေါင်းပြီး ၂ ခါ ရေတွက်မိမယ်။
   const [waterAdded, setWaterAdded] = useState(0);
   const [waterBusy, setWaterBusy] = useState(false);
+  // လိုင်းမရှိချိန် ရေ +1 နှိပ်ရင် ပြမယ့် စာ — သိမ်းဖို့ မကြိုးစားဘူး။
+  const [waterMsg, setWaterMsg] = useState("");
+  useEffect(() => {
+    if (online) setWaterMsg("");
+  }, [online]);
   useEffect(() => {
     setWaterAdded(0);
   }, [data?.cups]);
 
   async function addWater() {
     if (waterBusy) return;
+    // လိုင်းမရှိရင် POST က ဟန်းနေပြီး +1 က တက်နေသလို မြင်ရတယ် —
+    // အဲဒီအစား စာပြပြီး ဘာမှ မသိမ်းဘူး။
+    if (!online) {
+      setWaterMsg(t("offline.noInternet"));
+      return;
+    }
+    setWaterMsg("");
     setWaterBusy(true);
     setWaterAdded((v) => v + 1);
     try {
@@ -363,6 +377,12 @@ export default function Home() {
           <p className="caption">{unit}</p>
         </div>
       </section>
+
+      {waterMsg && (
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-amber-800">
+          {waterMsg}
+        </p>
+      )}
 
       <section className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
         <h2>{t("home.todayMeals")}</h2>
