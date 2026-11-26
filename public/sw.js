@@ -60,10 +60,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // စာမျက်နှာ navigation — network first, ပျက်ရင် cache က ဖွင့်ပေးတယ်။
+  // စာမျက်နှာ navigation — network first (၃ စက္ကန့်အတွင်း မရရင် cache က ဖွင့်ပေးတယ်)။
+  // Timeout လိုရင် လိုင်းပျက်တာ မဟုတ်ဘဲ ဟန်းနေတဲ့အချိန် (ဥပမာ VPN ဖွင့်ထားပြီး
+  // data ပိတ်ထားချိန်) မှာ fetch က အကြာကြီး စောင့်နေပြီး cache ကို မရောက်တော့ဘူး။
   if (request.mode === "navigate") {
+    const timedFetch = Promise.race([
+      fetch(request),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("nav-timeout")), 3000),
+      ),
+    ]);
     event.respondWith(
-      fetch(request)
+      timedFetch
         .then((res) => {
           if (res.ok) {
             const copy = res.clone();
