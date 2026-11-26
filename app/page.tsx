@@ -82,7 +82,11 @@ function CalorieRing({
     <div className={`relative mx-auto ${size}`}>
       <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90">
         <circle cx="64" cy="64" r={r} fill="none" stroke="#e2e8f0" strokeWidth="10" />
-        {arcs.map((a) => (
+        {/* အပိုင်းတွေ ထပ်တဲ့ အစဉ် — နောက်ဆုံး ဆွဲတာက အပေါ်ဆုံးမှာ ပေါ်တယ်။
+            Breakfast ကို အပေါ်ဆုံး ထားချင်လို့ reverse ပြီး ဆွဲတယ် —
+            lunch/dinner/snack က breakfast ရဲ့ အောက်ကနေ ထပ်ထွက်လာတဲ့ပုံ
+            ဖြစ်သွားတယ် (26 Nov 2026)။ */}
+        {[...arcs].reverse().map((a) => (
           <circle
             key={a.type}
             cx="64"
