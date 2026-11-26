@@ -27,9 +27,12 @@ export interface ReviewInitial {
 export default function ReviewForm({
   initial,
   onCancel,
+  offline = false,
 }: {
   initial: ReviewInitial;
   onCancel: () => void;
+  // လိုင်းမရှိရင် သိမ်းတဲ့ ခလုတ် ပိတ်ထားမယ် — server ကို ပို့လို့ မရလို့။
+  offline?: boolean;
 }) {
   const router = useRouter();
   const { t } = useLang();
@@ -337,6 +340,12 @@ export default function ReviewForm({
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-red-700">{message}</p>
       )}
 
+      {offline && (
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-amber-800">
+          {t("offline.noInternet")}
+        </p>
+      )}
+
       <div className="mt-3 flex gap-2">
         <button
           type="button"
@@ -349,7 +358,7 @@ export default function ReviewForm({
         <button
           type="button"
           onClick={handleSave}
-          disabled={busy}
+          disabled={busy || offline}
           className="btn-press flex-1 rounded-xl bg-[var(--theme)] py-2 font-semibold text-white disabled:opacity-50"
         >
           {busy ? t("common.saving") : t("review.save")}

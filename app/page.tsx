@@ -179,7 +179,9 @@ export default function Home() {
     );
   }
 
-  if (error) {
+  // cache ထဲက ဒေတာရှိရင် error တက်လည်း အဲဒါကို ဆက်ပြတယ် — လိုင်းမရှိချိန်
+  // (fetch ပျက်ချိန်) ဒေတာအဟောင်းကို မြင်ရဖို့။ cache လုံးဝ မရှိမှပဲ error ပြတယ်။
+  if (error && !data) {
     return (
       <main className="mx-auto min-h-screen max-w-md px-5 pb-24 pt-8">
         <p className="rounded-lg bg-red-50 px-3 py-2 text-red-700">

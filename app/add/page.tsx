@@ -7,6 +7,7 @@ import ReviewForm, { type ReviewInitial } from "@/components/ReviewForm";
 import { createClient } from "@/lib/supabase/client";
 import { scaleNutrients, type AnalyzedFood } from "@/lib/meal";
 import { useLang } from "@/lib/i18n";
+import { useOnlineStatus } from "@/lib/useOnline";
 
 type Mode = "photo" | "text" | "search" | "manual";
 
@@ -48,6 +49,7 @@ const POPULAR_FOOD_ORDER = ["မုန့်ဟင်းခါး", "ရှမ�
 
 export default function AddPage() {
   const { t } = useLang();
+  const online = useOnlineStatus();
   const [mode, setMode] = useState<Mode>("photo");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -284,8 +286,14 @@ export default function AddPage() {
     <main className="mx-auto min-h-screen max-w-md px-5 pb-24 pt-8">
       <h1>{t("add.title")}</h1>
 
+      {!online && (
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-amber-800">
+          {t("offline.noInternet")}
+        </p>
+      )}
+
       {review ? (
-        <ReviewForm initial={review} onCancel={resetReview} />
+        <ReviewForm initial={review} onCancel={resetReview} offline={!online} />
       ) : (
         <>
           <div className="mt-4 grid grid-cols-4 gap-2">
@@ -315,6 +323,7 @@ export default function AddPage() {
               <ReviewForm
                 initial={manualInitial}
                 onCancel={() => setMode("photo")}
+                offline={!online}
               />
             </div>
           )}
@@ -394,7 +403,7 @@ export default function AddPage() {
               <button
                 type="button"
                 onClick={analyzePhoto}
-                disabled={busy || !photoFile}
+                disabled={busy || !photoFile || !online}
                 className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
               >
                 {busy ? t("add.analyzing") : t("add.analyze")}
@@ -417,7 +426,7 @@ export default function AddPage() {
               <button
                 type="button"
                 onClick={analyzeText}
-                disabled={busy || !textInput.trim()}
+                disabled={busy || !textInput.trim() || !online}
                 className="mt-3 w-full rounded-xl bg-[var(--theme)] py-2.5 font-semibold text-white disabled:opacity-50"
               >
                 {busy ? t("add.analyzing") : t("add.analyze")}
