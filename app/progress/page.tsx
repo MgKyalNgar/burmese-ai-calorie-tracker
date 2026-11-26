@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
-import { invalidateCachePrefix, useCachedData } from "@/lib/useCachedData";
+import { invalidateCachePrefix, setCacheData, useCachedData } from "@/lib/useCachedData";
 import { FETCH_FALLBACK, useLang, type TFn } from "@/lib/i18n";
 import {
   formatDateDMY,
@@ -263,9 +263,15 @@ function MonthCalendar({ loggedDays }: { loggedDays: string[] }) {
 export default function ProgressPage() {
   const { t } = useLang();
   const router = useRouter();
-  // POST ပြီးတိုင်း tick ပြောင်းပြီး cache key အသစ်နဲ့ ပြန်ဆွဲတယ်
-  // (ဒေတာ အဟောင်း ပြနေရင်း နောက်ကွယ်မှာ အသစ် ရောက်လာတယ်)။
+  // POST ပြီးတိုင်း tick ပြောင်းပြီး cache key အသစ်နဲ့ ပြန်ဆွဲတယ်။
+  // key အသစ်မှာ data အဟောင်း ရှိအောင် အရင် ကူးထည့်ရတယ် — မကူးရင်
+  // key အသစ်မှာ cache မရှိလို့ loading=true ဖြစ်ပြီး စာမျက်နှာတစ်ခုလုံး
+  // spinner ဖြစ်သွားတယ် (ရေ အတိုးအလျော့မှာ တွေ့တဲ့ bug)။
   const [tick, setTick] = useState(0);
+  function bumpTick() {
+    if (data) setCacheData(`progress-${tick + 1}`, data);
+    bumpTick();
+  }
   const { data, loading, error } = useCachedData<ProgressData>(
     `progress-${tick}`,
     fetchProgress,
@@ -317,7 +323,7 @@ export default function ProgressPage() {
       setWeightMsg(t("progress.weightSaved"));
       setWeightKg("");
       invalidateCachePrefix("today-");
-      setTick((t) => t + 1);
+      bumpTick();
     } catch (err) {
       setWeightMsg(err instanceof Error ? err.message : t("common.saveError"));
     } finally {
@@ -345,7 +351,7 @@ export default function ProgressPage() {
       setWeightMsg(t("progress.weightUpdated"));
       setEditingWeightId(null);
       invalidateCachePrefix("today-");
-      setTick((t) => t + 1);
+      bumpTick();
     } catch (err) {
       setWeightMsg(err instanceof Error ? err.message : t("common.editError"));
     } finally {
@@ -368,7 +374,7 @@ export default function ProgressPage() {
       setWeightMsg(t("progress.weightDeleted"));
       setDeletingWeightId(null);
       invalidateCachePrefix("today-");
-      setTick((t) => t + 1);
+      bumpTick();
     } catch (err) {
       setWeightMsg(err instanceof Error ? err.message : t("common.deleteError"));
     } finally {
@@ -393,7 +399,7 @@ export default function ProgressPage() {
         t("progress.waterLogged", { label, cups: d.cupsToday }),
       );
       invalidateCachePrefix("today-");
-      setTick((t) => t + 1);
+      bumpTick();
     } catch (err) {
       setWaterMsg(err instanceof Error ? err.message : t("common.logError"));
     } finally {
@@ -419,7 +425,7 @@ export default function ProgressPage() {
         t("progress.waterUndone", { label, cups: d.cupsToday }),
       );
       invalidateCachePrefix("today-");
-      setTick((t) => t + 1);
+      bumpTick();
     } catch (err) {
       setWaterMsg(err instanceof Error ? err.message : t("common.deleteError"));
     } finally {
@@ -444,7 +450,7 @@ export default function ProgressPage() {
       setWaterGoal(d.goal);
       setWaterMsg(t("progress.goalSet", { goal: d.goal }));
       invalidateCachePrefix("today-");
-      setTick((t) => t + 1);
+      bumpTick();
     } catch (err) {
       setWaterMsg(err instanceof Error ? err.message : t("common.saveError"));
     } finally {

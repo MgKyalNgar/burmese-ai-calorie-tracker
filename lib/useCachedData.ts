@@ -200,5 +200,5 @@ export function useCachedData<T>(key: string, fetcher: () => Promise<T>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, refresh]);
 
-  return { data, loading, refreshing, error };
+  return { data, loading, refreshing, error, refresh };
 }

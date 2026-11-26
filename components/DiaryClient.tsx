@@ -257,7 +257,7 @@ export default function DiaryClient() {
   // ပြောင်းတော့ hook က ပြန်ဆွဲတယ်။
   const fetcher = useCallback(() => fetchDiary(date), [date]);
   // ဒေတာကို cache နဲ့ ဆွဲတယ် — tab ပြန်ကူးတိုင်း မှတ်ထားတာကို ချက်ချင်း ပြတယ်။
-  const { data, loading, error } = useCachedData<DiaryData>(key, fetcher);
+  const { data, loading, error, refresh } = useCachedData<DiaryData>(key, fetcher);
   const [meals, setMeals] = useState<MealRow[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -307,6 +307,9 @@ export default function DiaryClient() {
     setMeals(newMeals);
     setCacheData(key, { date, meals: newMeals });
     invalidateCachePrefix("today-");
+    // hook ရဲ့ data ကိုလည်း အသစ်ဆွဲတယ် — မဆွဲရင် tab ပြန်ကူးတဲ့အခါ
+    // အဟောင်း ပြန်ပေါ်တယ် (ဖျက်ထားတဲ့ အစာ ပြန်ပေါ်တဲ့ bug)။
+    void refresh();
     setEditingId(null);
     // Parent meal totals ကို DB မှာလည်း ပြင်တယ်။
     void syncMealTotals(updated.meal_id, newItems);
@@ -365,6 +368,9 @@ export default function DiaryClient() {
         invalidateCachePrefix("today-");
         void syncMealTotals(item.meal_id, remaining);
       }
+      // hook ရဲ့ data ကိုလည်း အသစ်ဆွဲတယ် — မဆွဲရင် tab ပြန်ကူးတဲ့အခါ
+      // ဖျက်ထားတဲ့ အစာ ပြန်ပေါ်တယ်။
+      void refresh();
       setDeletingId(null);
       router.refresh();
     } catch (err) {
@@ -456,6 +462,9 @@ export default function DiaryClient() {
       } else {
         setMessage(t("diary.repeatedToday"));
       }
+      // hook ရဲ့ data ကိုလည်း အသစ်ဆွဲတယ် — မဆွဲရင် tab ပြန်ကူးတဲ့အခါ
+      // အဟောင်း ပြန်ပေါ်တယ်။
+      void refresh();
       router.refresh();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : t("common.repeatError"));

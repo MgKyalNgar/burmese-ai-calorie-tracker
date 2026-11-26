@@ -3,7 +3,9 @@
 -- RUN 24 Nov 2026 by the user in the Supabase dashboard SQL Editor; count
 -- verified 88 via REST (60 seed + 28 new). Safe to re-run: guarded by
 -- WHERE NOT EXISTS on name_mm, so already-present foods are skipped.
--- NOT yet in the GitHub repo — the snapshot sync does not include supabase/seed files.
+-- In the GitHub repo since 26 Nov 2026 (commit 114e161) — the record of
+-- what is live in Supabase. Do NOT re-run blindly on a fresh project
+-- without checking the count first.
 --
 -- VALUES RE-CHECKED 24 Nov 2026 against independent sources (USDA FoodData
 -- Central, nutrition databases, Burmese food tables, recipe estimates, and a
