@@ -39,19 +39,23 @@ export default function LoginPage() {
       setError(toMyanmarError(error.message, t));
       return;
     }
+    // push() သက်သက် — refresh() တွဲခေါ်ရင် navigation ပျက်ပြီး
+    // ဒီစာမျက်နှာမှာပဲ ကျန်နေတတ်တယ် (27 Nov 2026, onboarding မှာ ပြန်ဖြစ်ဖူးတယ်)။
     router.push("/");
-    router.refresh();
   }
 
-  async function handleGoogle() {
-    setError("");
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) setError(toMyanmarError(error.message, t));
-  }
+  // Google login ခဏဖြုတ်ထားတယ် (27 Nov 2026) — Supabase Google provider မှာ
+  // Client Secret မရှိသေးလို့ ("missing OAuth secret" error)။
+  // ပြန်ထည့်ရန်: အောက်က handleGoogle + "Google နဲ့ ဝင်မယ်" ခလုတ်ကို ပြန်ဖွင့်ရုံပဲ။
+  // async function handleGoogle() {
+  //   setError("");
+  //   const supabase = createClient();
+  //   const { error } = await supabase.auth.signInWithOAuth({
+  //     provider: "google",
+  //     options: { redirectTo: `${window.location.origin}/auth/callback` },
+  //   });
+  //   if (error) setError(toMyanmarError(error.message, t));
+  // }
 
   return (
     <main className="mx-auto max-w-md min-h-screen px-5 py-10">
@@ -95,13 +99,14 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <button
+      {/* Google login ခဏဖြုတ် — 27 Nov 2026 (အပေါ် handleGoogle နဲ့အတူ ပြန်ဖွင့်ရန်) */}
+      {/* <button
         type="button"
         onClick={handleGoogle}
         className="mt-3 w-full rounded-xl border bg-white py-3 font-semibold"
       >
         {t("auth.googleSignIn")}
-      </button>
+      </button> */}
 
       <p className="mt-6 text-center">
         {t("auth.noAccount")}{" "}

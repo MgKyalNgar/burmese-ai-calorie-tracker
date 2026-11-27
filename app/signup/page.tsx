@@ -41,8 +41,8 @@ export default function SignupPage() {
     }
     // Email အတည်ပြု ပိတ်ထားရင် session တန်းရတယ်။
     if (data.session) {
+      // push() သက်သက် — refresh() တွဲခေါ်ရင် navigation ပျက်နိုင်တယ် (27 Nov 2026)။
       router.push("/onboarding");
-      router.refresh();
       return;
     }
     setDone(t("auth.signupDone"));

@@ -136,7 +136,21 @@ export function invalidateCachePrefix(prefix: string) {
 export function useCachedData<T>(key: string, fetcher: () => Promise<T>) {
   const [data, setData] = useState<T | null>(() => {
     const mem = store.get(key) as T | undefined;
-    if (mem !== undefined) return mem;
+    // memory ထဲက အဟောင်းက login/onboarding လိုတယ်ဆိုတဲ့ အဖြေဆိုရင် မယူဘူး —
+    // session ပြန်ရပြီး Home ပြန်လာတဲ့အခါ အဟောင်းက /login ကို မှားပို့မိမယ်
+    // (27 Nov 2026 — login ပြီးပြန်လာလည်း /login ကို ပြန်ပို့တဲ့ bug)။
+    if (mem !== undefined) {
+      const m = mem as Record<string, unknown> | null;
+      if (
+        m &&
+        typeof m === "object" &&
+        (m.needsLogin || m.needsOnboarding)
+      ) {
+        store.delete(key);
+      } else {
+        return mem;
+      }
+    }
     // memory မှာ မရှိရင် localStorage က အဟောင်း (မနေ့က data) ကို ယူတယ် —
     // ချက်ချင်း ပြပြီး နောက်ကွယ်မှာ အသစ်ဆွဲမယ်။
     const saved = readPersisted(key) as T | undefined;
@@ -165,8 +179,21 @@ export function useCachedData<T>(key: string, fetcher: () => Promise<T>) {
     setError("");
     try {
       const d = await fetcherRef.current();
-      store.set(key, d);
-      writePersisted(key, d);
+      // login/onboarding လိုအပ်တဲ့ အဖြေကို cache ထဲ လုံးဝ မသိမ်းဘူး —
+      // session ပြန်ရပြီး Home ပြန်လာတဲ့အခါ အဟောင်းက /login (သို့)
+      // /onboarding ကို မှားပြီး ပို့မိမယ် (localStorage မှာလည်း
+      // ဒီအတိုင်း ကာထားပြီးသား — memory cache မှာပါ 27 Nov 2026 မှာ ဖြည့်တယ်)။
+      const dd = d as Record<string, unknown> | null;
+      if (
+        dd &&
+        typeof dd === "object" &&
+        (dd.needsLogin || dd.needsOnboarding)
+      ) {
+        store.delete(key);
+      } else {
+        store.set(key, d);
+        writePersisted(key, d);
+      }
       if (!mountedRef.current) return;
       setData(d);
     } catch (e) {

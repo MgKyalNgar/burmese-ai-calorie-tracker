@@ -25,8 +25,8 @@ export default function LogoutButton() {
     // မဟုတ်ရင် App Router က Profile စာမျက်နှာကို cache ထဲ
     // busy=true အတိုင်း သိမ်းထားပြီး ပြန်လာရင် ခလုတ် ပိတ်နေမယ်။
     setBusy(false);
+    // push() သက်သက် — refresh() တွဲခေါ်ရင် navigation ပျက်နိုင်တယ် (27 Nov 2026)။
     router.push("/login");
-    router.refresh();
   }
 
   return (

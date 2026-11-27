@@ -132,8 +132,9 @@ export default function OnboardingPage() {
     // (target ပြောင်းနိုင်လို့ Home cache လည်း ဖျက်တယ်)။
     invalidateCache("profile");
     invalidateCachePrefix("today-");
+    // push() သက်သက် — refresh() တွဲခေါ်ရင် navigation ပျက်ပြီး
+    // onboarding စာမျက်နှာမှာပဲ ကျန်နေတယ် (27 Nov 2026, စမ်းပြီး တွေ့တယ်)။
     router.push("/");
-    router.refresh();
   }
 
   if (!loaded) {

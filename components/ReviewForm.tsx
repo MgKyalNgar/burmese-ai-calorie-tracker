@@ -174,8 +174,8 @@ export default function ReviewForm({
       // Add form ကို အစက ပြန်စထားတယ် — မဟုတ်ရင် Back နှိပ်ပြီး + Add
       // ပြန်လာရင် Review အဟောင်း ပြန်ပေါ်နေမယ်။
       onCancel();
+      // push() သက်သက် — refresh() တွဲခေါ်ရင် navigation ပျက်နိုင်တယ် (27 Nov 2026)။
       router.push("/diary");
-      router.refresh();
     } catch (err) {
       setMessage(
         err instanceof Error ? err.message : t("common.saveErrorRetry"),
