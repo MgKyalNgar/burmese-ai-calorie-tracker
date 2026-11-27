@@ -152,7 +152,7 @@ export default function ApiKeySettings() {
               type="password"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              placeholder="AIza..."
+              placeholder="AIza... / AQ...."
               autoComplete="off"
               className="mt-1 w-full rounded-xl border px-3 py-2"
             />

@@ -11,7 +11,7 @@ const MISSING_ENV_ERROR =
 const NO_KEY_ERROR =
   "API key မထည့်ရသေးဘူး — Profile မှာ Gemini API key ကို အရင် ထည့်ပေးပါ။";
 const BAD_KEY_ERROR =
-  "API key မှားနေပါတယ် — Profile မှာ Gemini API key ကို စစ်ပေးပါ။ (AI Studio က AIza နဲ့ စတဲ့ key ဖြစ်ရမယ်)";
+  "API key မှားနေပါတယ် — Profile မှာ Gemini API key ကို စစ်ပေးပါ။ (AI Studio က AIza နဲ့ (သို့) AQ. နဲ့ စတဲ့ key ဖြစ်ရမယ်)";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 

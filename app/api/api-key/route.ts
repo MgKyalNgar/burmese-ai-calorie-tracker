@@ -59,9 +59,14 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Key ကို ဖတ်လို့ မရပါ။" }, { status: 400 });
   }
-  if (key.length < 20 || !key.startsWith("AIza")) {
+  // Gemini key က AIza နဲ့လည်း စတယ်၊ AQ. နဲ့လည်း စတယ် — AI Studio က
+  // အသစ်ထုတ်တဲ့ key တွေက AQ. နဲ့ စတာ များတယ်။ နှစ်မျိုးလုံး လက်ခံတယ်။
+  if (
+    key.length < 20 ||
+    !(key.startsWith("AIza") || key.startsWith("AQ."))
+  ) {
     return NextResponse.json(
-      { error: "Gemini API key ပုံစံ မမှန်ပါ — AIza နဲ့ စတဲ့ key ထည့်ပေးပါ။" },
+      { error: "Gemini API key ပုံစံ မမှန်ပါ — AIza နဲ့ (သို့) AQ. နဲ့ စတဲ့ key ထည့်ပေးပါ။" },
       { status: 400 },
     );
   }

@@ -26,9 +26,12 @@ export async function POST(request: Request) {
     typedKey = "";
   }
   if (typedKey) {
-    if (typedKey.length < 20 || !typedKey.startsWith("AIza")) {
+    if (
+      typedKey.length < 20 ||
+      !(typedKey.startsWith("AIza") || typedKey.startsWith("AQ."))
+    ) {
       return NextResponse.json(
-        { error: "Gemini API key ပုံစံ မမှန်ပါ — AIza နဲ့ စတဲ့ key ထည့်ပေးပါ။" },
+        { error: "Gemini API key ပုံစံ မမှန်ပါ — AIza နဲ့ (သို့) AQ. နဲ့ စတဲ့ key ထည့်ပေးပါ။" },
         { status: 400 },
       );
     }
