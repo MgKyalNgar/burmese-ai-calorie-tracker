@@ -1,9 +1,16 @@
 // Gemini API ကို server-side ကနေ ခေါ်တဲ့ helper — key ကို frontend ကို ဘယ်တော့မှ မပေးဘူး။
 // 2.5-flash က key အသစ်တွေမှာ မရတော့ဘူး (Google: "no longer available to new
-// users") — အဓိကကို 3.8-flash ပြောင်းတယ်။ 3.8-flash မရတဲ့ account အဟောင်းတွေအတွက်
-// 2.5-flash ကို fallback အဖြစ် တစ်ခါ ပြန်စမ်းတယ်။
-const MODEL = "gemini-3.8-flash";
-const FALLBACK_MODEL = "gemini-2.5-flash";
+// users") — အဓိကကို 3.8-flash ပြောင်းတယ်။ တစ်ခုခု မရရင် အသစ်ကနေ အဟောင်းအတိုင်း
+// တစ်ဆင့်ချင်း ပြန်စမ်းတယ် — 3.7 → 3.6 → 3.5 → 3-flash-preview → 2.5-flash
+// (အဟောင်းတွေအတွက် နောက်ဆုံး)။
+const MODELS = [
+  "gemini-3.8-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3-flash-preview",
+  "gemini-2.5-flash",
+];
 // Fallback စမ်းတဲ့ error တွေ — 404 (model မရှိ)၊ 429 (quota)၊ 503 (overload)။
 // Key မှား (400/401) ကတော့ fallback နဲ့လည်း တူတူပဲ မှားမှာမို့ ချက်ချင်း ပြန်ပေးတယ်။
 const RETRYABLE_STATUSES = [404, 429, 503];
@@ -84,16 +91,17 @@ export async function callGeminiParts(
   apiKey: string,
   parts: GeminiPart[],
 ): Promise<string> {
-  for (const model of [MODEL, FALLBACK_MODEL]) {
+  const LAST_MODEL = MODELS[MODELS.length - 1];
+  for (const model of MODELS) {
     try {
       return await callModel(apiKey, model, parts);
     } catch (err) {
       const retryable =
         err instanceof GeminiApiError &&
         RETRYABLE_STATUSES.includes(err.status);
-      // Fallback ပါ မှားပြီ (သို့) retry မလုပ်တဲ့ error ဆို ချက်ချင်း ပြန်ပေးတယ်။
-      if (!retryable || model === FALLBACK_MODEL) throw err;
-      // မဟုတ်ရင် fallback model နဲ့ တစ်ခါ ပြန်စမ်းတယ်။
+      // နောက်ဆုံး model ပါ မှားပြီ (သို့) retry မလုပ်တဲ့ error ဆို ချက်ချင်း ပြန်ပေးတယ်။
+      if (!retryable || model === LAST_MODEL) throw err;
+      // မဟုတ်ရင် နောက် model နဲ့ တစ်ခါ ပြန်စမ်းတယ်။
     }
   }
   // ရောက်ဖို့ မရှိပေမဲ့ TypeScript အတွက် —
