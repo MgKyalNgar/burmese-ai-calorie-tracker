@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decryptApiKey } from "@/lib/crypto";
-import { testGeminiKey } from "@/lib/gemini";
+import { testGeminiKey, GeminiApiError } from "@/lib/gemini";
 
 // POST /api/api-key/test — key ကို Gemini နဲ့ စမ်းခေါ်တယ်။
 // body မှာ { key } ပါရင် အဲဒီ key ကို မသိမ်းဘဲ စမ်းတယ်
@@ -39,9 +39,17 @@ export async function POST(request: Request) {
       const reply = await testGeminiKey(typedKey);
       return NextResponse.json({ ok: true, reply: reply.trim() });
     } catch (err) {
+      const attempts =
+        err instanceof GeminiApiError ? err.attempts : undefined;
+      if (attempts && attempts.length > 0) {
+        console.error(
+          "[api-key/test] Gemini attempts:",
+          JSON.stringify(attempts),
+        );
+      }
       const message =
         err instanceof Error ? err.message : "Gemini ကို စမ်းလို့ မရပါ။";
-      return NextResponse.json({ error: message }, { status: 400 });
+      return NextResponse.json({ error: message, attempts }, { status: 400 });
     }
   }
 
@@ -93,6 +101,14 @@ export async function POST(request: Request) {
       .eq("id", row.id);
     const message =
       err instanceof Error ? err.message : "Gemini ကို စမ်းလို့ မရပါ။";
-    return NextResponse.json({ error: message }, { status: 400 });
+    const attempts =
+      err instanceof GeminiApiError ? err.attempts : undefined;
+    if (attempts && attempts.length > 0) {
+      console.error(
+        "[api-key/test] Gemini attempts:",
+        JSON.stringify(attempts),
+      );
+    }
+    return NextResponse.json({ error: message, attempts }, { status: 400 });
   }
 }

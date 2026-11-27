@@ -215,20 +215,36 @@ export async function POST(request: Request) {
   try {
     rawText = await callGeminiParts(apiKey, parts);
   } catch (err) {
+    // Error Log — ဘယ် model တွေ ဘာဖြစ်ခဲ့လဲ server log မှာရော
+    // frontend မှာရော မြင်ရအောင် attempts ပါ ပြန်ပေးတယ်။
+    const attempts =
+      err instanceof GeminiApiError ? err.attempts : undefined;
+    if (attempts && attempts.length > 0) {
+      console.error("[analyze] Gemini attempts:", JSON.stringify(attempts));
+    }
     if (err instanceof GeminiApiError) {
       // Key မှားတာ (400/401) ဆိုရင် သိသာအောင် မြန်မာလို ရှင်းရှင်းပြောတယ်။
       if (err.status === 400 || err.status === 401) {
-        return NextResponse.json({ error: BAD_KEY_ERROR }, { status: 400 });
+        return NextResponse.json(
+          { error: BAD_KEY_ERROR, attempts },
+          { status: 400 },
+        );
       }
       if (err.status === 429) {
         return NextResponse.json(
-          { error: "Gemini က ခဏ အသုံးများနေတယ် — ခနစောင့်ပြီး ပြန်စမ်းပေးပါ။" },
+          {
+            error: "Gemini က ခဏ အသုံးများနေတယ် — ခနစောင့်ပြီး ပြန်စမ်းပေးပါ။",
+            attempts,
+          },
           { status: 429 },
         );
       }
     }
     return NextResponse.json(
-      { error: "Gemini ကို ခေါ်လို့ မရပါ — အင်တာနက် စစ်ပြီး ပြန်စမ်းပေးပါ။" },
+      {
+        error: "Gemini ကို ခေါ်လို့ မရပါ — အင်တာနက် စစ်ပြီး ပြန်စမ်းပေးပါ။",
+        attempts,
+      },
       { status: 502 },
     );
   }

@@ -14,13 +14,26 @@ const MODELS = [
 // Fallback စမ်းတဲ့ error တွေ — 404 (model မရှိ)၊ 429 (quota)၊ 503 (overload)။
 // Key မှား (400/401) ကတော့ fallback နဲ့လည်း တူတူပဲ မှားမှာမို့ ချက်ချင်း ပြန်ပေးတယ်။
 const RETRYABLE_STATUSES = [404, 429, 503];
-// Model တစ်ခု ၆၀ စက္ကန့် မပြန်ရင် timeout — ဟန်းပြီး ခလုတ် ပိတ်နေတာမျိုး မဖြစ်အောင်။
-const FETCH_TIMEOUT_MS = 60000;
+// Model တစ်ခု ၃၀ စက္ကန့် မပြန်ရင် timeout — ဟန်းပြီး ခလုတ် ပိတ်နေတာမျိုး မဖြစ်အောင်။
+// (၆၀ စက္ကန့်တုန်းက chain လျှောက်ရင် တစ်ကြိမ် ၃–၄ မိနစ် ကြာခဲ့လို့ ၃၀ စက္ကန့်ကို
+// လျှော့ထားတယ် — 27 Nov 2026။)
+const FETCH_TIMEOUT_MS = 30000;
+
+// Model တစ်ခုချင်းစီ စမ်းတုန်း မှတ်ထားတဲ့ Error Log —
+// ဘယ် model က ဘာကြောင့် ရှုံးလဲ (status + ကြာချိန်) သိရအောင်။
+// error ဖြစ်ရင် API response မှာ ပါပြီး UI မှာ ပြတယ်။
+export type GeminiAttempt = {
+  model: string;
+  ms: number;
+  status: number | null;
+  error: string;
+};
 
 // Gemini က ပြန်တဲ့ HTTP status ပါတဲ့ error —
 // 400/401 = key မှားတာ၊ 429 = quota/rate limit ဆိုပြီး ခွဲသိဖို့။
 export class GeminiApiError extends Error {
   status: number;
+  attempts?: GeminiAttempt[];
   constructor(status: number, message: string) {
     super(message);
     this.name = "GeminiApiError";
@@ -91,17 +104,37 @@ export async function callGeminiParts(
   apiKey: string,
   parts: GeminiPart[],
 ): Promise<string> {
+  const attempts: GeminiAttempt[] = [];
   const LAST_MODEL = MODELS[MODELS.length - 1];
   for (const model of MODELS) {
+    const started = Date.now();
     try {
       return await callModel(apiKey, model, parts);
     } catch (err) {
+      attempts.push({
+        model,
+        ms: Date.now() - started,
+        status: err instanceof GeminiApiError ? err.status : null,
+        error: (err instanceof Error ? err.message : "Unknown error").slice(
+          0,
+          120,
+        ),
+      });
       const retryable =
         err instanceof GeminiApiError &&
         RETRYABLE_STATUSES.includes(err.status);
-      // နောက်ဆုံး model ပါ မှားပြီ (သို့) retry မလုပ်တဲ့ error ဆို ချက်ချင်း ပြန်ပေးတယ်။
-      if (!retryable || model === LAST_MODEL) throw err;
-      // မဟုတ်ရင် နောက် model နဲ့ တစ်ခါ ပြန်စမ်းတယ်။
+      // နောက်ဆုံး model ပါ မှားပြီ (သို့) retry မလုပ်တဲ့ error ဆို
+      // attempts (Error Log) ပါ ထည့်ပြီး ပြန်ပေးတယ်။
+      if (retryable && model !== LAST_MODEL) continue;
+      const finalErr =
+        err instanceof GeminiApiError
+          ? err
+          : new GeminiApiError(
+              502,
+              err instanceof Error ? err.message : "Gemini ကို ခေါ်လို့ မရပါ။",
+            );
+      finalErr.attempts = attempts;
+      throw finalErr;
     }
   }
   // ရောက်ဖို့ မရှိပေမဲ့ TypeScript အတွက် —

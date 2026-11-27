@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { scaleNutrients, type AnalyzedFood } from "@/lib/meal";
 import { useLang } from "@/lib/i18n";
 import { useOnlineStatus } from "@/lib/useOnline";
+import type { GeminiAttempt } from "@/lib/gemini";
 
 type Mode = "photo" | "text" | "search" | "manual";
 
@@ -53,6 +54,8 @@ export default function AddPage() {
   const [mode, setMode] = useState<Mode>("photo");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  // Error Log — Gemini စမ်းတုန်း ဘယ် model တွေ ဘာဖြစ်ခဲ့လဲ (error ဖြစ်မှသာ ပြတယ်)။
+  const [attemptLog, setAttemptLog] = useState<GeminiAttempt[] | null>(null);
   // key မရှိလို့ AI စစ်မရတဲ့ error — Profile သွားတဲ့ link ပြဖို့။
   const [noKeyError, setNoKeyError] = useState(false);
 
@@ -117,6 +120,7 @@ export default function AddPage() {
     }
     setBusy(true);
     setMessage("");
+    setAttemptLog(null);
     setNoKeyError(false);
     try {
       const form = new FormData();
@@ -126,6 +130,7 @@ export default function AddPage() {
       const data = await res.json();
       if (!res.ok) {
         if (data?.code === "NO_API_KEY") setNoKeyError(true);
+        if (Array.isArray(data?.attempts)) setAttemptLog(data.attempts);
         throw new Error(data?.error ?? t("add.analyzeError"));
       }
       setReview({
@@ -148,6 +153,7 @@ export default function AddPage() {
     }
     setBusy(true);
     setMessage("");
+    setAttemptLog(null);
     setNoKeyError(false);
     try {
       const res = await fetch("/api/analyze", {
@@ -158,6 +164,7 @@ export default function AddPage() {
       const data = await res.json();
       if (!res.ok) {
         if (data?.code === "NO_API_KEY") setNoKeyError(true);
+        if (Array.isArray(data?.attempts)) setAttemptLog(data.attempts);
         throw new Error(data?.error ?? t("add.analyzeError"));
       }
       setReview({ food: data.result as AnalyzedFood, source: "text" });
@@ -606,6 +613,18 @@ export default function AddPage() {
                 </Link>
               )}
             </p>
+          )}
+
+          {attemptLog && attemptLog.length > 0 && (
+            <div className="mt-2 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">
+              <p className="font-semibold">{t("common.errorLog")}</p>
+              {attemptLog.map((a) => (
+                <p key={a.model} className="mt-1 break-words">
+                  {a.model} · {a.status ?? "—"} · {(a.ms / 1000).toFixed(1)}s
+                  {a.error ? ` · ${a.error}` : ""}
+                </p>
+              ))}
+            </div>
           )}
         </>
       )}

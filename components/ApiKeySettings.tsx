@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLang } from "@/lib/i18n";
 import { formatDateTimeDMY } from "@/lib/meal";
+import type { GeminiAttempt } from "@/lib/gemini";
 
 // API Key Settings — ကိုယ့် Gemini API key ကို server-side encrypted သိမ်းတယ်။
 type Status = {
@@ -18,6 +19,8 @@ export default function ApiKeySettings() {
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  // Error Log — key စမ်းတုန်း ဘယ် model တွေ ဘာဖြစ်ခဲ့လဲ (error ဖြစ်မှသာ ပြတယ်)။
+  const [attemptLog, setAttemptLog] = useState<GeminiAttempt[] | null>(null);
   // ပုံမှန် ပိတ်ထား — ခေါင်းစဉ်ကိုနှိပ်မှ ဖွင့်တယ်။
   const [open, setOpen] = useState(false);
 
@@ -67,6 +70,7 @@ export default function ApiKeySettings() {
     const typedKey = key.trim();
     setBusy(true);
     setMessage("");
+    setAttemptLog(null);
     try {
       const res = await fetch("/api/api-key/test", {
         method: "POST",
@@ -74,7 +78,10 @@ export default function ApiKeySettings() {
         body: JSON.stringify(typedKey ? { key: typedKey } : {}),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? t("apiKey.testError"));
+      if (!res.ok) {
+        if (Array.isArray(data?.attempts)) setAttemptLog(data.attempts);
+        throw new Error(data?.error ?? t("apiKey.testError"));
+      }
       setMessage(
         typedKey
           ? t("apiKey.worksSave", { reply: data.reply ?? "OK" })
@@ -206,6 +213,18 @@ export default function ApiKeySettings() {
 
           {message && (
             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2">{message}</p>
+          )}
+
+          {attemptLog && attemptLog.length > 0 && (
+            <div className="mt-2 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">
+              <p className="font-semibold">{t("common.errorLog")}</p>
+              {attemptLog.map((a) => (
+                <p key={a.model} className="mt-1 break-words">
+                  {a.model} · {a.status ?? "—"} · {(a.ms / 1000).toFixed(1)}s
+                  {a.error ? ` · ${a.error}` : ""}
+                </p>
+              ))}
+            </div>
           )}
         </div>
       )}
